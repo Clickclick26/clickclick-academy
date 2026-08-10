@@ -4,7 +4,7 @@ Pack-gated courses for ClickClick. An access code unlocks a pack of courses — 
 
 ## Live URL
 
-https://academy.clickclick.video/
+https://clickclick26.github.io/clickclick-academy/
 
 ## Local preview
 
