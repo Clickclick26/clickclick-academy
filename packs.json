@@ -1,0 +1,120 @@
+{
+  "corp-basic": {
+    "label": "Corporate Basic",
+    "audience": "corporate",
+    "courseIds": [
+      "corp-brand-hooks",
+      "corp-exec-signoff",
+      "corp-linkedin-shorts",
+      "coach-book"
+    ]
+  },
+  "corp-premium": {
+    "label": "Corporate Premium",
+    "audience": "corporate",
+    "courseIds": [
+      "corp-brand-hooks",
+      "corp-exec-signoff",
+      "corp-linkedin-shorts",
+      "corp-story-frameworks",
+      "coach-book"
+    ]
+  },
+  "agency": {
+    "label": "Agency Pack",
+    "audience": "agency",
+    "courseIds": [
+      "agency-brief-to-reel",
+      "agency-multi-brand",
+      "corp-linkedin-shorts",
+      "coach-book"
+    ]
+  },
+  "creator-ugc": {
+    "label": "Creator UGC",
+    "audience": "creator",
+    "courseIds": [
+      "ugc-hook-3s",
+      "ugc-phone-light",
+      "ugc-cta-sell",
+      "ugc-edit-scroll",
+      "coach-book"
+    ]
+  },
+  "staff-onboard": {
+    "label": "Staff onboarding",
+    "audience": "staff",
+    "courseIds": [
+      "staff-welcome",
+      "staff-client-voice",
+      "staff-day-one-tools",
+      "staff-quality-bar",
+      "coach-book"
+    ]
+  },
+  "live-host": {
+    "label": "Live host training",
+    "audience": "live-host",
+    "courseIds": [
+      "host-live-basics",
+      "host-energy-camera",
+      "host-product-demo",
+      "host-chat-convert",
+      "host-brand-brief",
+      "coach-book"
+    ]
+  },
+  "internal": {
+    "label": "Internal (all courses)",
+    "audience": "internal",
+    "courseIds": [
+      "corp-brand-hooks",
+      "corp-exec-signoff",
+      "corp-linkedin-shorts",
+      "corp-story-frameworks",
+      "agency-brief-to-reel",
+      "agency-multi-brand",
+      "ugc-hook-3s",
+      "ugc-phone-light",
+      "ugc-cta-sell",
+      "ugc-edit-scroll",
+      "staff-welcome",
+      "staff-client-voice",
+      "staff-day-one-tools",
+      "staff-quality-bar",
+      "host-live-basics",
+      "host-energy-camera",
+      "host-product-demo",
+      "host-chat-convert",
+      "host-brand-brief",
+      "coach-book"
+    ]
+  },
+  "Clickclick123": {
+    "label": "Internal (all courses)",
+    "audience": "internal",
+    "courseIds": [
+      "corp-brand-hooks",
+      "corp-exec-signoff",
+      "corp-linkedin-shorts",
+      "corp-story-frameworks",
+      "agency-brief-to-reel",
+      "agency-multi-brand",
+      "ugc-hook-3s",
+      "ugc-phone-light",
+      "ugc-cta-sell",
+      "ugc-edit-scroll",
+      "staff-welcome",
+      "staff-client-voice",
+      "staff-day-one-tools",
+      "staff-quality-bar",
+      "host-live-basics",
+      "host-energy-camera",
+      "host-product-demo",
+      "host-chat-convert",
+      "host-brand-brief",
+      "coach-book"
+    ],
+    "note": "Legacy master code — same as internal. Keep until Kathryn rotates codes."
+  }
+}

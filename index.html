@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClickClick Academy</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#efe9da" />
+  <link rel="canonical" href="https://academy.clickclick.video/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Gate -->
+  <div id="gate" class="gate" hidden>
+    <div class="gate-card">
+      <p class="eyebrow">ClickClick Academy</p>
+      <h1>Your course pack</h1>
+      <p class="lead">Enter the access code ClickClick gave you. It opens only your courses — nothing else.</p>
+      <form id="gate-form" class="gate-form">
+        <label for="access-code">Access code</label>
+        <input id="access-code" name="access-code" type="text" autocomplete="off" spellcheck="false" required />
+        <p id="gate-error" class="error" hidden>That code did not work. Try again or ask ClickClick.</p>
+        <button type="submit">Enter Academy</button>
+      </form>
+      <p class="hint">Need a code? Email <a href="mailto:hello@clickclick.video">hello@clickclick.video</a></p>
+    </div>
+  </div>
+
+  <!-- App shell -->
+  <div id="app" class="shell" hidden>
+    <aside class="sidebar" aria-label="Main">
+      <div class="sidebar-brand" title="ClickClick Academy">
+        <span class="brand-mark">CC</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-btn" data-view="dashboard" aria-label="Dashboard" title="Dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 10.5L12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button type="button" class="nav-btn active" data-view="courses" aria-label="Courses" title="Courses">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v14H6.5A2.5 2.5 0 0 0 4 20.5V6.5z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </button>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <button type="button" id="logout" class="nav-btn logout" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M10 7V5a1 1 0 0 1 1-1h8v16h-8a1 1 0 0 1-1-1v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M13 12H4m0 0l2.5-2.5M4 12l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">ClickClick Academy</p>
+          <h1 class="greeting">Hello</h1>
+          <p class="pack-line">Pack: <span id="pack-label">—</span></p>
+        </div>
+        <label class="search">
+          <span class="sr-only">Search courses</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <input id="course-search" type="search" placeholder="Search courses" autocomplete="off" />
+        </label>
+      </header>
+
+      <section id="view-dashboard" class="view" hidden>
+        <div class="welcome-card">
+          <div>
+            <h2>Welcome back</h2>
+            <p>These are the courses in your pack. Other catalogs stay hidden.</p>
+          </div>
+          <div class="stat-chips">
+            <div class="chip">
+              <strong>0</strong>
+              <span>Courses</span>
+            </div>
+            <div class="chip">
+              <strong>0</strong>
+              <span>Started</span>
+            </div>
+            <div class="chip">
+              <strong>—</strong>
+              <span>Coaching</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel-head">
+          <h2>Your courses</h2>
+          <button type="button" class="linkish" data-view="courses">See all →</button>
+        </div>
+        <div class="courses-grid courses-grid--preview" id="courses-preview"></div>
+      </section>
+
+      <section id="view-courses" class="view">
+        <div class="panel-head">
+          <div>
+            <h2>Your courses</h2>
+            <p class="sub">Your pack · short lessons</p>
+          </div>
+          <span class="count" id="course-count">0 courses</span>
+        </div>
+        <div class="courses-grid" id="courses-grid"></div>
+        <footer class="foot">
+          <p>ClickClick · <a href="https://www.clickclick.video/">clickclick.video</a></p>
+          <a class="cta" href="mailto:hello@clickclick.video?subject=ClickClick%20Academy%20coaching">Book coaching →</a>
+        </footer>
+      </section>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
