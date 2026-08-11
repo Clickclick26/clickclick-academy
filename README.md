@@ -4,7 +4,10 @@ Pack-gated courses for ClickClick. An access code unlocks a pack of courses — 
 
 ## Live URL
 
-https://academy.clickclick.video/
+- **Now:** https://clickclick26.github.io/clickclick-academy/
+- **Target:** https://academy.clickclick.video/ (after 123-reg CNAME `academy` → `Clickclick26.github.io`)
+
+Claude / agents: read **`CLAUDE.md`** first.
 
 ## Local preview
 
@@ -63,7 +66,7 @@ Hard refresh if the old page sticks: **Cmd+Shift+R**.
 2. GitHub → Settings → Pages → Deploy from branch `main` / root (`/`).
 3. DNS CNAME: host **academy** → **Clickclick26.github.io**
 
-`CNAME` is already set to `academy.clickclick.video`.
+`CNAME` in the repo is `academy.clickclick.video`. If github.io redirects to a dead custom domain, remove `CNAME` until DNS works.
 
 ## Note
 
