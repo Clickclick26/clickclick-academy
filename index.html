@@ -16,14 +16,14 @@
   <!-- Gate -->
   <div id="gate" class="gate" hidden>
     <div class="gate-card">
-      <p class="eyebrow">ClickClick Academy</p>
-      <h1>Your course pack</h1>
+      <img class="brand-logo-stacked" src="brand/clickclick-logo-stacked-black.png" alt="ClickClick" />
+      <h3>Your course pack</h3>
       <p class="lead">Enter the access code ClickClick gave you. It opens only your courses — nothing else.</p>
       <form id="gate-form" class="gate-form">
-        <label for="access-code">Access code</label>
-        <input id="access-code" name="access-code" type="text" autocomplete="off" spellcheck="false" required />
+        <label class="sr-only" for="access-code">Access code</label>
+        <input id="access-code" name="access-code" class="gate-input" type="text" placeholder="Access code" autocomplete="off" spellcheck="false" required />
         <p id="gate-error" class="error" hidden>That code did not work. Try again or ask ClickClick.</p>
-        <button type="submit">Enter Academy</button>
+        <button class="btn primary" type="submit">Enter Academy</button>
       </form>
       <p class="hint">Need a code? Email <a href="mailto:hello@clickclick.video">hello@clickclick.video</a></p>
     </div>
@@ -115,6 +115,11 @@
           <p>ClickClick · <a href="https://www.clickclick.video/">clickclick.video</a></p>
           <a class="cta" href="mailto:hello@clickclick.video?subject=ClickClick%20Academy%20coaching">Book coaching →</a>
         </footer>
+      </section>
+
+      <section id="view-course-detail" class="view" hidden>
+        <button type="button" class="back-link" id="course-detail-back">&larr; Back to courses</button>
+        <div id="course-detail-body"></div>
       </section>
     </div>
   </div>

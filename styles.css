@@ -104,6 +104,27 @@ input {
 }
 
 
+/* —— Buttons (same component as the CRM) —— */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: transform 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn.primary {
+  background: var(--ink);
+  color: #fff;
+}
+
 /* —— Gate —— */
 .gate {
   min-height: 100vh;
@@ -112,68 +133,76 @@ input {
   padding: 1.5rem;
 }
 
+/* Matches the CRM's sign-in card exactly: centered logo, small muted
+   caption instead of a big headline, plain pill inputs, solid-ink button —
+   same components, same product family. */
 .gate-card {
-  width: min(420px, 100%);
+  width: min(360px, 100%);
   background: var(--surface);
   border-radius: var(--radius-lg);
-  padding: 1.85rem 1.75rem;
+  padding: 2rem 1.75rem;
   box-shadow: var(--shadow);
-  position: relative;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-.gate-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--brand-line);
+.brand-logo-stacked {
+  height: 52px;
+  width: auto;
+  display: block;
 }
 
-.gate-card h1 {
-  font-size: clamp(1.7rem, 4vw, 2.15rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.4rem;
+.gate-card h3 {
+  margin: 1rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--mid);
 }
 
 .lead {
   color: var(--mid);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
 }
 
 .gate-form {
-  display: grid;
-  gap: 0.5rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
   margin-top: 1.25rem;
 }
 
-.gate-form label {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
 .gate-form input {
+  width: 100%;
   border: 0;
-  border-radius: 16px;
-  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  padding: 0.75rem 0.9rem;
   background: var(--surface-soft);
-  box-shadow: inset 0 0 0 1.5px rgba(20, 20, 20, 0.06);
+  font-size: 0.85rem;
+  outline: none;
 }
 
 .gate-form input:focus {
-  outline: none;
   box-shadow: inset 0 0 0 2px rgba(0, 188, 212, 0.45);
 }
 
-.gate-form button,
+.gate-form .btn.primary {
+  justify-content: center;
+  margin-top: 0.25rem;
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+}
+
 .cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 0.35rem;
   border: 0;
   border-radius: 999px;
   padding: 0.9rem 1.25rem;
@@ -184,7 +213,6 @@ input {
   box-shadow: var(--shadow-soft);
 }
 
-.gate-form button:hover,
 .cta:hover {
   filter: brightness(1.04);
   transform: translateY(-1px);
@@ -192,13 +220,14 @@ input {
 
 .error {
   color: #b00020;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
+  text-align: left;
 }
 
 .hint {
-  margin-top: 1rem;
-  font-size: 0.8rem;
+  margin-top: 1.25rem;
+  font-size: 0.76rem;
   color: var(--mid);
 }
 
@@ -640,5 +669,186 @@ input {
 
   .main {
     padding: 4px 2px 20px;
+  }
+}
+
+/* —— Course detail (full curriculum view) —— */
+
+.course-card.is-openable {
+  cursor: pointer;
+}
+
+.back-link {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--turquoise-deep);
+  padding: 0.3rem 0;
+}
+
+.back-link:hover {
+  color: var(--pink);
+}
+
+.detail-head {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 1.6rem 1.75rem;
+}
+
+.detail-head h1 {
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0.5rem 0 0.6rem;
+}
+
+.detail-lead {
+  color: var(--mid);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  max-width: 68ch;
+  margin: 0 0 1rem;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--purple);
+}
+
+.module-block {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 1.5rem 1.75rem;
+}
+
+.module-block-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-bottom: 0.9rem;
+  margin-bottom: 0.6rem;
+  border-bottom: 1px solid var(--cream-deep);
+}
+
+.module-block-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pink);
+  white-space: nowrap;
+}
+
+.module-block-head h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.module-block-frame {
+  color: var(--mid);
+  font-size: 0.9rem;
+  max-width: 68ch;
+  margin: 0 0 1.1rem;
+}
+
+.lesson-card {
+  background: var(--surface-soft);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem 1.25rem;
+  margin-bottom: 0.85rem;
+}
+
+.lesson-card:last-child {
+  margin-bottom: 0;
+}
+
+.lesson-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.lesson-num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--turquoise-deep);
+  flex-shrink: 0;
+}
+
+.lesson-card h4 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.lesson-overview {
+  color: var(--mid);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  margin: 0 0 0.8rem;
+}
+
+.lesson-field {
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  gap: 0.15rem 0.9rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  align-items: start;
+}
+
+.lesson-field:last-child {
+  margin-bottom: 0;
+}
+
+.lesson-field-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding-top: 0.1rem;
+}
+
+.lesson-field-body {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.lesson-field--interactive {
+  background: rgba(0, 188, 212, 0.09);
+}
+.lesson-field--interactive .lesson-field-label {
+  color: var(--turquoise-deep);
+}
+
+.lesson-field--deliverable {
+  background: rgba(232, 62, 140, 0.08);
+}
+.lesson-field--deliverable .lesson-field-label {
+  color: var(--pink);
+}
+
+@media (max-width: 640px) {
+  .lesson-field {
+    grid-template-columns: 1fr;
+  }
+  .detail-head,
+  .module-block {
+    padding: 1.25rem 1.25rem 1.4rem;
   }
 }
