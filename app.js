@@ -6,6 +6,43 @@
 (function () {
   var STORAGE_KEY = 'clickclick_academy_session_v2';
   var LEGACY_OK_KEY = 'clickclick_academy_ok_v1';
+  var STUDENT_KEY = 'clickclick_academy_student_v1';
+
+  var ACADEMY_API =
+    'https://gapybapywpdogexibtgj.supabase.co/functions/v1/academy-progress';
+  var ACADEMY_ANON_KEY = 'sb_publishable_H6AqSkDWFjR42ff7YE1MIw_-qU2z0OT';
+
+  function academyApi(payload) {
+    return fetch(ACADEMY_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: ACADEMY_ANON_KEY,
+        Authorization: 'Bearer ' + ACADEMY_ANON_KEY,
+      },
+      body: JSON.stringify(payload),
+    }).then(function (r) {
+      return r.json().then(function (data) {
+        if (!r.ok) throw new Error(data && data.error ? data.error : 'Request failed');
+        return data;
+      });
+    });
+  }
+
+  function loadStudent() {
+    try {
+      var raw = localStorage.getItem(STUDENT_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveStudent(s) {
+    try {
+      localStorage.setItem(STUDENT_KEY, JSON.stringify(s));
+    } catch (e) {}
+  }
 
   var gate = document.getElementById('gate');
   var app = document.getElementById('app');
@@ -191,12 +228,68 @@
     );
   }
 
-  function lessonHtml(lesson) {
+  // Flat, in-order list of every lesson's num across all modules — used to
+  // find "the lesson before this one" for unlock checks.
+  function flatLessonNums(course) {
+    var nums = [];
+    (course.modules || []).forEach(function (m) {
+      (m.lessons || []).forEach(function (l) {
+        nums.push(l.num);
+      });
+    });
+    return nums;
+  }
+
+  function lessonHtml(lesson, state) {
+    // state: 'locked' | 'open' | 'submitted'
+    var statusBadge =
+      state === 'submitted'
+        ? '<span class="lesson-status lesson-status--done">&#10003; Submitted</span>'
+        : state === 'locked'
+          ? '<span class="lesson-status lesson-status--locked">Locked</span>'
+          : '';
+    var submitted = state === 'submitted' ? lesson._submitted : null;
+
+    var actionHtml;
+    if (state === 'locked') {
+      actionHtml =
+        '<p class="lesson-locked-note">Submit the lesson before this one to unlock it.</p>';
+    } else if (state === 'submitted') {
+      actionHtml =
+        '<div class="lesson-submitted-box">' +
+        (submitted && submitted.note
+          ? '<p class="lesson-submitted-note">' + esc(submitted.note) + '</p>'
+          : '') +
+        (submitted && submitted.filePath
+          ? '<p class="lesson-submitted-file">File attached &#10003;</p>'
+          : '') +
+        '<button type="button" class="link-btn lesson-resubmit-btn" data-lesson="' +
+        esc(lesson.num) +
+        '">Resubmit</button>' +
+        '</div>';
+    } else {
+      actionHtml =
+        '<div class="lesson-submit-form" data-lesson="' + esc(lesson.num) + '">' +
+        '<label class="sr-only" for="note-' + esc(lesson.num) + '">Your notes</label>' +
+        '<textarea id="note-' +
+        esc(lesson.num) +
+        '" class="lesson-note-input" placeholder="Paste your work, or describe what you did…"></textarea>' +
+        '<div class="lesson-submit-row">' +
+        '<input type="file" class="lesson-file-input" aria-label="Attach a file (optional)" />' +
+        '<button type="button" class="btn primary lesson-submit-btn" data-lesson="' +
+        esc(lesson.num) +
+        '">Submit &amp; unlock next</button>' +
+        '</div>' +
+        '<p class="lesson-submit-err" hidden></p>' +
+        '</div>';
+    }
+
     return (
-      '<article class="lesson-card">' +
+      '<article class="lesson-card lesson-card--' + state + '">' +
       '<div class="lesson-card-head">' +
       '<span class="lesson-num">' + esc(lesson.num || '') + '</span>' +
       '<h4>' + esc(lesson.title || '') + '</h4>' +
+      statusBadge +
       '</div>' +
       (lesson.overview ? '<p class="lesson-overview">' + esc(lesson.overview) + '</p>' : '') +
       '<div class="lesson-field lesson-field--interactive">' +
@@ -207,11 +300,12 @@
       '<span class="lesson-field-label">Deliverable</span>' +
       '<span class="lesson-field-body">' + esc(lesson.deliverable || '') + '</span>' +
       '</div>' +
+      actionHtml +
       '</article>'
     );
   }
 
-  function moduleHtml(mod, index) {
+  function moduleHtml(mod, index, submittedByNum) {
     var lessons = Array.isArray(mod.lessons) ? mod.lessons : [];
     return (
       '<section class="module-block">' +
@@ -220,16 +314,37 @@
       '<h3>' + esc(mod.title || '') + '</h3>' +
       '</div>' +
       (mod.frame ? '<p class="module-block-frame">' + esc(mod.frame) + '</p>' : '') +
-      lessons.map(lessonHtml).join('') +
+      lessons
+        .map(function (lesson) {
+          return lessonHtml(lesson, lessonState(lesson, submittedByNum));
+        })
+        .join('') +
       '</section>'
     );
   }
 
-  function courseDetailHtml(course) {
+  // A lesson is: submitted (in the map), locked (some earlier lesson isn't
+  // submitted yet), or open (the first not-yet-submitted lesson, or lesson
+  // 1 with nothing submitted at all).
+  var currentAllNums = [];
+  function lessonState(lesson, submittedByNum) {
+    if (submittedByNum[lesson.num]) {
+      lesson._submitted = submittedByNum[lesson.num];
+      return 'submitted';
+    }
+    var idx = currentAllNums.indexOf(lesson.num);
+    if (idx <= 0) return 'open';
+    var prevNum = currentAllNums[idx - 1];
+    return submittedByNum[prevNum] ? 'open' : 'locked';
+  }
+
+  function courseDetailHtml(course, submittedByNum) {
     var modules = Array.isArray(course.modules) ? course.modules : [];
     var lessonCount = modules.reduce(function (n, m) {
       return n + (Array.isArray(m.lessons) ? m.lessons.length : 0);
     }, 0);
+    var doneCount = Object.keys(submittedByNum).length;
+    currentAllNums = flatLessonNums(course);
     return (
       '<div class="detail-head">' +
       '<span class="course-tag">' + esc(course.tag || '') + '</span>' +
@@ -237,20 +352,154 @@
       (course.description ? '<p class="detail-lead">' + esc(course.description) + '</p>' : '') +
       '<div class="detail-meta">' +
       '<span>' + modules.length + (modules.length === 1 ? ' module' : ' modules') + '</span>' +
-      '<span>' + lessonCount + (lessonCount === 1 ? ' lesson' : ' lessons') + '</span>' +
+      '<span>' + doneCount + ' / ' + lessonCount + ' lessons done</span>' +
       '<span>Level: ' + esc(course.level || '') + '</span>' +
       '</div>' +
       '</div>' +
-      modules.map(moduleHtml).join('')
+      modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum); }).join('')
     );
+  }
+
+  function identifyGateHtml(course) {
+    return (
+      '<div class="detail-head detail-identify">' +
+      '<span class="course-tag">' + esc(course.tag || '') + '</span>' +
+      '<h1>' + esc(course.title || '') + '</h1>' +
+      (course.description ? '<p class="detail-lead">' + esc(course.description) + '</p>' : '') +
+      '<p class="detail-lead">Tell us who you are so your progress is saved — each lesson unlocks the next once you submit its deliverable.</p>' +
+      '<form id="identify-form" class="identify-form">' +
+      '<input type="text" id="identify-name" placeholder="Your name" required />' +
+      '<input type="email" id="identify-email" placeholder="Your email" required />' +
+      '<button type="submit" class="btn primary">Start the course</button>' +
+      '<p class="lesson-submit-err" id="identify-err" hidden></p>' +
+      '</form>' +
+      '</div>'
+    );
+  }
+
+  var currentDetailCourse = null;
+
+  function renderProgress(course) {
+    var student = loadStudent();
+    if (!student) {
+      detailBody.innerHTML = identifyGateHtml(course);
+      var idForm = document.getElementById('identify-form');
+      if (idForm) {
+        idForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var name = document.getElementById('identify-name').value.trim();
+          var email = document.getElementById('identify-email').value.trim();
+          var errEl = document.getElementById('identify-err');
+          academyApi({
+            type: 'identify',
+            name: name,
+            email: email,
+            accessCode: (session && session.code) || '',
+          })
+            .then(function (data) {
+              saveStudent({ studentId: data.studentId, name: data.name });
+              renderProgress(course);
+            })
+            .catch(function (err) {
+              if (errEl) {
+                errEl.textContent = err.message || 'Could not save that — try again.';
+                errEl.hidden = false;
+              }
+            });
+        });
+      }
+      return;
+    }
+
+    detailBody.innerHTML = '<p class="detail-loading">Loading your progress…</p>';
+    academyApi({ type: 'list', studentId: student.studentId, courseId: course.id })
+      .then(function (data) {
+        var byNum = {};
+        (data.progress || []).forEach(function (p) {
+          byNum[p.lessonNum] = p;
+        });
+        detailBody.innerHTML = courseDetailHtml(course, byNum);
+      })
+      .catch(function () {
+        detailBody.innerHTML = courseDetailHtml(course, {});
+      });
   }
 
   function openCourseDetail(id) {
     var course = allCourses.filter(function (c) { return c.id === id; })[0];
     if (!course || !Array.isArray(course.modules) || !detailBody) return;
-    detailBody.innerHTML = courseDetailHtml(course);
+    currentDetailCourse = course;
     setView('detail');
     if (viewDetail) viewDetail.scrollTop = 0;
+    renderProgress(course);
+  }
+
+  function submitLesson(lessonNum, cardEl) {
+    var student = loadStudent();
+    if (!student || !currentDetailCourse) return;
+    var note = cardEl.querySelector('.lesson-note-input')
+      ? cardEl.querySelector('.lesson-note-input').value.trim()
+      : '';
+    var fileInput = cardEl.querySelector('.lesson-file-input');
+    var file = fileInput && fileInput.files && fileInput.files[0];
+    var errEl = cardEl.querySelector('.lesson-submit-err');
+    var btn = cardEl.querySelector('.lesson-submit-btn');
+    if (errEl) errEl.hidden = true;
+    if (!note && !file) {
+      if (errEl) {
+        errEl.textContent = 'Add a note or attach a file first.';
+        errEl.hidden = false;
+      }
+      return;
+    }
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+    }
+
+    var uploadStep = file
+      ? academyApi({
+          type: 'uploadUrl',
+          studentId: student.studentId,
+          courseId: currentDetailCourse.id,
+          lessonNum: lessonNum,
+          fileName: file.name,
+        }).then(function (up) {
+          return fetch(up.signedUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': file.type || 'application/octet-stream' },
+            body: file,
+          }).then(function (res) {
+            if (!res.ok) throw new Error('File upload failed — try again.');
+            return up.path;
+          });
+        })
+      : Promise.resolve(null);
+
+    uploadStep
+      .then(function (filePath) {
+        return academyApi({
+          type: 'submit',
+          studentId: student.studentId,
+          courseId: currentDetailCourse.id,
+          lessonNum: lessonNum,
+          note: note,
+          filePath: filePath,
+        });
+      })
+      .then(function () {
+        renderProgress(currentDetailCourse);
+      })
+      .catch(function (err) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Submit & unlock next';
+        }
+        if (errEl) {
+          errEl.textContent = err.message || 'Could not submit — try again.';
+          errEl.hidden = false;
+        }
+      });
   }
 
   // Groups by tag, preserving first-seen order, so a mixed pack (mainly the
@@ -459,6 +708,33 @@
     var detailCard = e.target.closest('.course-card[data-detail]');
     if (detailCard) {
       openCourseDetail(detailCard.getAttribute('data-id'));
+      return;
+    }
+    var submitBtn = e.target.closest('.lesson-submit-btn');
+    if (submitBtn) {
+      var lessonNum = submitBtn.getAttribute('data-lesson');
+      var card = submitBtn.closest('.lesson-card');
+      if (lessonNum && card) submitLesson(lessonNum, card);
+      return;
+    }
+    var resubmitBtn = e.target.closest('.lesson-resubmit-btn');
+    if (resubmitBtn && currentDetailCourse) {
+      // Re-render this lesson as its open (form) state so they can redo it —
+      // simplest way is just re-fetching progress fresh and letting the
+      // lesson map decide, minus this one lesson's existing submission.
+      var num = resubmitBtn.getAttribute('data-lesson');
+      var student = loadStudent();
+      if (student && num) {
+        detailBody.innerHTML = '<p class="detail-loading">Loading…</p>';
+        academyApi({ type: 'list', studentId: student.studentId, courseId: currentDetailCourse.id })
+          .then(function (data) {
+            var byNum = {};
+            (data.progress || []).forEach(function (p) {
+              if (p.lessonNum !== num) byNum[p.lessonNum] = p;
+            });
+            detailBody.innerHTML = courseDetailHtml(currentDetailCourse, byNum);
+          });
+      }
     }
   });
 
