@@ -3,9 +3,6 @@
     "label": "Corporate Basic",
     "audience": "corporate",
     "courseIds": [
-      "corp-brand-hooks",
-      "corp-exec-signoff",
-      "corp-linkedin-shorts",
       "coach-book"
     ]
   },
@@ -13,10 +10,6 @@
     "label": "Corporate Premium",
     "audience": "corporate",
     "courseIds": [
-      "corp-brand-hooks",
-      "corp-exec-signoff",
-      "corp-linkedin-shorts",
-      "corp-story-frameworks",
       "coach-book"
     ]
   },
@@ -24,9 +17,6 @@
     "label": "Agency Pack",
     "audience": "agency",
     "courseIds": [
-      "agency-brief-to-reel",
-      "agency-multi-brand",
-      "corp-linkedin-shorts",
       "coach-book"
     ]
   },
@@ -34,10 +24,6 @@
     "label": "Creator UGC",
     "audience": "creator",
     "courseIds": [
-      "ugc-hook-3s",
-      "ugc-phone-light",
-      "ugc-cta-sell",
-      "ugc-edit-scroll",
       "ugc-elite-program",
       "coach-book"
     ]
@@ -46,10 +32,6 @@
     "label": "Staff onboarding",
     "audience": "staff",
     "courseIds": [
-      "staff-welcome",
-      "staff-client-voice",
-      "staff-day-one-tools",
-      "staff-quality-bar",
       "coach-book"
     ]
   },
@@ -57,11 +39,6 @@
     "label": "Live host training",
     "audience": "live-host",
     "courseIds": [
-      "host-live-basics",
-      "host-energy-camera",
-      "host-product-demo",
-      "host-chat-convert",
-      "host-brand-brief",
       "coach-book"
     ]
   },
@@ -69,26 +46,7 @@
     "label": "Internal (all courses)",
     "audience": "internal",
     "courseIds": [
-      "corp-brand-hooks",
-      "corp-exec-signoff",
-      "corp-linkedin-shorts",
-      "corp-story-frameworks",
-      "agency-brief-to-reel",
-      "agency-multi-brand",
-      "ugc-hook-3s",
-      "ugc-phone-light",
-      "ugc-cta-sell",
-      "ugc-edit-scroll",
       "ugc-elite-program",
-      "staff-welcome",
-      "staff-client-voice",
-      "staff-day-one-tools",
-      "staff-quality-bar",
-      "host-live-basics",
-      "host-energy-camera",
-      "host-product-demo",
-      "host-chat-convert",
-      "host-brand-brief",
       "coach-book"
     ]
   },
@@ -96,28 +54,9 @@
     "label": "Internal (all courses)",
     "audience": "internal",
     "courseIds": [
-      "corp-brand-hooks",
-      "corp-exec-signoff",
-      "corp-linkedin-shorts",
-      "corp-story-frameworks",
-      "agency-brief-to-reel",
-      "agency-multi-brand",
-      "ugc-hook-3s",
-      "ugc-phone-light",
-      "ugc-cta-sell",
-      "ugc-edit-scroll",
       "ugc-elite-program",
-      "staff-welcome",
-      "staff-client-voice",
-      "staff-day-one-tools",
-      "staff-quality-bar",
-      "host-live-basics",
-      "host-energy-camera",
-      "host-product-demo",
-      "host-chat-convert",
-      "host-brand-brief",
       "coach-book"
     ],
-    "note": "Legacy master code — same as internal. Keep until Kathryn rotates codes."
+    "note": "Legacy master code \u2014 same as internal. Keep until Kathryn rotates codes."
   }
 }
