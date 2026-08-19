@@ -1069,6 +1069,21 @@ input {
   color: #1c9d5f;
 }
 
+.activity-reset-btn {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--mid);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.activity-reset-btn:hover {
+  color: var(--pink);
+}
+
 .activity-prompt {
   margin: 0;
   font-size: 0.85rem;
