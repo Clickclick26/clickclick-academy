@@ -241,29 +241,58 @@
   }
 
   // ---- Lesson activities: real, checkable widgets, not description text ----
-  // Completion is a badge only — it never gates the deliverable/unlock flow
-  // (that stays driven by academy_progress). Kept in localStorage since it's
-  // just "have you had a go at this," not something worth a server round trip.
-  var ACTIVITY_DONE_KEY = 'clickclick_academy_activity_v1';
-  function loadActivityDone() {
+  // State (answers/inputs/order + a "done" flag) is remembered per lesson in
+  // localStorage, so leaving and coming back keeps exactly where a student
+  // left off. It never gates the deliverable/unlock flow (that stays driven
+  // by academy_progress) — it's just not worth a server round trip. Each
+  // widget also gets its own Reset button to clear and start over.
+  var ACTIVITY_STATE_KEY = 'clickclick_academy_activity_v2';
+  function loadActivityState() {
     try {
-      var raw = localStorage.getItem(ACTIVITY_DONE_KEY);
+      var raw = localStorage.getItem(ACTIVITY_STATE_KEY);
       return raw ? JSON.parse(raw) : {};
     } catch (e) {
       return {};
     }
   }
-  function markActivityDone(lessonNum) {
-    var map = loadActivityDone();
-    if (map[lessonNum]) return;
-    map[lessonNum] = true;
+  function getLessonActivityState(lessonNum) {
+    return loadActivityState()[lessonNum] || {};
+  }
+  function saveLessonActivityState(lessonNum, patch) {
+    var all = loadActivityState();
+    var cur = all[lessonNum] || {};
+    Object.keys(patch).forEach(function (k) {
+      cur[k] = patch[k];
+    });
+    all[lessonNum] = cur;
     try {
-      localStorage.setItem(ACTIVITY_DONE_KEY, JSON.stringify(map));
+      localStorage.setItem(ACTIVITY_STATE_KEY, JSON.stringify(all));
     } catch (e) {}
+    return cur;
+  }
+  function clearLessonActivityState(lessonNum) {
+    var all = loadActivityState();
+    delete all[lessonNum];
+    try {
+      localStorage.setItem(ACTIVITY_STATE_KEY, JSON.stringify(all));
+    } catch (e) {}
+  }
+  function markActivityDone(lessonNum) {
+    saveLessonActivityState(lessonNum, { done: true });
     var badge = document.querySelector(
       '.activity[data-lesson="' + lessonNum + '"] .activity-done-badge'
     );
     if (badge) badge.hidden = false;
+  }
+  function findLessonByNum(course, num) {
+    var mods = (course && course.modules) || [];
+    for (var i = 0; i < mods.length; i++) {
+      var lessons = mods[i].lessons || [];
+      for (var j = 0; j < lessons.length; j++) {
+        if (lessons[j].num === num) return lessons[j];
+      }
+    }
+    return null;
   }
 
   function shuffled(arr) {
@@ -278,29 +307,29 @@
   }
 
   function activityHtml(lessonNum, activity) {
-    var done = loadActivityDone()[lessonNum];
+    var state = getLessonActivityState(lessonNum);
     var body;
     switch (activity.kind) {
       case 'quiz':
-        body = activityQuizHtml(lessonNum, activity);
+        body = activityQuizHtml(lessonNum, activity, state);
         break;
       case 'sequence':
-        body = activitySequenceHtml(lessonNum, activity);
+        body = activitySequenceHtml(lessonNum, activity, state);
         break;
       case 'match':
-        body = activityMatchHtml(lessonNum, activity);
+        body = activityMatchHtml(lessonNum, activity, state);
         break;
       case 'rubric':
-        body = activityRubricHtml(lessonNum, activity);
+        body = activityRubricHtml(lessonNum, activity, state);
         break;
       case 'allocator':
-        body = activityAllocatorHtml(lessonNum, activity);
+        body = activityAllocatorHtml(lessonNum, activity, state);
         break;
       case 'checklist':
-        body = activityChecklistHtml(lessonNum, activity);
+        body = activityChecklistHtml(lessonNum, activity, state);
         break;
       case 'builder':
-        body = activityBuilderHtml(lessonNum, activity);
+        body = activityBuilderHtml(lessonNum, activity, state);
         break;
       default:
         return '';
@@ -316,8 +345,11 @@
       '<div class="activity-head">' +
       '<span class="activity-badge">Try it</span>' +
       '<span class="activity-done-badge"' +
-      (done ? '' : ' hidden') +
+      (state.done ? '' : ' hidden') +
       '>&#10003; done</span>' +
+      '<button type="button" class="activity-reset-btn" data-lesson="' +
+      esc(lessonNum) +
+      '">Reset</button>' +
       '</div>' +
       (activity.prompt ? '<p class="activity-prompt">' + esc(activity.prompt) + '</p>' : '') +
       body +
@@ -325,12 +357,15 @@
     );
   }
 
-  function activityQuizHtml(lessonNum, activity) {
+  function activityQuizHtml(lessonNum, activity, state) {
+    var answers = state.answers || {};
     return (activity.questions || [])
       .map(function (q, qi) {
+        var picked = answers[qi];
+        var answered = picked !== undefined && picked !== null;
         return (
-          '<div class="activity-quiz-q" data-lesson="' +
-          esc(lessonNum) +
+          '<div class="activity-quiz-q' +
+          (answered ? ' is-answered' : '') +
           '" data-correct="' +
           q.correct +
           '">' +
@@ -338,93 +373,155 @@
           '<div class="activity-quiz-options">' +
           q.options
             .map(function (opt, oi) {
+              var cls = 'activity-quiz-opt';
+              if (answered) {
+                if (oi === q.correct) cls += ' is-correct';
+                else if (oi === picked) cls += ' is-wrong';
+              }
               return (
-                '<button type="button" class="activity-quiz-opt" data-opt="' +
-                oi +
-                '">' +
-                esc(opt) +
-                '</button>'
+                '<button type="button" class="' + cls + '" data-opt="' + oi + '"' +
+                (answered ? ' disabled' : '') +
+                '>' + esc(opt) + '</button>'
               );
             })
             .join('') +
           '</div>' +
-          '<p class="activity-quiz-explain" hidden>' + esc(q.explain || '') + '</p>' +
+          '<p class="activity-quiz-explain"' + (answered ? '' : ' hidden') + '>' +
+          esc(q.explain || '') + '</p>' +
           '</div>'
         );
       })
       .join('');
   }
 
-  function activitySequenceHtml(lessonNum, activity) {
+  // Order-correctness is a pure function of (order, target) so the check
+  // button and a page-load rehydrate always agree.
+  function sequenceMarks(order, target) {
+    return order.map(function (correctIdx, pos) {
+      if (pos >= target) return null;
+      return target === order.length ? correctIdx === pos : correctIdx < target;
+    });
+  }
+
+  function activitySequenceHtml(lessonNum, activity, state) {
     var items = activity.items || [];
-    var order = shuffled(items.map(function (text, i) { return i; }));
-    // Re-shuffle once if it happened to land in the exact correct order —
-    // otherwise the exercise is trivially "already right."
     var target = activity.topN || items.length;
-    var isExact = order.every(function (v, i) { return v === i; });
-    if (isExact && items.length > 1) {
-      var a = order[0];
-      order[0] = order[1];
-      order[1] = a;
+    var order = state.order && state.order.length === items.length ? state.order : null;
+    if (!order) {
+      order = shuffled(items.map(function (text, i) { return i; }));
+      // Re-shuffle once if it happened to land in the exact correct order —
+      // otherwise the exercise is trivially "already right."
+      var isExact = order.every(function (v, i) { return v === i; });
+      if (isExact && items.length > 1) {
+        var a = order[0];
+        order[0] = order[1];
+        order[1] = a;
+      }
+      saveLessonActivityState(lessonNum, { order: order });
     }
+    var marks = state.checked ? sequenceMarks(order, target) : null;
+    var rightCount = marks ? marks.filter(function (m) { return m === true; }).length : 0;
     return (
       '<ol class="activity-seq-list" data-target="' + target + '">' +
       order
         .map(function (origIdx, pos) {
+          var mark = marks ? marks[pos] : null;
+          var cls = 'activity-seq-item' + (mark === true ? ' is-correct' : mark === false ? ' is-wrong' : '');
+          var markHtml = mark === true ? '&#10003;' : mark === false ? '&#10007;' : '';
           return (
-            '<li class="activity-seq-item" data-correct-idx="' +
-            origIdx +
-            '">' +
+            '<li class="' + cls + '" data-correct-idx="' + origIdx + '">' +
             '<span class="activity-seq-text">' + esc(items[origIdx]) + '</span>' +
             '<span class="activity-seq-controls">' +
             '<button type="button" class="activity-seq-move" data-dir="up" aria-label="Move up">&#8593;</button>' +
             '<button type="button" class="activity-seq-move" data-dir="down" aria-label="Move down">&#8595;</button>' +
             '</span>' +
-            '<span class="activity-seq-mark"></span>' +
+            '<span class="activity-seq-mark">' + markHtml + '</span>' +
             '</li>'
           );
         })
         .join('') +
       '</ol>' +
       '<button type="button" class="btn primary activity-check-btn" data-check="sequence">Check order</button>' +
-      '<p class="activity-result" hidden></p>'
+      '<p class="activity-result"' + (state.checked ? '' : ' hidden') + '>' +
+      (state.checked ? rightCount + ' of ' + target + ' in the right spot.' : '') +
+      '</p>'
     );
   }
 
-  function activityMatchHtml(lessonNum, activity) {
+  function activityMatchHtml(lessonNum, activity, state) {
     var categories = activity.categories || [];
+    var selections = state.selections || {};
+    var right = 0;
+    var answeredCount = 0;
+    var rowsHtml = (activity.items || [])
+      .map(function (item, ri) {
+        var val = selections[ri];
+        var hasVal = val !== undefined && val !== null && val !== '';
+        var isRight = hasVal && String(val) === String(item.correct);
+        if (state.checked && hasVal) {
+          answeredCount++;
+          if (isRight) right++;
+        }
+        var cls =
+          'activity-match-row' +
+          (state.checked && hasVal ? (isRight ? ' is-correct' : ' is-wrong') : '');
+        var markHtml = state.checked && hasVal ? (isRight ? '&#10003;' : '&#10007;') : '';
+        return (
+          '<div class="' + cls + '" data-correct="' + item.correct + '">' +
+          '<span class="activity-match-label">' + esc(item.label) + '</span>' +
+          '<select class="activity-match-select">' +
+          '<option value="">Choose…</option>' +
+          categories
+            .map(function (cat, ci) {
+              return (
+                '<option value="' + ci + '"' +
+                (hasVal && String(val) === String(ci) ? ' selected' : '') +
+                '>' + esc(cat) + '</option>'
+              );
+            })
+            .join('') +
+          '</select>' +
+          '<span class="activity-match-mark">' + markHtml + '</span>' +
+          '</div>'
+        );
+      })
+      .join('');
+    var total = (activity.items || []).length;
     return (
-      '<div class="activity-match">' +
-      (activity.items || [])
-        .map(function (item) {
-          return (
-            '<div class="activity-match-row" data-correct="' + item.correct + '">' +
-            '<span class="activity-match-label">' + esc(item.label) + '</span>' +
-            '<select class="activity-match-select">' +
-            '<option value="">Choose…</option>' +
-            categories
-              .map(function (cat, ci) {
-                return '<option value="' + ci + '">' + esc(cat) + '</option>';
-              })
-              .join('') +
-            '</select>' +
-            '<span class="activity-match-mark"></span>' +
-            '</div>'
-          );
-        })
-        .join('') +
-      '</div>' +
+      '<div class="activity-match">' + rowsHtml + '</div>' +
       '<button type="button" class="btn primary activity-check-btn" data-check="match">Check answers</button>' +
-      '<p class="activity-result" hidden></p>'
+      '<p class="activity-result"' + (state.checked ? '' : ' hidden') + '>' +
+      (state.checked ? right + ' of ' + total + ' correct.' : '') +
+      '</p>'
     );
   }
 
-  function activityRubricHtml(lessonNum, activity) {
+  function activityRubricHtml(lessonNum, activity, state) {
     var criteria = activity.criteria || [];
+    var scores = state.scores || {};
     return (
       '<div class="activity-rubric">' +
       (activity.subjects || [])
         .map(function (s, si) {
+          var subjScores = scores[si] || {};
+          var subjTotal = 0;
+          var inputsHtml = criteria
+            .map(function (c, ci) {
+              var v = subjScores[ci];
+              subjTotal += Number(v) || 0;
+              return (
+                '<label class="activity-rubric-crit">' +
+                esc(c) +
+                '<input type="number" min="1" max="10" class="activity-rubric-input"' +
+                (v !== undefined && v !== null && v !== '' ? ' value="' + esc(v) + '"' : '') +
+                ' />' +
+                '</label>'
+              );
+            })
+            .join('');
+          var compareHtml = state.compared
+            ? 'Your total: ' + subjTotal + '.  Instructor: ' + s.reference + '. ' + esc(s.note || '')
+            : '';
           return (
             '<div class="activity-rubric-subject" data-reference="' +
             s.reference +
@@ -432,19 +529,10 @@
             esc(s.note || '') +
             '">' +
             '<p class="activity-rubric-label">' + esc(s.label) + '</p>' +
-            '<div class="activity-rubric-inputs">' +
-            criteria
-              .map(function (c, ci) {
-                return (
-                  '<label class="activity-rubric-crit">' +
-                  esc(c) +
-                  '<input type="number" min="1" max="10" class="activity-rubric-input" />' +
-                  '</label>'
-                );
-              })
-              .join('') +
-            '</div>' +
-            '<p class="activity-rubric-compare" hidden></p>' +
+            '<div class="activity-rubric-inputs">' + inputsHtml + '</div>' +
+            '<p class="activity-rubric-compare"' + (state.compared ? '' : ' hidden') + '>' +
+            compareHtml +
+            '</p>' +
             '</div>'
           );
         })
@@ -454,14 +542,17 @@
     );
   }
 
-  function activityAllocatorHtml(lessonNum, activity) {
+  function activityAllocatorHtml(lessonNum, activity, state) {
     if (activity.mode === 'calculator') {
+      var inputs = state.inputs || {};
+      var calcResult = state.calculated ? ACTIVITY_FORMULAS[activity.formula](inputs) : '';
       return (
         '<div class="activity-allocator" data-mode="calculator" data-formula="' +
         esc(activity.formula || '') +
         '">' +
         (activity.fields || [])
           .map(function (f) {
+            var v = inputs[f.key];
             if (f.type === 'select') {
               return (
                 '<label class="activity-allocator-field">' +
@@ -469,7 +560,11 @@
                 '<select class="activity-calc-input" data-key="' + esc(f.key) + '">' +
                 (f.options || [])
                   .map(function (o) {
-                    return '<option value="' + esc(o.value) + '">' + esc(o.label) + '</option>';
+                    return (
+                      '<option value="' + esc(o.value) + '"' +
+                      (v !== undefined && String(v) === String(o.value) ? ' selected' : '') +
+                      '>' + esc(o.label) + '</option>'
+                    );
                   })
                   .join('') +
                 '</select>' +
@@ -481,85 +576,137 @@
               esc(f.label) +
               '<input type="number" class="activity-calc-input" data-key="' +
               esc(f.key) +
-              '" placeholder="' + esc(f.placeholder || '') + '" />' +
+              '" placeholder="' + esc(f.placeholder || '') + '"' +
+              (v !== undefined && v !== null && v !== '' ? ' value="' + esc(v) + '"' : '') +
+              ' />' +
               '</label>'
             );
           })
           .join('') +
         '<button type="button" class="btn primary activity-check-btn" data-check="allocator-calc">Calculate</button>' +
-        '<p class="activity-result" hidden></p>' +
+        '<p class="activity-result"' + (state.calculated ? '' : ' hidden') + '>' + esc(calcResult) + '</p>' +
         (activity.modelNote ? '<p class="activity-note">' + esc(activity.modelNote) + '</p>' : '') +
         '</div>'
       );
     }
+    var values = state.values || {};
+    var sum = 0;
+    var rowsHtml = (activity.items || [])
+      .map(function (it, ri) {
+        var v = values[ri];
+        sum += Number(v) || 0;
+        return (
+          '<label class="activity-allocator-row" data-suggested="' + it.suggested + '">' +
+          '<span class="activity-allocator-label">' + esc(it.label) + '</span>' +
+          '<input type="number" min="0" class="activity-allocator-input" value="' +
+          (v !== undefined && v !== null && v !== '' ? esc(v) : '0') +
+          '" />' +
+          '</label>'
+        );
+      })
+      .join('');
+    var lines = (activity.items || [])
+      .map(function (it) {
+        return it.label + ': ' + it.suggested;
+      })
+      .join(', ');
     return (
-      '<div class="activity-allocator" data-mode="budget" data-total="' + activity.total + '">' +
-      (activity.items || [])
-        .map(function (it) {
-          return (
-            '<label class="activity-allocator-row" data-suggested="' + it.suggested + '">' +
-            '<span class="activity-allocator-label">' + esc(it.label) + '</span>' +
-            '<input type="number" min="0" class="activity-allocator-input" value="0" />' +
-            '</label>'
-          );
-        })
-        .join('') +
-      '<p class="activity-allocator-total">Total: <span class="activity-allocator-sum">0</span> / ' +
-      activity.total +
-      ' ' + esc(activity.unit || '') + '</p>' +
+      '<div class="activity-allocator' + (sum > activity.total ? ' is-over-budget' : '') +
+      '" data-mode="budget" data-total="' + activity.total + '">' +
+      rowsHtml +
+      '<p class="activity-allocator-total">Total: <span class="activity-allocator-sum">' + sum +
+      '</span> / ' + activity.total + ' ' + esc(activity.unit || '') + '</p>' +
       '<button type="button" class="btn primary activity-check-btn" data-check="allocator-budget">See a model allocation</button>' +
-      '<p class="activity-result" hidden></p>' +
+      '<p class="activity-result"' + (state.revealed ? '' : ' hidden') + '>' +
+      (state.revealed ? 'A model allocation — ' + esc(lines) + '.' : '') +
+      '</p>' +
       '</div>'
     );
   }
 
-  function activityChecklistHtml(lessonNum, activity) {
+  function activityChecklistHtml(lessonNum, activity, state) {
     var graded = !!activity.graded;
+    var checked = state.checked || {};
     var label = graded
       ? 'Check my picks'
       : activity.minRequired
         ? 'Check my list'
         : 'Mark complete';
+    var itemsHtml = (activity.items || [])
+      .map(function (it, i) {
+        var isChecked = !!checked[i];
+        var isFlag = !!it.isFlag;
+        var cls = 'activity-checklist-item';
+        if (graded && state.submitted) {
+          cls += isChecked === isFlag ? ' is-correct' : ' is-wrong';
+        }
+        return (
+          '<label class="' + cls + '" data-flag="' + isFlag + '" data-tag="' + esc(it.tag || '') + '">' +
+          '<input type="checkbox" class="activity-checklist-input"' + (isChecked ? ' checked' : '') + ' />' +
+          '<span>' + esc(it.text) + '</span>' +
+          '</label>'
+        );
+      })
+      .join('');
+    var resultText = '';
+    if (state.submitted) resultText = checklistResultText(activity, checked);
     return (
-      '<div class="activity-checklist" data-graded="' +
-      graded +
-      '" data-min-required="' +
-      (activity.minRequired || '') +
-      '" data-require-diversity="' +
-      (activity.requireTagDiversity || '') +
-      '">' +
-      (activity.items || [])
-        .map(function (it, i) {
-          return (
-            '<label class="activity-checklist-item" data-flag="' +
-            (it.isFlag ? 'true' : 'false') +
-            '" data-tag="' + esc(it.tag || '') + '">' +
-            '<input type="checkbox" class="activity-checklist-input" />' +
-            '<span>' + esc(it.text) + '</span>' +
-            '</label>'
-          );
-        })
-        .join('') +
-      '<button type="button" class="btn primary activity-check-btn" data-check="checklist">' +
-      esc(label) +
-      '</button>' +
-      '<p class="activity-result" hidden></p>' +
+      '<div class="activity-checklist" data-graded="' + graded + '" data-min-required="' +
+      (activity.minRequired || '') + '" data-require-diversity="' + (activity.requireTagDiversity || '') + '">' +
+      itemsHtml +
+      '<button type="button" class="btn primary activity-check-btn" data-check="checklist">' + esc(label) + '</button>' +
+      '<p class="activity-result"' + (state.submitted ? '' : ' hidden') + '>' + esc(resultText) + '</p>' +
       '</div>'
     );
   }
 
-  function activityBuilderHtml(lessonNum, activity) {
+  // Shared by render (rehydrate) and the click handler so both agree.
+  function checklistResultText(activity, checkedMap) {
+    var items = activity.items || [];
+    if (activity.graded) {
+      var right = 0;
+      items.forEach(function (it, i) {
+        if (!!checkedMap[i] === !!it.isFlag) right++;
+      });
+      return right + ' of ' + items.length + ' judged correctly.';
+    }
+    var checkedCount = 0;
+    var tags = {};
+    items.forEach(function (it, i) {
+      if (checkedMap[i]) {
+        checkedCount++;
+        if (it.tag) tags[it.tag] = true;
+      }
+    });
+    var minRequired = activity.minRequired || 0;
+    var requireDiversity = activity.requireTagDiversity || 0;
+    if (minRequired && checkedCount < minRequired) {
+      return 'Pick at least ' + minRequired + ' — you have ' + checkedCount + ' so far.';
+    }
+    if (requireDiversity) {
+      var distinct = Object.keys(tags).length;
+      if (distinct < requireDiversity) {
+        return 'You have ' + checkedCount + ', but only ' + distinct + ' angle type(s) — cover at least ' + requireDiversity + '.';
+      }
+      return 'Nice — ' + checkedCount + ' shots across ' + distinct + ' angle types, that’s diverse enough.';
+    }
+    return 'Marked complete — nice work.';
+  }
+
+  function activityBuilderHtml(lessonNum, activity, state) {
+    var values = state.values || {};
     return (
       '<div class="activity-builder">' +
       (activity.fields || [])
-        .map(function (f) {
+        .map(function (f, fi) {
+          var v = values[fi] || '';
           return (
             '<div class="activity-builder-field">' +
             '<label class="activity-builder-label">' + esc(f.label) + '</label>' +
-            '<textarea class="activity-builder-input" placeholder="' +
-            esc(f.placeholder || '') +
-            '"></textarea>' +
-            '<p class="activity-builder-model" hidden>' + esc(f.model || '') + '</p>' +
+            '<textarea class="activity-builder-input" placeholder="' + esc(f.placeholder || '') + '">' +
+            esc(v) +
+            '</textarea>' +
+            '<p class="activity-builder-model"' + (state.revealed ? '' : ' hidden') + '>' + esc(f.model || '') + '</p>' +
             '</div>'
           );
         })
@@ -1092,6 +1239,18 @@
     }
 
     // --- Activities ---
+    var resetBtn = e.target.closest('.activity-reset-btn');
+    if (resetBtn) {
+      var resetNum = resetBtn.getAttribute('data-lesson');
+      clearLessonActivityState(resetNum);
+      var lessonToReset = findLessonByNum(currentDetailCourse, resetNum);
+      var oldEl = document.querySelector('.activity[data-lesson="' + resetNum + '"]');
+      if (lessonToReset && lessonToReset.activity && oldEl) {
+        oldEl.outerHTML = activityHtml(resetNum, lessonToReset.activity);
+      }
+      return;
+    }
+
     var quizOpt = e.target.closest('.activity-quiz-opt');
     if (quizOpt) {
       var qWrap = quizOpt.closest('.activity-quiz-q');
@@ -1107,7 +1266,14 @@
         var explain = qWrap.querySelector('.activity-quiz-explain');
         if (explain) explain.hidden = false;
         var lessonNumQ = qWrap.closest('.activity').getAttribute('data-lesson');
-        markActivityDone(lessonNumQ);
+        var qAll = qWrap.closest('.activity').querySelectorAll('.activity-quiz-q');
+        var qi = Array.prototype.indexOf.call(qAll, qWrap);
+        var qState = getLessonActivityState(lessonNumQ);
+        var answers = qState.answers || {};
+        answers[qi] = pickedIdx;
+        saveLessonActivityState(lessonNumQ, { answers: answers, done: true });
+        var badgeQ = document.querySelector('.activity[data-lesson="' + lessonNumQ + '"] .activity-done-badge');
+        if (badgeQ) badgeQ.hidden = false;
       }
       return;
     }
@@ -1122,6 +1288,12 @@
         if (dir === 'up') list.insertBefore(li, sibling);
         else list.insertBefore(sibling, li);
       }
+      var seqLessonNum = seqMove.closest('.activity').getAttribute('data-lesson');
+      var newOrder = Array.prototype.map.call(
+        seqMove.closest('.activity').querySelectorAll('.activity-seq-item'),
+        function (item) { return Number(item.getAttribute('data-correct-idx')); }
+      );
+      saveLessonActivityState(seqLessonNum, { order: newOrder });
       return;
     }
 
@@ -1130,13 +1302,13 @@
       var kind = checkBtn.getAttribute('data-check');
       var activityEl = checkBtn.closest('.activity');
       var lessonNumC = activityEl ? activityEl.getAttribute('data-lesson') : null;
-      if (kind === 'sequence') checkSequence(checkBtn);
-      else if (kind === 'match') checkMatch(checkBtn);
-      else if (kind === 'rubric') checkRubric(checkBtn);
-      else if (kind === 'allocator-budget') checkAllocatorBudget(checkBtn);
-      else if (kind === 'allocator-calc') checkAllocatorCalc(checkBtn);
-      else if (kind === 'checklist') checkChecklist(checkBtn);
-      else if (kind === 'builder') checkBuilder(checkBtn);
+      if (kind === 'sequence') checkSequence(checkBtn, lessonNumC);
+      else if (kind === 'match') checkMatch(checkBtn, lessonNumC);
+      else if (kind === 'rubric') checkRubric(checkBtn, lessonNumC);
+      else if (kind === 'allocator-budget') checkAllocatorBudget(checkBtn, lessonNumC);
+      else if (kind === 'allocator-calc') checkAllocatorCalc(checkBtn, lessonNumC);
+      else if (kind === 'checklist') checkChecklist(checkBtn, lessonNumC);
+      else if (kind === 'builder') checkBuilder(checkBtn, lessonNumC);
       if (lessonNumC) markActivityDone(lessonNumC);
       return;
     }
@@ -1149,30 +1321,107 @@
       var sumEl = wrap.querySelector('.activity-allocator-sum');
       var total = Number(wrap.getAttribute('data-total')) || 0;
       var sum = 0;
-      wrap.querySelectorAll('.activity-allocator-input').forEach(function (inp) {
-        sum += Number(inp.value) || 0;
+      var rows = wrap.querySelectorAll('.activity-allocator-row');
+      var values = {};
+      rows.forEach(function (row, ri) {
+        var v = row.querySelector('.activity-allocator-input').value;
+        values[ri] = v;
+        sum += Number(v) || 0;
       });
       if (sumEl) sumEl.textContent = String(sum);
       wrap.classList.toggle('is-over-budget', sum > total);
+      var lessonNumA = wrap.closest('.activity').getAttribute('data-lesson');
+      saveLessonActivityState(lessonNumA, { values: values });
+      return;
+    }
+
+    var rubricInput = e.target.closest('.activity-rubric-input');
+    if (rubricInput) {
+      var rWrap = rubricInput.closest('.activity');
+      var lessonNumR = rWrap.getAttribute('data-lesson');
+      var subjects = rWrap.querySelectorAll('.activity-rubric-subject');
+      var scores = {};
+      subjects.forEach(function (subj, si) {
+        var subjScores = {};
+        subj.querySelectorAll('.activity-rubric-input').forEach(function (inp, ci) {
+          subjScores[ci] = inp.value;
+        });
+        scores[si] = subjScores;
+      });
+      saveLessonActivityState(lessonNumR, { scores: scores });
+      return;
+    }
+
+    var builderInput = e.target.closest('.activity-builder-input');
+    if (builderInput) {
+      var bWrap = builderInput.closest('.activity');
+      var lessonNumB = bWrap.getAttribute('data-lesson');
+      var fields = bWrap.querySelectorAll('.activity-builder-input');
+      var values2 = {};
+      fields.forEach(function (ta, fi) {
+        values2[fi] = ta.value;
+      });
+      saveLessonActivityState(lessonNumB, { values: values2 });
+      return;
+    }
+
+    var calcInput = e.target.closest('.activity-calc-input');
+    if (calcInput) {
+      var cWrap = calcInput.closest('.activity');
+      var lessonNumCalc = cWrap.getAttribute('data-lesson');
+      var calcInputs = {};
+      cWrap.querySelectorAll('.activity-calc-input').forEach(function (el) {
+        calcInputs[el.getAttribute('data-key')] = el.value;
+      });
+      saveLessonActivityState(lessonNumCalc, { inputs: calcInputs });
+      return;
     }
   });
 
-  function checkSequence(btn) {
+  document.addEventListener('change', function (e) {
+    var matchSelect = e.target.closest('.activity-match-select');
+    if (matchSelect) {
+      var mWrap = matchSelect.closest('.activity');
+      var lessonNumM = mWrap.getAttribute('data-lesson');
+      var rows = mWrap.querySelectorAll('.activity-match-row');
+      var selections = {};
+      rows.forEach(function (row, ri) {
+        selections[ri] = row.querySelector('.activity-match-select').value;
+      });
+      saveLessonActivityState(lessonNumM, { selections: selections });
+      return;
+    }
+
+    var checklistInput = e.target.closest('.activity-checklist-input');
+    if (checklistInput) {
+      var clWrap = checklistInput.closest('.activity');
+      var lessonNumCl = clWrap.getAttribute('data-lesson');
+      var items = clWrap.querySelectorAll('.activity-checklist-item');
+      var checkedMap = {};
+      items.forEach(function (item, ii) {
+        checkedMap[ii] = item.querySelector('.activity-checklist-input').checked;
+      });
+      saveLessonActivityState(lessonNumCl, { checked: checkedMap });
+      return;
+    }
+  });
+
+  function checkSequence(btn, lessonNum) {
     var wrap = btn.closest('.activity');
     var list = wrap.querySelector('.activity-seq-list');
     var items = Array.prototype.slice.call(list.querySelectorAll('.activity-seq-item'));
     var target = Number(list.getAttribute('data-target')) || items.length;
+    var order = items.map(function (li) { return Number(li.getAttribute('data-correct-idx')); });
+    var marks = sequenceMarks(order, target);
     var rightCount = 0;
     items.forEach(function (li, pos) {
-      var correctIdx = Number(li.getAttribute('data-correct-idx'));
       var mark = li.querySelector('.activity-seq-mark');
       li.classList.remove('is-correct', 'is-wrong');
-      if (pos >= target) {
+      if (marks[pos] === null) {
         if (mark) mark.innerHTML = '';
         return;
       }
-      var right = target === items.length ? correctIdx === pos : correctIdx < target;
-      if (right) {
+      if (marks[pos]) {
         rightCount++;
         li.classList.add('is-correct');
         if (mark) mark.innerHTML = '&#10003;';
@@ -1186,14 +1435,17 @@
       result.hidden = false;
       result.textContent = rightCount + ' of ' + target + ' in the right spot.';
     }
+    saveLessonActivityState(lessonNum, { order: order, checked: true });
   }
 
-  function checkMatch(btn) {
+  function checkMatch(btn, lessonNum) {
     var wrap = btn.closest('.activity');
     var rows = wrap.querySelectorAll('.activity-match-row');
     var right = 0;
-    rows.forEach(function (row) {
+    var selections = {};
+    rows.forEach(function (row, ri) {
       var select = row.querySelector('.activity-match-select');
+      selections[ri] = select.value;
       var mark = row.querySelector('.activity-match-mark');
       var correct = row.getAttribute('data-correct');
       row.classList.remove('is-correct', 'is-wrong');
@@ -1215,16 +1467,21 @@
       result.hidden = false;
       result.textContent = right + ' of ' + rows.length + ' correct.';
     }
+    saveLessonActivityState(lessonNum, { selections: selections, checked: true });
   }
 
-  function checkRubric(btn) {
+  function checkRubric(btn, lessonNum) {
     var wrap = btn.closest('.activity');
-    wrap.querySelectorAll('.activity-rubric-subject').forEach(function (subj) {
+    var scores = {};
+    wrap.querySelectorAll('.activity-rubric-subject').forEach(function (subj, si) {
       var inputs = subj.querySelectorAll('.activity-rubric-input');
       var total = 0;
-      inputs.forEach(function (inp) {
+      var subjScores = {};
+      inputs.forEach(function (inp, ci) {
+        subjScores[ci] = inp.value;
         total += Number(inp.value) || 0;
       });
+      scores[si] = subjScores;
       var reference = subj.getAttribute('data-reference');
       var note = subj.getAttribute('data-note');
       var compare = subj.querySelector('.activity-rubric-compare');
@@ -1234,13 +1491,16 @@
           'Your total: ' + total + '.  Instructor: ' + reference + '. ' + note;
       }
     });
+    saveLessonActivityState(lessonNum, { scores: scores, compared: true });
   }
 
-  function checkAllocatorBudget(btn) {
+  function checkAllocatorBudget(btn, lessonNum) {
     var wrap = btn.closest('.activity-allocator');
     var rows = wrap.querySelectorAll('.activity-allocator-row');
     var lines = [];
-    rows.forEach(function (row) {
+    var values = {};
+    rows.forEach(function (row, ri) {
+      values[ri] = row.querySelector('.activity-allocator-input').value;
       lines.push(row.querySelector('.activity-allocator-label').textContent + ': ' + row.getAttribute('data-suggested'));
     });
     var result = wrap.querySelector('.activity-result');
@@ -1248,9 +1508,10 @@
       result.hidden = false;
       result.textContent = 'A model allocation — ' + lines.join(', ') + '.';
     }
+    saveLessonActivityState(lessonNum, { values: values, revealed: true });
   }
 
-  function checkAllocatorCalc(btn) {
+  function checkAllocatorCalc(btn, lessonNum) {
     var wrap = btn.closest('.activity-allocator');
     var formulaName = wrap.getAttribute('data-formula');
     var formula = ACTIVITY_FORMULAS[formulaName];
@@ -1262,67 +1523,48 @@
     });
     result.hidden = false;
     result.textContent = formula(inputs);
+    saveLessonActivityState(lessonNum, { inputs: inputs, calculated: true });
   }
 
-  function checkChecklist(btn) {
+  function checkChecklist(btn, lessonNum) {
     var wrap = btn.closest('.activity-checklist');
     var graded = wrap.getAttribute('data-graded') === 'true';
-    var minRequired = Number(wrap.getAttribute('data-min-required')) || 0;
-    var requireDiversity = Number(wrap.getAttribute('data-require-diversity')) || 0;
     var items = wrap.querySelectorAll('.activity-checklist-item');
     var result = wrap.querySelector('.activity-result');
-    if (!result) return;
-    result.hidden = false;
-
-    if (graded) {
-      var right = 0;
-      items.forEach(function (item) {
-        var checked = item.querySelector('.activity-checklist-input').checked;
+    var checkedMap = {};
+    items.forEach(function (item, ii) {
+      checkedMap[ii] = item.querySelector('.activity-checklist-input').checked;
+      item.classList.remove('is-correct', 'is-wrong');
+      if (graded) {
         var isFlag = item.getAttribute('data-flag') === 'true';
-        item.classList.remove('is-correct', 'is-wrong');
-        if (checked === isFlag) {
-          right++;
-          item.classList.add('is-correct');
-        } else {
-          item.classList.add('is-wrong');
-        }
-      });
-      result.textContent = right + ' of ' + items.length + ' judged correctly.';
-      return;
-    }
-
-    var checkedCount = 0;
-    var tags = {};
-    items.forEach(function (item) {
-      if (item.querySelector('.activity-checklist-input').checked) {
-        checkedCount++;
-        var tag = item.getAttribute('data-tag');
-        if (tag) tags[tag] = true;
+        item.classList.add(checkedMap[ii] === isFlag ? 'is-correct' : 'is-wrong');
       }
     });
-
-    if (minRequired && checkedCount < minRequired) {
-      result.textContent = 'Pick at least ' + minRequired + ' — you have ' + checkedCount + ' so far.';
-      return;
+    var activityLike = {
+      graded: graded,
+      minRequired: Number(wrap.getAttribute('data-min-required')) || 0,
+      requireTagDiversity: Number(wrap.getAttribute('data-require-diversity')) || 0,
+      items: Array.prototype.map.call(items, function (item) {
+        return { isFlag: item.getAttribute('data-flag') === 'true', tag: item.getAttribute('data-tag') };
+      }),
+    };
+    if (result) {
+      result.hidden = false;
+      result.textContent = checklistResultText(activityLike, checkedMap);
     }
-    if (requireDiversity) {
-      var distinct = Object.keys(tags).length;
-      if (distinct < requireDiversity) {
-        result.textContent =
-          'You have ' + checkedCount + ', but only ' + distinct + ' angle type(s) — cover at least ' + requireDiversity + '.';
-        return;
-      }
-      result.textContent = 'Nice — ' + checkedCount + ' shots across ' + distinct + ' angle types, that’s diverse enough.';
-      return;
-    }
-    result.textContent = 'Marked complete — nice work.';
+    saveLessonActivityState(lessonNum, { checked: checkedMap, submitted: true });
   }
 
-  function checkBuilder(btn) {
+  function checkBuilder(btn, lessonNum) {
     var wrap = btn.closest('.activity-builder');
+    var values = {};
+    wrap.querySelectorAll('.activity-builder-input').forEach(function (ta, fi) {
+      values[fi] = ta.value;
+    });
     wrap.querySelectorAll('.activity-builder-model').forEach(function (p) {
       p.hidden = false;
     });
+    saveLessonActivityState(lessonNum, { values: values, revealed: true });
   }
 
   if (detailBack) {
