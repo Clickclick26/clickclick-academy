@@ -10,7 +10,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <!-- Bump ?v= on every deploy that touches styles.css or app.js — this static
+       site has no build step to fingerprint filenames, and browsers were
+       caching stale CSS/JS across deploys (confirmed live: a visitor's
+       browser mixed new HTML with cached old CSS and rendered broken). -->
+  <link rel="stylesheet" href="styles.css?v=2" />
 </head>
 <body>
   <!-- Gate -->
@@ -18,7 +22,7 @@
     <div class="gate-card">
       <img class="brand-logo-stacked" src="brand/clickclick-logo-stacked-black.png" alt="ClickClick" />
       <h3>Your course pack</h3>
-      <p class="lead">Enter the access code ClickClick gave you. It opens only your courses — nothing else.</p>
+      <p class="lead">Enter the access code ClickClick gave you. It opens only your courses, nothing else.</p>
       <form id="gate-form" class="gate-form">
         <label class="sr-only" for="access-code">Access code</label>
         <input id="access-code" name="access-code" class="gate-input" type="text" placeholder="Access code" autocomplete="off" spellcheck="false" required />
@@ -124,6 +128,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>
