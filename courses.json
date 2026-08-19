@@ -120,6 +120,224 @@
     "tone": "#e4f7ea"
   },
   {
+    "id": "ugc-elite-program",
+    "title": "The Elite UGC Creator Program",
+    "description": "The full certification path — hooks, scripts, filming, editing, and landing paid brand deals. 24 lessons, every one ends with something built, filmed, or sent.",
+    "tag": "UGC Certification",
+    "audience": ["creator"],
+    "lessons": 24,
+    "level": "Certification",
+    "status": "Not started",
+    "icon": "★",
+    "tone": "#f3e8ff",
+    "modules": [
+      {
+        "title": "The Elite UGC Creator Blueprint",
+        "frame": "Sets the bar students are being trained to hit, gets their setup production-ready, and installs the operating rhythm every later module depends on.",
+        "lessons": [
+          {
+            "num": "1.01",
+            "title": "What \"Elite\" Actually Means in UGC",
+            "overview": "Most beginners think UGC is \"hold phone, talk to camera.\" Elite creators get hired repeatedly because their work performs — judged on watch-time, CTR, and conversion, not vibes. This lesson breaks down what separates a one-off gig from a real retainer: reliability, brand-safety instincts, and content that's shot to be edited, not just filmed.",
+            "interactive": "Live teardown — students score 3 real UGC ads (amateur / competent / elite) on a 10-point Brief Fit / Hookiness / Editability rubric before the real performance data is revealed.",
+            "deliverable": "Submit your 3 completed scorecards plus one paragraph naming the biggest gap between your instinct-score and the revealed score."
+          },
+          {
+            "num": "1.02",
+            "title": "The Creator Workflow: Brief to Delivery",
+            "overview": "Walks the full pipeline a working creator runs on every paid job — brief intake, script draft, shot list, filming day, footage triage, delivery — and exactly where each step commonly breaks (almost always: skipping the shot list).",
+            "interactive": "Card-sort exercise — students receive a real (anonymized) client brief and sequence an 8-step production checklist into the correct order.",
+            "deliverable": "Upload your completed checklist sequence and your own one-page \"Creator SOP\" — the exact steps you commit to running on every job."
+          },
+          {
+            "num": "1.03",
+            "title": "Building the Ultimate Home Studio, on Any Budget",
+            "overview": "Gear doesn't make the creator, but the wrong gear caps the ceiling. Covers three studio tiers — Starter (£150 / $190), Working Pro (£600 / $760), Studio (£2,000+ / $2,500+) — across lighting, audio, mounting, and background, and which tier actually matters for which content type.",
+            "interactive": "Budget simulator — students allocate a fixed £250 / $320 across a provided gear menu, then compare their build against two working creators' real kit lists.",
+            "deliverable": "Submit your gear-allocation sheet plus a photo of your current setup, marked up with what you'd change first and why."
+          },
+          {
+            "num": "1.04",
+            "title": "Your Creator Operating System",
+            "overview": "The unglamorous system — content calendar, deal tracker, invoice template, footage naming and backup convention — that separates creators who scale from creators who burn out re-inventing process on every job.",
+            "interactive": "Template sprint — students take the provided deal-tracker and footage-naming templates and adapt them live to their own niche and file structure.",
+            "deliverable": "Upload a screenshot of your customized deal tracker with at least 2 entries, and your finalized file-naming convention written out in full."
+          }
+        ]
+      },
+      {
+        "title": "Reverse-Engineering Winning Hooks",
+        "frame": "The scroll-stop decision happens in under a second. This module installs the pattern recognition and writing reflex to win that second, on demand, for any product.",
+        "lessons": [
+          {
+            "num": "2.01",
+            "title": "The Psychology of the First 3 Seconds",
+            "overview": "Why the scroll-stop decision happens in under a second, and the four psychological levers — curiosity gap, pattern interrupt, stakes, relatability — that force a thumb to stop moving.",
+            "interactive": "Hook A/B simulator — students see two muted first-frames back to back and predict which outperformed in real ad data, then see the actual retention-graph result.",
+            "deliverable": "Submit your 5 predictions with accuracy score, and a written breakdown of the lever the top-performing hook used."
+          },
+          {
+            "num": "2.02",
+            "title": "Hook Autopsy: 20 Viral Hooks, Broken Down",
+            "overview": "A structured teardown of 20 real high-performing hooks across niches — beauty, tech, food, fitness — sorted into the 6 core archetypes: Problem-Agitate, Bold Claim, Relatable POV, Visual Pattern-Interrupt, Story Cold-Open, Direct Callout.",
+            "interactive": "Live tagging exercise — students tag all 20 hooks against the 6-archetype key in a shared sheet, then compare against the instructor's answer key with rationale.",
+            "deliverable": "Upload your completed tagging sheet with your accuracy score, plus 3 hooks you'd personally steal-and-adapt for a ClickClick client."
+          },
+          {
+            "num": "2.03",
+            "title": "The Pattern-Interrupt Scripting Framework",
+            "overview": "A repeatable 4-line formula for writing a hook from a blank page — Interrupt → Stakes → Promise → Proof-Tease — backed by a bank of 30 fill-in-the-blank interrupt openers sorted by niche.",
+            "interactive": "Guided builder — students plug a real product (their own or assigned) into the 4-line formula, generating 3 full hook variants live in class.",
+            "deliverable": "Submit your 3 hook variants written out in full, each line labeled with the formula slot it fills."
+          },
+          {
+            "num": "2.04",
+            "title": "Hook Writing Sprint & Peer Review",
+            "overview": "A timed sprint under real production pressure — 12 minutes, 8 hooks, one assigned product — followed by structured peer review, the fastest way to pressure-test instinct against real feedback before it costs a client's budget.",
+            "interactive": "Live peer-review circle — students post their 8 hooks to a shared board, score 3 classmates against the Module rubric, and leave one specific, actionable note each.",
+            "deliverable": "Upload your 8 sprint hooks, your 3 completed peer reviews, and your self-selected top 2 to carry into Module 3."
+          }
+        ]
+      },
+      {
+        "title": "Advanced Direct-Response Scriptwriting",
+        "frame": "Takes a winning hook and builds the 30–45 seconds that follow it — the difference between content that's watched and content that sells.",
+        "lessons": [
+          {
+            "num": "3.01",
+            "title": "Direct-Response Fundamentals for Short-Form",
+            "overview": "A UGC script is a direct-response sales letter shrunk to 30 seconds, not a movie script. Maps the Hook → Agitate → Bridge → Offer → CTA structure onto real short-form pacing.",
+            "interactive": "Structure-labeling exercise — students receive 5 full scripts with structure stripped out and re-annotate every line to its role.",
+            "deliverable": "Submit your 5 annotated scripts, plus one line naming the structural mistake you catch most often in your own past work."
+          },
+          {
+            "num": "3.02",
+            "title": "Value Propositions & Benefit Stacking",
+            "overview": "The gap between a feature (\"12-hour battery\") and a benefit that lands (\"never dies mid-shift\") — and how to stack three benefits inside 10 seconds without the script reading like a spec sheet.",
+            "interactive": "Timed translation drill — students take 10 raw product features from real (anonymized) spec sheets and rewrite each as a benefit line against the clock.",
+            "deliverable": "Upload your 10 translated lines and your strongest 3-benefit stack, submitted as a ready-to-read script excerpt."
+          },
+          {
+            "num": "3.03",
+            "title": "Writing CTAs That Actually Convert",
+            "overview": "Why \"link in bio\" wastes the most valuable line in the script, and the 5 CTA types — Urgency, Social-Proof-Close, Risk-Reversal, Curiosity-Loop, Direct-Command — mapped to the funnel stage each is built for.",
+            "interactive": "CTA-swap lab — students write 5 different endings, one per type, for one fixed script body, then the class votes on which they'd actually click.",
+            "deliverable": "Submit your 5 CTA variants labeled by type, with the class-vote winner marked and one sentence on why it won."
+          },
+          {
+            "num": "3.04",
+            "title": "Full Script Assembly — Hook to CTA",
+            "overview": "Assembling everything from Modules 2–3 into one complete, production-ready 30–45 second script for a real or assigned product, timed to actual spoken pacing rather than word count.",
+            "interactive": "Live table-read — students perform a spoken read-through of their draft against a stopwatch to catch pacing issues text alone hides, then revise on the spot.",
+            "deliverable": "Upload your final written script plus a voice-memo table-read, timed and under the 45-second cap."
+          }
+        ]
+      },
+      {
+        "title": "High-Converting Production & Real-Life B-Roll Masterclass",
+        "frame": "The hands-on filming core of the program — lighting, framing, and the specific skill of making a product look native to real life instead of staged on a white table.",
+        "lessons": [
+          {
+            "num": "4.01",
+            "title": "Lighting on a Budget",
+            "overview": "The 3-point lighting principle adapted for a bedroom or kitchen set — one window, one cheap LED panel, one bounce card — and the 4 most common lighting mistakes that make even a great script look unpaid.",
+            "interactive": "Diagnosis gallery — students view 8 badly-lit clips and diagnose the specific fix (angle, colour temp, diffusion, position) for each before the answer is revealed.",
+            "deliverable": "Film and upload a 10-second test clip using only natural light plus one bounce card, applying the fix from your weakest diagnosis."
+          },
+          {
+            "num": "4.02",
+            "title": "Framing, Angles & Camera Movement",
+            "overview": "The 6 shot types every UGC creator needs on command — talking-head medium, close-up reaction, POV hand-shot, over-shoulder demo, static product hero, walk-and-talk — and when each earns its place in a cut.",
+            "interactive": "Shot-matching challenge — students assign the correct shot type to every line of a rough script using the provided reference card.",
+            "deliverable": "Submit your shot-annotated script, then film and upload one example each of your 2 weakest shot types."
+          },
+          {
+            "num": "4.03",
+            "title": "Capturing Aesthetic, Real-Life Product B-Roll",
+            "overview": "The core skill this course is built around: making a product look native to a real, lived-in environment rather than staged on a white table — composition, prop-styling with items you already own, and the 3-angle-minimum rule for every b-roll beat.",
+            "interactive": "Shot-list build — students build a 6-shot b-roll list for an assigned product using the provided environment and prop-styling checklist, before filming.",
+            "deliverable": "Film and upload your full 6-shot b-roll sequence of a real product in a real, lived-in setting — kitchen, desk, bathroom counter, car. No white background."
+          },
+          {
+            "num": "4.04",
+            "title": "The Multi-Shot Product Story",
+            "overview": "Sequencing individual b-roll shots into a mini narrative arc — context → interaction → payoff — so b-roll supports the script's story instead of filling dead air. The skill that turns \"footage\" into \"a cut.\"",
+            "interactive": "Sequencing lab — students arrange 8 unordered provided b-roll clips into the strongest 5-shot narrative order, then compare against the instructor's cut.",
+            "deliverable": "Upload your own filmed sequence, built from your 4.03 footage, edited into a 15–20 second silent story cut."
+          }
+        ]
+      },
+      {
+        "title": "Retention Editing in CapCut",
+        "frame": "Cutting raw footage into a finished, scroll-stopping edit — pacing, captions, and sound treated as a data problem, not a feel problem.",
+        "lessons": [
+          {
+            "num": "5.01",
+            "title": "Timeline Pacing & the Retention Curve",
+            "overview": "Reading a real audience-retention graph and reverse-engineering the exact edit decisions — cut length, moment placement — that caused each drop-off.",
+            "interactive": "Retention-graph matching — students match 4 retention curves to 4 finished edits and identify the exact timestamp of the steepest drop in each.",
+            "deliverable": "Submit your 4 matches with reasoning, plus one edited 5-second segment from your own footage cut to under 2-second average shot length."
+          },
+          {
+            "num": "5.02",
+            "title": "Jump Cuts & Visual Rhythm in CapCut",
+            "overview": "Hands-on CapCut technique — clean jump-cut execution, J/L-cut audio bridging, and building a visual rhythm so cuts feel intentional rather than choppy.",
+            "interactive": "Guided sandbox build — students follow a live screen-share build of a 15-second jump-cut sequence inside CapCut, then replicate it on their own footage.",
+            "deliverable": "Export and upload your own 15-second jump-cut edit, built from your Module 4 footage."
+          },
+          {
+            "num": "5.03",
+            "title": "Dynamic Captioning That Holds Attention",
+            "overview": "Why static bottom-third captions underperform — keyword emphasis, caption timing matched to speech rhythm, and CapCut's auto-caption workflow cleaned up to broadcast quality fast.",
+            "interactive": "Styling lab — students apply 3 different CapCut caption presets to the same clip and A/B their own attention on a blind rewatch.",
+            "deliverable": "Upload your final captioned edit with keyword emphasis applied to at least 5 words across the clip."
+          },
+          {
+            "num": "5.04",
+            "title": "Sound Design for Scroll-Stopping Content",
+            "overview": "Layering trending audio, SFX whooshes and impacts on cut points, and basic voice-EQ cleanup — the last 10% that makes an edit feel professional instead of homemade.",
+            "interactive": "Sound-layering sandbox — students add one music bed, 3 SFX hits on cut points, and voice EQ to a provided template clip inside CapCut.",
+            "deliverable": "Export and upload your fully sound-designed final edit — Module 4 b-roll, Module 3 script, and Module 5 editing, complete."
+          }
+        ]
+      },
+      {
+        "title": "The Business, Pitching & Brand Deal Playbook",
+        "frame": "Turns finished work into paid work — portfolio, outreach, pricing, and the contract that gets the invoice actually paid.",
+        "lessons": [
+          {
+            "num": "6.01",
+            "title": "Building a Portfolio That Sells",
+            "overview": "What brands actually screen for in the first 8 seconds of a portfolio review, and how to structure a 5-video reel that leads with your strongest, most relevant work — not your most recent.",
+            "interactive": "Portfolio-order exercise — students select and order the strongest 5-clip reel from 8 sample clips, then compare against a brand buyer's real pick order.",
+            "deliverable": "Upload your own 5-video portfolio reel, built entirely from work completed across this course."
+          },
+          {
+            "num": "6.02",
+            "title": "Cold Outreach That Gets Replies",
+            "overview": "The anatomy of a cold pitch that gets opened and answered — subject line, first-line hook (yes, the same skill from Module 2), specific-not-generic brand research, and a low-friction ask.",
+            "interactive": "Pitch-rewrite drill — students rewrite 3 real weak cold pitches using the provided framework, then vote as a class on the strongest rewrite.",
+            "deliverable": "Submit one real cold pitch email, written for an actual brand you'd like to work with, ready to send."
+          },
+          {
+            "num": "6.03",
+            "title": "Pricing Your Work & Packaging Offers",
+            "overview": "Moving off \"what should I charge?\" guesswork into a real rate framework built on usage rights, exclusivity, and volume — plus 3 ready-to-use package tiers: single-video, bundle, retainer. Rate examples worked in both £ and $ so the framework travels with you.",
+            "interactive": "Rate-calculator walkthrough — students plug their experience level and a sample brief into the provided calculator to generate a defensible quote in £ or $.",
+            "deliverable": "Submit your calculated rate card across all 3 package tiers, in your own currency, with your reasoning for each price."
+          },
+          {
+            "num": "6.04",
+            "title": "Contracts, Usage Rights & Getting Paid",
+            "overview": "The 5 non-negotiable clauses every UGC contract needs — usage term, usage scope/platform, revision limit, payment terms, kill fee — and the red flags that mean walk away.",
+            "interactive": "Red-flag hunt — students review a sample brand contract and flag every missing or unfavorable clause against the 5-clause checklist.",
+            "deliverable": "Submit your annotated red-flag list, plus your own filled-in contract template, ready to send to your next client — the course's final deliverable."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "staff-welcome",
     "title": "Welcome to the ClickClick team",
     "description": "How we work, who we serve, and what “good” looks like here.",

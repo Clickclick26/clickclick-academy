@@ -24,11 +24,15 @@
   var dashCountStrong = document.querySelector('#view-dashboard .chip strong');
   var viewDash = document.getElementById('view-dashboard');
   var viewCourses = document.getElementById('view-courses');
+  var viewDetail = document.getElementById('view-course-detail');
+  var detailBody = document.getElementById('course-detail-body');
+  var detailBack = document.getElementById('course-detail-back');
 
   var allCourses = [];
   var packsByCode = {};
   var session = null;
   var allowedCourses = [];
+  var lastListView = 'courses';
 
   function esc(str) {
     return String(str == null ? '' : str)
@@ -125,9 +129,13 @@
   function cardHtml(course) {
     var statusClass = course.statusClass ? ' status ' + course.statusClass : ' status';
     var openAttr = course.href ? ' data-href="' + esc(course.href) + '"' : '';
+    var detailAttr =
+      !course.href && Array.isArray(course.modules) ? ' data-detail="1"' : '';
     var lessons = Number(course.lessons) || 0;
     return (
-      '<article class="course-card" data-id="' +
+      '<article class="course-card' +
+      (detailAttr ? ' is-openable' : '') +
+      '" data-id="' +
       esc(course.id) +
       '" data-title="' +
       esc(String(course.title || '').toLowerCase()) +
@@ -135,6 +143,7 @@
       esc(String(course.tag || '').toLowerCase()) +
       '"' +
       openAttr +
+      detailAttr +
       '>' +
       '<div class="course-visual" style="background:' +
       esc(course.tone || '#ebe4f5') +
@@ -172,6 +181,68 @@
     );
   }
 
+  function lessonHtml(lesson) {
+    return (
+      '<article class="lesson-card">' +
+      '<div class="lesson-card-head">' +
+      '<span class="lesson-num">' + esc(lesson.num || '') + '</span>' +
+      '<h4>' + esc(lesson.title || '') + '</h4>' +
+      '</div>' +
+      (lesson.overview ? '<p class="lesson-overview">' + esc(lesson.overview) + '</p>' : '') +
+      '<div class="lesson-field lesson-field--interactive">' +
+      '<span class="lesson-field-label">Interactive</span>' +
+      '<span class="lesson-field-body">' + esc(lesson.interactive || '') + '</span>' +
+      '</div>' +
+      '<div class="lesson-field lesson-field--deliverable">' +
+      '<span class="lesson-field-label">Deliverable</span>' +
+      '<span class="lesson-field-body">' + esc(lesson.deliverable || '') + '</span>' +
+      '</div>' +
+      '</article>'
+    );
+  }
+
+  function moduleHtml(mod, index) {
+    var lessons = Array.isArray(mod.lessons) ? mod.lessons : [];
+    return (
+      '<section class="module-block">' +
+      '<div class="module-block-head">' +
+      '<span class="module-block-num">Module ' + String(index + 1).padStart(2, '0') + '</span>' +
+      '<h3>' + esc(mod.title || '') + '</h3>' +
+      '</div>' +
+      (mod.frame ? '<p class="module-block-frame">' + esc(mod.frame) + '</p>' : '') +
+      lessons.map(lessonHtml).join('') +
+      '</section>'
+    );
+  }
+
+  function courseDetailHtml(course) {
+    var modules = Array.isArray(course.modules) ? course.modules : [];
+    var lessonCount = modules.reduce(function (n, m) {
+      return n + (Array.isArray(m.lessons) ? m.lessons.length : 0);
+    }, 0);
+    return (
+      '<div class="detail-head">' +
+      '<span class="course-tag">' + esc(course.tag || '') + '</span>' +
+      '<h1>' + esc(course.title || '') + '</h1>' +
+      (course.description ? '<p class="detail-lead">' + esc(course.description) + '</p>' : '') +
+      '<div class="detail-meta">' +
+      '<span>' + modules.length + (modules.length === 1 ? ' module' : ' modules') + '</span>' +
+      '<span>' + lessonCount + (lessonCount === 1 ? ' lesson' : ' lessons') + '</span>' +
+      '<span>Level: ' + esc(course.level || '') + '</span>' +
+      '</div>' +
+      '</div>' +
+      modules.map(moduleHtml).join('')
+    );
+  }
+
+  function openCourseDetail(id) {
+    var course = allCourses.filter(function (c) { return c.id === id; })[0];
+    if (!course || !Array.isArray(course.modules) || !detailBody) return;
+    detailBody.innerHTML = courseDetailHtml(course);
+    setView('detail');
+    if (viewDetail) viewDetail.scrollTop = 0;
+  }
+
   function renderCourses() {
     applySessionUi();
     if (grid) {
@@ -194,9 +265,17 @@
   }
 
   function setView(name) {
+    if (name === 'detail') {
+      if (viewDash) viewDash.hidden = true;
+      if (viewCourses) viewCourses.hidden = true;
+      if (viewDetail) viewDetail.hidden = false;
+      return;
+    }
+    lastListView = name;
     var isDash = name === 'dashboard';
     if (viewDash) viewDash.hidden = !isDash;
     if (viewCourses) viewCourses.hidden = isDash;
+    if (viewDetail) viewDetail.hidden = true;
     document.querySelectorAll('.nav-btn[data-view]').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-view') === name);
     });
@@ -331,11 +410,22 @@
   }
 
   document.addEventListener('click', function (e) {
-    var card = e.target.closest('.course-card[data-href]');
-    if (card && card.getAttribute('data-href')) {
-      window.location.href = card.getAttribute('data-href');
+    var hrefCard = e.target.closest('.course-card[data-href]');
+    if (hrefCard && hrefCard.getAttribute('data-href')) {
+      window.location.href = hrefCard.getAttribute('data-href');
+      return;
+    }
+    var detailCard = e.target.closest('.course-card[data-detail]');
+    if (detailCard) {
+      openCourseDetail(detailCard.getAttribute('data-id'));
     }
   });
+
+  if (detailBack) {
+    detailBack.addEventListener('click', function () {
+      setView(lastListView);
+    });
+  }
 
   boot();
 })();
