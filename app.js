@@ -127,14 +127,24 @@
   }
 
   function cardHtml(course) {
-    var statusClass = course.statusClass ? ' status ' + course.statusClass : ' status';
+    var hasDetail = !course.href && Array.isArray(course.modules);
+    var isInert = !course.href && !hasDetail;
     var openAttr = course.href ? ' data-href="' + esc(course.href) + '"' : '';
-    var detailAttr =
-      !course.href && Array.isArray(course.modules) ? ' data-detail="1"' : '';
+    var detailAttr = hasDetail ? ' data-detail="1"' : '';
     var lessons = Number(course.lessons) || 0;
+
+    // Placeholder catalog entries (no href, no real lesson content) get an
+    // honest "Coming soon" badge instead of "Not started" — that copy
+    // implies there's something to start, which there isn't yet.
+    var statusText = isInert ? 'Coming soon' : (course.status || 'Not started');
+    var statusClass = isInert
+      ? 'status is-coming-soon'
+      : (course.statusClass ? 'status ' + course.statusClass : 'status');
+
     return (
       '<article class="course-card' +
       (detailAttr ? ' is-openable' : '') +
+      (isInert ? ' is-inert' : '') +
       '" data-id="' +
       esc(course.id) +
       '" data-title="' +
@@ -171,9 +181,9 @@
       esc(course.level || '') +
       '</span>' +
       '<span class="' +
-      statusClass.trim() +
+      statusClass +
       '">' +
-      esc(course.status || 'Not started') +
+      esc(statusText) +
       '</span>' +
       '</div>' +
       '</div>' +
@@ -243,10 +253,41 @@
     if (viewDetail) viewDetail.scrollTop = 0;
   }
 
+  // Groups by tag, preserving first-seen order, so a mixed pack (mainly the
+  // internal/admin one, which sees every audience at once) reads as
+  // sections instead of one flat 21-card wall. A single-audience pack
+  // (what every real customer actually has) only ever has one group, so
+  // this renders as a plain grid for them — no redundant lone header.
+  function groupedCoursesHtml(courses) {
+    var order = [];
+    var byTag = {};
+    courses.forEach(function (c) {
+      var tag = c.tag || 'Other';
+      if (!byTag[tag]) {
+        byTag[tag] = [];
+        order.push(tag);
+      }
+      byTag[tag].push(c);
+    });
+    if (order.length <= 1) {
+      return '<div class="courses-grid">' + courses.map(cardHtml).join('') + '</div>';
+    }
+    return order
+      .map(function (tag) {
+        return (
+          '<div class="course-group">' +
+          '<h3 class="course-group-head">' + esc(tag) + '</h3>' +
+          '<div class="courses-grid">' + byTag[tag].map(cardHtml).join('') + '</div>' +
+          '</div>'
+        );
+      })
+      .join('');
+  }
+
   function renderCourses() {
     applySessionUi();
     if (grid) {
-      grid.innerHTML = allowedCourses.map(cardHtml).join('');
+      grid.innerHTML = groupedCoursesHtml(allowedCourses);
     }
     if (preview) {
       preview.innerHTML = allowedCourses.slice(0, 3).map(cardHtml).join('');

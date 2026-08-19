@@ -852,3 +852,39 @@ input {
     padding: 1.25rem 1.25rem 1.4rem;
   }
 }
+
+/* —— Grouped catalog (mixed-audience packs — mainly the internal one) —— */
+
+.course-group {
+  margin-bottom: 8px;
+}
+
+.course-group-head {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin: 0 0 10px;
+  padding-top: 4px;
+}
+
+.course-group + .course-group .course-group-head {
+  border-top: 1px solid var(--cream-deep);
+  padding-top: 20px;
+  margin-top: 4px;
+}
+
+/* —— Honest "not built yet" state —— */
+
+.course-card.is-inert {
+  cursor: default;
+}
+
+.course-card.is-inert .course-visual {
+  opacity: 0.6;
+}
+
+.course-meta .status.is-coming-soon {
+  color: var(--light);
+}
