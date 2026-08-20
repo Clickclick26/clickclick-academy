@@ -960,9 +960,14 @@
     var labelsHtml = segments
       .map(function (s, i) {
         var center = i * seg + seg / 2;
+        // The label's parent is the dial itself, which carries the
+        // accumulated spin (rotation, often several thousand degrees after
+        // a few spins), so the inner span has to counter-rotate against that
+        // too, not just its own segment angle, or it lands sideways/upside
+        // down once the dial has spun past its first rest position.
         return (
           '<span class="wheel-label" style="transform: translate(-50%, -50%) rotate(' + center + 'deg) translateY(-88px)">' +
-          '<span style="display:inline-block; transform: rotate(' + -center + 'deg)">' + esc(s.label) + '</span>' +
+          '<span style="display:inline-block; transform: rotate(' + -(center + rotation) + 'deg)">' + esc(s.label) + '</span>' +
           '</span>'
         );
       })
