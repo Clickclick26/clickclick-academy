@@ -1617,3 +1617,169 @@ input {
   line-height: 1.4;
   font-style: italic;
 }
+
+/* == Bonus recap cards (word bank + wheel) == */
+.lesson-card--bonus {
+  background: var(--surface);
+}
+
+.lesson-card--bonus .lesson-card-head {
+  margin-bottom: 0.6rem;
+}
+
+/* Word bank */
+.activity-wordbank {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.wb-sentence {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.9;
+  color: var(--ink);
+}
+
+.wb-blank {
+  display: inline-block;
+  min-width: 74px;
+  padding: 0.08rem 0.55rem;
+  margin: 0 0.15rem;
+  border-radius: 8px;
+  background: var(--surface-soft);
+  box-shadow: inset 0 -2.5px 0 var(--turquoise);
+  font-weight: 700;
+  color: var(--turquoise-deep);
+  text-align: center;
+  cursor: pointer;
+}
+
+.wb-blank.is-correct {
+  box-shadow: inset 0 -2.5px 0 #1c9d5f;
+  color: #1c9d5f;
+}
+
+.wb-blank.is-wrong {
+  box-shadow: inset 0 -2.5px 0 var(--pink);
+  color: var(--pink);
+}
+
+.wb-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(20, 20, 20, 0.08);
+}
+
+.wb-chip {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  background: var(--surface-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  box-shadow: inset 0 0 0 1.5px rgba(20, 20, 20, 0.08);
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.wb-chip:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.wb-chip.is-selected {
+  box-shadow: inset 0 0 0 2px var(--purple);
+  background: rgba(123, 94, 167, 0.1);
+}
+
+.wb-chip.is-dragging {
+  cursor: grabbing;
+  position: relative;
+  z-index: 6;
+  box-shadow: 0 10px 20px rgba(20, 20, 20, 0.18);
+}
+
+.wb-chip.is-used {
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Spin the wheel */
+.activity-wheel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wheel-stage {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.wheel-dial {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 8px 24px rgba(20, 20, 20, 0.18), inset 0 0 0 5px var(--surface);
+}
+
+.wheel-dial.is-spinning {
+  box-shadow: 0 14px 30px rgba(20, 20, 20, 0.24), inset 0 0 0 5px var(--surface);
+}
+
+.wheel-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 16px solid var(--ink);
+  z-index: 2;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
+}
+
+.activity-wheel-spin-btn {
+  min-width: 180px;
+  justify-content: center;
+}
+
+.wheel-question {
+  width: 100%;
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(20, 20, 20, 0.08);
+}
+
+.wheel-question-label {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--purple);
+}
