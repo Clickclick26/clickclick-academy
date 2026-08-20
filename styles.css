@@ -104,7 +104,7 @@ input {
 }
 
 
-/* —— Buttons (same component as the CRM) —— */
+/* == Buttons (same component as the CRM) == */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -125,7 +125,7 @@ input {
   color: #fff;
 }
 
-/* —— Gate —— */
+/* == Gate == */
 .gate {
   min-height: 100vh;
   display: grid;
@@ -134,7 +134,7 @@ input {
 }
 
 /* Matches the CRM's sign-in card exactly: centered logo, small muted
-   caption instead of a big headline, plain pill inputs, solid-ink button —
+   caption instead of a big headline, plain pill inputs, solid-ink button,
    same components, same product family. */
 .gate-card {
   width: min(360px, 100%);
@@ -231,7 +231,7 @@ input {
   color: var(--mid);
 }
 
-/* —— Shell —— */
+/* == Shell == */
 .shell {
   min-height: 100vh;
   display: grid;
@@ -672,7 +672,7 @@ input {
   }
 }
 
-/* —— Course detail (full curriculum view) —— */
+/* == Course detail (full curriculum view) == */
 
 .course-card.is-openable {
   cursor: pointer;
@@ -853,7 +853,7 @@ input {
   }
 }
 
-/* —— Grouped catalog (mixed-audience packs — mainly the internal one) —— */
+/* == Grouped catalog (mixed-audience packs, mainly the internal one) == */
 
 .course-group {
   margin-bottom: 8px;
@@ -875,7 +875,7 @@ input {
   margin-top: 4px;
 }
 
-/* —— Honest "not built yet" state —— */
+/* == Honest "not built yet" state == */
 
 .course-card.is-inert {
   cursor: default;
@@ -889,7 +889,7 @@ input {
   color: var(--light);
 }
 
-/* —— Lesson unlock/submit states —— */
+/* == Lesson unlock/submit states == */
 
 .lesson-card-head {
   align-items: center;
@@ -1036,7 +1036,7 @@ input {
   box-shadow: inset 0 0 0 2px rgba(0, 188, 212, 0.45);
 }
 
-/* —— Lesson activities: real, checkable widgets —— */
+/* == Lesson activities: real, checkable widgets == */
 .activity {
   background: var(--surface-soft);
   border-radius: 16px;
@@ -1193,6 +1193,18 @@ input {
   border-radius: 12px;
   padding: 0.5rem 0.7rem;
   box-shadow: inset 0 0 0 1.5px rgba(20, 20, 20, 0.06);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition: box-shadow 0.15s ease;
+}
+
+.activity-seq-item.is-dragging {
+  cursor: grabbing;
+  position: relative;
+  z-index: 5;
+  background: var(--surface-soft);
+  box-shadow: 0 10px 24px rgba(20, 20, 20, 0.16);
 }
 
 .activity-seq-item.is-correct {
@@ -1483,6 +1495,119 @@ input {
 .activity-builder-input:focus {
   outline: none;
   box-shadow: inset 0 0 0 2px rgba(0, 188, 212, 0.45);
+}
+
+/* == Progress bar == */
+.progress-track {
+  width: 100%;
+  max-width: 420px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(20, 20, 20, 0.08);
+  overflow: hidden;
+  margin: 0.5rem 0 0;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--brand-line);
+  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.course-complete-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(28, 157, 95, 0.1);
+  color: #1c9d5f;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 14px;
+  margin-top: 0.7rem;
+  width: fit-content;
+}
+
+/* == Motion: unlock entrance, right/wrong feedback, confetti, press feel == */
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.activity-quiz-opt:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.activity-seq-move:active {
+  transform: scale(0.88);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lesson-card--just-unlocked {
+    animation: unlockIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes unlockIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    45% {
+      box-shadow: 0 0 0 6px rgba(0, 188, 212, 0.16);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      box-shadow: 0 0 0 0 rgba(0, 188, 212, 0);
+    }
+  }
+
+  .anim-pop {
+    animation: activityPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes activityPop {
+    0% {
+      transform: scale(1);
+    }
+    35% {
+      transform: scale(1.07);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .anim-shake {
+    animation: activityShake 0.4s ease;
+  }
+
+  @keyframes activityShake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-5px);
+    }
+    40% {
+      transform: translateX(4px);
+    }
+    60% {
+      transform: translateX(-3px);
+    }
+    80% {
+      transform: translateX(2px);
+    }
+  }
 }
 
 .activity-builder-model {
