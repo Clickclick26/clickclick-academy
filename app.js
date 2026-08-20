@@ -922,13 +922,25 @@
   // yet answered correctly, so every spin makes real progress toward
   // clearing all of them, and a wrong answer keeps that topic in the pool
   // instead of moving on. Once all are cleared it becomes a free replay.
-  var WHEEL_COLORS = ['#00bcd4', '#7b5ea7', '#e83e8c', '#f5a623', '#22c55e', '#c2185b'];
+  var WHEEL_COLORS = [
+    '#00bcd4', '#7b5ea7', '#e83e8c', '#f5a623', '#22c55e',
+    '#c2185b', '#0891b2', '#f97316', '#6366f1', '#65a30d',
+  ];
+
+  // A topic is "mastered" once its currently-recorded answer is correct
+  // against the specific question it was recorded against (each landing
+  // can draw a different question from that topic's pool).
+  function wheelTopicMastered(topic, entry) {
+    if (!entry || entry.qIdx === undefined) return false;
+    var q = topic.questions && topic.questions[entry.qIdx];
+    return !!q && entry.picked === q.correct;
+  }
 
   function wheelMasteredCount(segments, answered) {
     answered = answered || {};
     var n = 0;
     segments.forEach(function (s, i) {
-      if (answered[i] !== undefined && answered[i] === s.correct) n++;
+      if (wheelTopicMastered(s, answered[i])) n++;
     });
     return n;
   }
@@ -937,8 +949,7 @@
     answered = answered || {};
     var pool = [];
     segments.forEach(function (s, i) {
-      var mastered = answered[i] !== undefined && answered[i] === s.correct;
-      if (!mastered) pool.push(i);
+      if (!wheelTopicMastered(s, answered[i])) pool.push(i);
     });
     if (!pool.length) pool = segments.map(function (s, i) { return i; });
     return pool[Math.floor(Math.random() * pool.length)];
@@ -966,7 +977,7 @@
         // too, not just its own segment angle, or it lands sideways/upside
         // down once the dial has spun past its first rest position.
         return (
-          '<span class="wheel-label" style="transform: translate(-50%, -50%) rotate(' + center + 'deg) translateY(-88px)">' +
+          '<span class="wheel-label" style="transform: translate(-50%, -50%) rotate(' + center + 'deg) translateY(-100px)">' +
           '<span style="display:inline-block; transform: rotate(' + -(center + rotation) + 'deg)">' + esc(s.label) + '</span>' +
           '</span>'
         );
@@ -975,22 +986,25 @@
 
     var landedIndex = state.landedIndex;
     var hasLanded = landedIndex !== undefined && landedIndex !== null;
-    var seg_ = hasLanded ? segments[landedIndex] : null;
-    var answered = hasLanded && answeredMap[landedIndex] !== undefined;
-    var pickedIdx = answered ? answeredMap[landedIndex] : null;
+    var topic = hasLanded ? segments[landedIndex] : null;
+    var qIdx = state.landedQuestionIdx || 0;
+    var question = topic ? topic.questions[qIdx] : null;
+    var answeredEntry = hasLanded ? answeredMap[landedIndex] : null;
+    var answered = !!(answeredEntry && answeredEntry.qIdx === qIdx);
+    var pickedIdx = answered ? answeredEntry.picked : null;
 
     var resultHtml = '';
-    if (hasLanded && seg_) {
+    if (hasLanded && topic && question) {
       resultHtml =
-        '<div class="wheel-question" data-seg="' + landedIndex + '">' +
-        '<p class="wheel-question-label">' + esc(seg_.label) + '</p>' +
-        '<p class="activity-quiz-question">' + esc(seg_.q) + '</p>' +
+        '<div class="wheel-question" data-seg="' + landedIndex + '" data-q="' + qIdx + '">' +
+        '<p class="wheel-question-label">' + esc(topic.label) + '</p>' +
+        '<p class="activity-quiz-question">' + esc(question.q) + '</p>' +
         '<div class="activity-quiz-options">' +
-        seg_.options
+        question.options
           .map(function (opt, oi) {
             var cls = 'activity-quiz-opt';
             if (answered) {
-              if (oi === seg_.correct) cls += ' is-correct';
+              if (oi === question.correct) cls += ' is-correct';
               else if (oi === pickedIdx) cls += ' is-wrong';
             }
             return (
@@ -1001,7 +1015,7 @@
           })
           .join('') +
         '</div>' +
-        '<p class="activity-quiz-explain"' + (answered ? '' : ' hidden') + '>' + esc(seg_.explain || '') + '</p>' +
+        '<p class="activity-quiz-explain"' + (answered ? '' : ' hidden') + '>' + esc(question.explain || '') + '</p>' +
         '</div>';
     }
 
@@ -1736,17 +1750,19 @@
       var wheelActivityEl = wheelOpt.closest('.activity');
       var wheelLessonNum = wheelActivityEl.getAttribute('data-lesson');
       var segIdx = Number(wqWrap.getAttribute('data-seg'));
+      var wheelQIdx = Number(wqWrap.getAttribute('data-q'));
       var wheelCfg = findActivityConfig(wheelLessonNum);
       if (!wheelCfg) return;
       var segCfg = wheelCfg.segments[segIdx];
+      var questionCfg = segCfg.questions[wheelQIdx];
       var wheelState = getLessonActivityState(wheelLessonNum);
       var answeredMap = wheelState.answered || {};
       if (answeredMap[segIdx] !== undefined) return;
       var wheelPickedIdx = Number(wheelOpt.getAttribute('data-wheel-opt'));
       var wasAllMastered = wheelMasteredCount(wheelCfg.segments, answeredMap) >= wheelCfg.segments.length;
-      answeredMap[segIdx] = wheelPickedIdx;
+      answeredMap[segIdx] = { qIdx: wheelQIdx, picked: wheelPickedIdx };
       saveLessonActivityState(wheelLessonNum, { answered: answeredMap, done: true });
-      if (wheelPickedIdx === segCfg.correct) {
+      if (wheelPickedIdx === questionCfg.correct) {
         var nowAllMastered = wheelMasteredCount(wheelCfg.segments, answeredMap) >= wheelCfg.segments.length;
         playFeedback(wheelOpt, 'anim-pop');
         if (nowAllMastered && !wasAllMastered) {
@@ -2255,13 +2271,22 @@
 
     setTimeout(function () {
       // A topic that was answered wrong before gets a genuinely fresh shot
-      // on this new landing rather than staying locked on the old miss;
-      // one already answered correctly stays locked in as mastered.
+      // on this new landing (a newly-drawn question from its pool) rather
+      // than staying locked on the old miss; one already answered correctly
+      // stays locked in as mastered.
       var priorState = getLessonActivityState(lessonNum);
       var priorAnswered = priorState.answered || {};
-      var wasMastered = priorAnswered[idx] !== undefined && priorAnswered[idx] === cfg.segments[idx].correct;
+      var topic = cfg.segments[idx];
+      var wasMastered = wheelTopicMastered(topic, priorAnswered[idx]);
       if (!wasMastered && priorAnswered[idx] !== undefined) delete priorAnswered[idx];
-      saveLessonActivityState(lessonNum, { rotation: target, landedIndex: idx, done: true, answered: priorAnswered });
+      var newQIdx = Math.floor(Math.random() * topic.questions.length);
+      saveLessonActivityState(lessonNum, {
+        rotation: target,
+        landedIndex: idx,
+        landedQuestionIdx: newQIdx,
+        done: true,
+        answered: priorAnswered,
+      });
       var freshCfg = findActivityConfig(lessonNum);
       var el = document.querySelector('.activity[data-lesson="' + lessonNum + '"]');
       if (el && freshCfg) el.outerHTML = activityHtml(lessonNum, freshCfg);
