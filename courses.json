@@ -855,7 +855,100 @@
           }
         ]
       }
-    ]
+    ],
+    "bonusActivities": {
+      "wordbank": {
+        "kind": "wordbank",
+        "prompt": "Drag each word into its blank. These pull from every module in the course.",
+        "template": "A great hook has to win the scroll in about three {0}. The direct-response structure every script follows is Hook, Agitate, Bridge, Offer, {1}. When a shadow looks harsh, {2} usually fixes it faster than moving the light. A retention graph shows you exactly where a viewer got {3} and left. Every UGC contract needs a {4} fee clause, or a cancelled job could pay you nothing.",
+        "blanks": [
+          "seconds",
+          "CTA",
+          "diffusion",
+          "bored",
+          "kill"
+        ],
+        "distractors": [
+          "minutes",
+          "Bridge",
+          "brightness",
+          "excited",
+          "usage"
+        ]
+      },
+      "wheel": {
+        "kind": "wheel",
+        "prompt": "Spin for a random question pulled from one of the 6 modules.",
+        "segments": [
+          {
+            "label": "Module 1",
+            "q": "Which studio tier did the course price at roughly \u00a3600 / $760?",
+            "options": [
+              "Starter",
+              "Working Pro",
+              "Studio"
+            ],
+            "correct": 1,
+            "explain": "Working Pro is the mid-tier, the point where gear stops being the bottleneck for most creators."
+          },
+          {
+            "label": "Module 2",
+            "q": "How long does a viewer's scroll-stop decision actually take?",
+            "options": [
+              "About 10 seconds",
+              "About 3 seconds",
+              "Under 1 second"
+            ],
+            "correct": 2,
+            "explain": "Under a second. That's why the first frame matters more than the first sentence."
+          },
+          {
+            "label": "Module 3",
+            "q": "What comes right after \u201cAgitate\u201d in the Hook, Agitate, Bridge, Offer, CTA structure?",
+            "options": [
+              "Offer",
+              "Bridge",
+              "CTA"
+            ],
+            "correct": 1,
+            "explain": "Bridge is the pivot, it moves from the problem into your product as the solution."
+          },
+          {
+            "label": "Module 4",
+            "q": "What's the minimum number of angles the course says a single b-roll beat needs?",
+            "options": [
+              "1",
+              "2",
+              "3"
+            ],
+            "correct": 2,
+            "explain": "Three angles minimum, so an editor actually has something to cut between."
+          },
+          {
+            "label": "Module 5",
+            "q": "What does a steep drop in the first 3 seconds of a retention graph usually mean?",
+            "options": [
+              "The edit paced well",
+              "The hook didn't land",
+              "The captions were too small"
+            ],
+            "correct": 1,
+            "explain": "A steep early drop almost always traces back to a weak or missing hook."
+          },
+          {
+            "label": "Module 6",
+            "q": "Which contract clause protects you if a client cancels the job halfway through?",
+            "options": [
+              "Revision limit",
+              "Kill fee",
+              "Usage scope"
+            ],
+            "correct": 1,
+            "explain": "A kill fee means a cancelled job still pays you something for the work already done."
+          }
+        ]
+      }
+    }
   },
   {
     "id": "coach-book",

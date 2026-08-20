@@ -295,6 +295,24 @@
     return null;
   }
 
+  // Looks up an activity config by its storage key, covering both real
+  // lesson nums ("1.01") and the two bonus recap widgets ("bonus-wordbank",
+  // "bonus-wheel") that live outside the module/lesson structure.
+  function findActivityConfig(lessonNum) {
+    if (lessonNum === 'bonus-wordbank') {
+      return currentDetailCourse && currentDetailCourse.bonusActivities
+        ? currentDetailCourse.bonusActivities.wordbank
+        : null;
+    }
+    if (lessonNum === 'bonus-wheel') {
+      return currentDetailCourse && currentDetailCourse.bonusActivities
+        ? currentDetailCourse.bonusActivities.wheel
+        : null;
+    }
+    var lesson = findLessonByNum(currentDetailCourse, lessonNum);
+    return lesson ? lesson.activity : null;
+  }
+
   function shuffled(arr) {
     var copy = arr.slice();
     for (var i = copy.length - 1; i > 0; i--) {
@@ -415,6 +433,12 @@
         break;
       case 'builder':
         body = activityBuilderHtml(lessonNum, activity, state);
+        break;
+      case 'wordbank':
+        body = activityWordbankHtml(lessonNum, activity, state);
+        break;
+      case 'wheel':
+        body = activityWheelHtml(lessonNum, activity, state);
         break;
       default:
         return '';
@@ -822,6 +846,147 @@
     );
   }
 
+  // Word bank: a templated paragraph with {n} blanks, filled by clicking or
+  // dragging chips from a shared bank (blanks + distractors, shuffled once
+  // and persisted like sequence's order so a reload doesn't reshuffle mid-go).
+  function activityWordbankHtml(lessonNum, activity, state) {
+    var bankWords = (activity.blanks || []).concat(activity.distractors || []);
+    var bankOrder = state.bankOrder && state.bankOrder.length === bankWords.length ? state.bankOrder : null;
+    if (!bankOrder) {
+      bankOrder = shuffled(bankWords.map(function (w, i) { return i; }));
+      saveLessonActivityState(lessonNum, { bankOrder: bankOrder });
+    }
+    var filled = state.filled || {};
+    var usedChipIdx = {};
+    Object.keys(filled).forEach(function (bi) {
+      usedChipIdx[filled[bi]] = true;
+    });
+    var blankCount = (activity.blanks || []).length;
+
+    var sentenceHtml = String(activity.template || '').replace(/\{(\d+)\}/g, function (m, idxStr) {
+      var bi = Number(idxStr);
+      var chipIdx = filled[bi];
+      var hasWord = chipIdx !== undefined && chipIdx !== null;
+      var word = hasWord ? bankWords[bankOrder[chipIdx]] : '';
+      var correctness = '';
+      if (state.checked && hasWord) {
+        correctness = word === activity.blanks[bi] ? ' is-correct' : ' is-wrong';
+      }
+      return (
+        '<span class="wb-blank' + correctness + '" data-blank="' + bi + '">' +
+        (hasWord ? esc(word) : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;') +
+        '</span>'
+      );
+    });
+
+    var bankHtml = bankOrder
+      .map(function (wordIdx, chipIdx) {
+        var used = !!usedChipIdx[chipIdx];
+        return (
+          '<button type="button" class="wb-chip' + (used ? ' is-used' : '') + '" data-chip="' + chipIdx + '"' +
+          (used ? ' disabled' : '') +
+          '>' + esc(bankWords[wordIdx]) + '</button>'
+        );
+      })
+      .join('');
+
+    var filledCount = Object.keys(filled).length;
+    var right = 0;
+    if (state.checked) {
+      Object.keys(filled).forEach(function (bi) {
+        if (bankWords[bankOrder[filled[bi]]] === activity.blanks[Number(bi)]) right++;
+      });
+    }
+
+    return (
+      '<div class="activity-wordbank" data-blank-count="' + blankCount + '">' +
+      '<p class="wb-sentence">' + sentenceHtml + '</p>' +
+      '<div class="wb-bank">' + bankHtml + '</div>' +
+      '<button type="button" class="btn primary activity-check-btn" data-check="wordbank"' +
+      (filledCount < blankCount ? ' disabled' : '') +
+      '>Check answers</button>' +
+      '<p class="activity-result"' + (state.checked ? '' : ' hidden') + '>' +
+      (state.checked ? right + ' of ' + blankCount + ' correct.' : '') +
+      '</p>' +
+      '</div>'
+    );
+  }
+
+  // Spin the wheel: a CSS conic-gradient dial with radially-placed labels,
+  // spun via an accumulated rotation (so each spin continues smoothly from
+  // wherever it last stopped rather than snapping back to 0). Landing on a
+  // segment reveals that segment's quiz question, answered the same way a
+  // normal quiz question is (instant reveal + pop/shake + confetti).
+  var WHEEL_COLORS = ['#00bcd4', '#7b5ea7', '#e83e8c', '#f5a623', '#22c55e', '#c2185b'];
+  function activityWheelHtml(lessonNum, activity, state) {
+    var segments = activity.segments || [];
+    var n = segments.length;
+    var seg = 360 / n;
+    var rotation = state.rotation || 0;
+    var gradientStops = segments
+      .map(function (s, i) {
+        var color = WHEEL_COLORS[i % WHEEL_COLORS.length];
+        return color + ' ' + i * seg + 'deg ' + (i + 1) * seg + 'deg';
+      })
+      .join(', ');
+    var labelsHtml = segments
+      .map(function (s, i) {
+        var center = i * seg + seg / 2;
+        return (
+          '<span class="wheel-label" style="transform: translate(-50%, -50%) rotate(' + center + 'deg) translateY(-92px)">' +
+          '<span style="display:inline-block; transform: rotate(' + -center + 'deg)">' + esc(s.label) + '</span>' +
+          '</span>'
+        );
+      })
+      .join('');
+
+    var landedIndex = state.landedIndex;
+    var hasLanded = landedIndex !== undefined && landedIndex !== null;
+    var seg_ = hasLanded ? segments[landedIndex] : null;
+    var answered = hasLanded && state.answered && state.answered[landedIndex] !== undefined;
+    var pickedIdx = answered ? state.answered[landedIndex] : null;
+
+    var resultHtml = '';
+    if (hasLanded && seg_) {
+      resultHtml =
+        '<div class="wheel-question" data-seg="' + landedIndex + '">' +
+        '<p class="wheel-question-label">' + esc(seg_.label) + '</p>' +
+        '<p class="activity-quiz-question">' + esc(seg_.q) + '</p>' +
+        '<div class="activity-quiz-options">' +
+        seg_.options
+          .map(function (opt, oi) {
+            var cls = 'activity-quiz-opt';
+            if (answered) {
+              if (oi === seg_.correct) cls += ' is-correct';
+              else if (oi === pickedIdx) cls += ' is-wrong';
+            }
+            return (
+              '<button type="button" class="' + cls + '" data-wheel-opt="' + oi + '"' +
+              (answered ? ' disabled' : '') +
+              '>' + esc(opt) + '</button>'
+            );
+          })
+          .join('') +
+        '</div>' +
+        '<p class="activity-quiz-explain"' + (answered ? '' : ' hidden') + '>' + esc(seg_.explain || '') + '</p>' +
+        '</div>';
+    }
+
+    return (
+      '<div class="activity-wheel">' +
+      '<div class="wheel-stage">' +
+      '<div class="wheel-pointer"></div>' +
+      '<div class="wheel-dial" data-rotation="' + rotation + '" style="transform: rotate(' + rotation +
+      'deg); background: conic-gradient(' + gradientStops + ')">' +
+      labelsHtml +
+      '</div>' +
+      '</div>' +
+      '<button type="button" class="btn primary activity-wheel-spin-btn">Spin the wheel</button>' +
+      resultHtml +
+      '</div>'
+    );
+  }
+
   var ACTIVITY_FORMULAS = {
     // Two base day-rates (already roughly at parity), each scaled by
     // experience multiplier and a mild per-extra-month usage bump.
@@ -971,7 +1136,43 @@
         ? '<p class="course-complete-banner">&#127881; Every lesson done. That\'s the whole certification. Nice work.</p>'
         : '') +
       '</div>' +
-      modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum); }).join('')
+      modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum); }).join('') +
+      bonusActivitiesHtml(course)
+    );
+  }
+
+  // Two recap games pulling from across the whole course, always playable,
+  // no unlock-gating or deliverable involved (they're just for fun).
+  function bonusActivitiesHtml(course) {
+    var bonus = course.bonusActivities;
+    if (!bonus) return '';
+    var cards = [];
+    if (bonus.wordbank) {
+      cards.push(
+        '<article class="lesson-card lesson-card--bonus">' +
+        '<div class="lesson-card-head"><h4>Fill in the blanks</h4></div>' +
+        activityHtml('bonus-wordbank', bonus.wordbank) +
+        '</article>'
+      );
+    }
+    if (bonus.wheel) {
+      cards.push(
+        '<article class="lesson-card lesson-card--bonus">' +
+        '<div class="lesson-card-head"><h4>Spin the wheel</h4></div>' +
+        activityHtml('bonus-wheel', bonus.wheel) +
+        '</article>'
+      );
+    }
+    if (!cards.length) return '';
+    return (
+      '<section class="module-block">' +
+      '<div class="module-block-head">' +
+      '<span class="module-block-num">Bonus</span>' +
+      '<h3>Quick review</h3>' +
+      '</div>' +
+      '<p class="module-block-frame">Two fast recap games pulling from everything above. Nothing to unlock, just for fun.</p>' +
+      cards.join('') +
+      '</section>'
     );
   }
 
@@ -1386,18 +1587,23 @@
     if (resetBtn) {
       var resetNum = resetBtn.getAttribute('data-lesson');
       clearLessonActivityState(resetNum);
-      var lessonToReset = findLessonByNum(currentDetailCourse, resetNum);
+      var resetCfg = findActivityConfig(resetNum);
       var oldEl = document.querySelector('.activity[data-lesson="' + resetNum + '"]');
-      if (lessonToReset && lessonToReset.activity && oldEl) {
-        oldEl.outerHTML = activityHtml(resetNum, lessonToReset.activity);
+      if (resetCfg && oldEl) {
+        oldEl.outerHTML = activityHtml(resetNum, resetCfg);
       }
       return;
     }
 
+    // Wheel-question options reuse .activity-quiz-opt for identical styling
+    // but live under .wheel-question, not .activity-quiz-q. Only handle
+    // the click here when it's an actual quiz question, so a wheel answer
+    // falls through to its own handler further down instead of being
+    // silently swallowed by this early return.
     var quizOpt = e.target.closest('.activity-quiz-opt');
-    if (quizOpt) {
+    if (quizOpt && quizOpt.closest('.activity-quiz-q')) {
       var qWrap = quizOpt.closest('.activity-quiz-q');
-      if (qWrap && !qWrap.classList.contains('is-answered')) {
+      if (!qWrap.classList.contains('is-answered')) {
         var correctIdx = Number(qWrap.getAttribute('data-correct'));
         var pickedIdx = Number(quizOpt.getAttribute('data-opt'));
         qWrap.classList.add('is-answered');
@@ -1441,6 +1647,83 @@
       return;
     }
 
+    // --- Word bank: click (or drag, handled in pointer events below) a
+    // chip to pick it up, then click a blank to drop it there. Clicking a
+    // filled blank pops its word back to the bank. ---
+    var wbChip = e.target.closest('.wb-chip');
+    if (wbChip && !wbChip.disabled) {
+      var wbActivityEl = wbChip.closest('.activity');
+      var wbLessonNum = wbActivityEl.getAttribute('data-lesson');
+      var chipIdx = Number(wbChip.getAttribute('data-chip'));
+      if (wbSelectedChip && wbSelectedChip.chipIdx === chipIdx && wbSelectedChip.lessonNum === wbLessonNum) {
+        clearWbSelection();
+      } else {
+        clearWbSelection();
+        wbChip.classList.add('is-selected');
+        wbSelectedChip = { lessonNum: wbLessonNum, chipIdx: chipIdx, el: wbChip };
+      }
+      return;
+    }
+
+    var wbBlank = e.target.closest('.wb-blank');
+    if (wbBlank) {
+      var wbActivityEl2 = wbBlank.closest('.activity');
+      var wbLessonNum2 = wbActivityEl2.getAttribute('data-lesson');
+      var blankIdx = Number(wbBlank.getAttribute('data-blank'));
+      var wbState = getLessonActivityState(wbLessonNum2);
+      var filled = wbState.filled || {};
+      var wbCfg = findActivityConfig(wbLessonNum2);
+      if (!wbCfg) return;
+      if (filled[blankIdx] !== undefined) {
+        delete filled[blankIdx];
+        saveLessonActivityState(wbLessonNum2, { filled: filled, checked: false });
+        clearWbSelection();
+        wbActivityEl2.outerHTML = activityHtml(wbLessonNum2, wbCfg);
+      } else if (wbSelectedChip && wbSelectedChip.lessonNum === wbLessonNum2) {
+        filled[blankIdx] = wbSelectedChip.chipIdx;
+        saveLessonActivityState(wbLessonNum2, { filled: filled, checked: false, done: true });
+        clearWbSelection();
+        wbActivityEl2.outerHTML = activityHtml(wbLessonNum2, wbCfg);
+      }
+      return;
+    }
+
+    // --- Spin the wheel, and answer whichever question it lands on ---
+    var wheelSpinBtn = e.target.closest('.activity-wheel-spin-btn');
+    if (wheelSpinBtn) {
+      spinWheel(wheelSpinBtn.closest('.activity'));
+      return;
+    }
+
+    var wheelOpt = e.target.closest('[data-wheel-opt]');
+    if (wheelOpt && !wheelOpt.disabled) {
+      var wqWrap = wheelOpt.closest('.wheel-question');
+      var wheelActivityEl = wheelOpt.closest('.activity');
+      var wheelLessonNum = wheelActivityEl.getAttribute('data-lesson');
+      var segIdx = Number(wqWrap.getAttribute('data-seg'));
+      var wheelCfg = findActivityConfig(wheelLessonNum);
+      if (!wheelCfg) return;
+      var segCfg = wheelCfg.segments[segIdx];
+      var wheelState = getLessonActivityState(wheelLessonNum);
+      var answeredMap = wheelState.answered || {};
+      if (answeredMap[segIdx] !== undefined) return;
+      var wheelPickedIdx = Number(wheelOpt.getAttribute('data-wheel-opt'));
+      answeredMap[segIdx] = wheelPickedIdx;
+      saveLessonActivityState(wheelLessonNum, { answered: answeredMap, done: true });
+      if (wheelPickedIdx === segCfg.correct) {
+        playFeedback(wheelOpt, 'anim-pop');
+        launchConfetti(wheelOpt, { count: 30 });
+      } else {
+        playFeedback(wheelOpt, 'anim-shake');
+      }
+      setTimeout(function () {
+        var el = document.querySelector('.activity[data-lesson="' + wheelLessonNum + '"]');
+        var freshCfg = findActivityConfig(wheelLessonNum);
+        if (el && freshCfg) el.outerHTML = activityHtml(wheelLessonNum, freshCfg);
+      }, 420);
+      return;
+    }
+
     var checkBtn = e.target.closest('[data-check]');
     if (checkBtn) {
       var kind = checkBtn.getAttribute('data-check');
@@ -1452,6 +1735,7 @@
       else if (kind === 'allocator-budget') checkAllocatorBudget(checkBtn, lessonNumC);
       else if (kind === 'allocator-calc') checkAllocatorCalc(checkBtn, lessonNumC);
       else if (kind === 'checklist') checkChecklist(checkBtn, lessonNumC);
+      else if (kind === 'wordbank') checkWordbank(checkBtn, lessonNumC);
       else if (kind === 'builder') checkBuilder(checkBtn, lessonNumC);
       if (lessonNumC) markActivityDone(lessonNumC);
       return;
@@ -1561,11 +1845,48 @@
 
   // Real drag-to-reorder for sequence cards, on top of the up/down buttons
   // (which stay for keyboard/accessibility). Pointer Events cover mouse and
-  // touch in one code path — classic "sortable list" swap-on-crossing-the-
+  // touch in one code path: classic "sortable list" swap-on-crossing-the-
   // midpoint, not HTML5 native drag (which touch devices don't support).
   var seqDrag = null; // { item, list, startY, startTop, moved }
+  var wbDrag = null; // { chip, activityEl, lessonNum, chipIdx, startX, startY, moved }
+  var wbSelectedChip = null; // { lessonNum, chipIdx, el }: click-to-pick-up, click-to-place
+
+  function clearWbSelection() {
+    if (wbSelectedChip && wbSelectedChip.el) wbSelectedChip.el.classList.remove('is-selected');
+    wbSelectedChip = null;
+  }
+
+  function placeChipInBlank(lessonNum, blankIdx, chipIdx) {
+    var state = getLessonActivityState(lessonNum);
+    var filled = state.filled || {};
+    filled[blankIdx] = chipIdx;
+    saveLessonActivityState(lessonNum, { filled: filled, checked: false, done: true });
+    var cfg = findActivityConfig(lessonNum);
+    var el = document.querySelector('.activity[data-lesson="' + lessonNum + '"]');
+    if (cfg && el) el.outerHTML = activityHtml(lessonNum, cfg);
+  }
+
   document.addEventListener('pointerdown', function (e) {
     if (e.button !== undefined && e.button !== 0) return;
+
+    var chip = e.target.closest('.wb-chip');
+    if (chip && !chip.disabled) {
+      var wbActivityEl = chip.closest('.activity');
+      wbDrag = {
+        chip: chip,
+        activityEl: wbActivityEl,
+        lessonNum: wbActivityEl.getAttribute('data-lesson'),
+        chipIdx: Number(chip.getAttribute('data-chip')),
+        startX: e.clientX,
+        startY: e.clientY,
+        moved: false,
+      };
+      try {
+        chip.setPointerCapture(e.pointerId);
+      } catch (err) {}
+      return;
+    }
+
     var item = e.target.closest('.activity-seq-item');
     if (!item || e.target.closest('.activity-seq-move')) return;
     var list = item.closest('.activity-seq-list');
@@ -1577,6 +1898,15 @@
   });
 
   document.addEventListener('pointermove', function (e) {
+    if (wbDrag) {
+      var dx = e.clientX - wbDrag.startX;
+      var dy2 = e.clientY - wbDrag.startY;
+      if (!wbDrag.moved && Math.abs(dx) < 4 && Math.abs(dy2) < 4) return;
+      wbDrag.moved = true;
+      wbDrag.chip.classList.add('is-dragging');
+      wbDrag.chip.style.transform = 'translate(' + dx + 'px, ' + dy2 + 'px)';
+      return;
+    }
     if (!seqDrag) return;
     var dy = e.clientY - seqDrag.startY;
     if (!seqDrag.moved && Math.abs(dy) < 4) return;
@@ -1599,7 +1929,28 @@
     }
   });
 
-  function endSeqDrag() {
+  function endSeqDrag(e) {
+    if (wbDrag) {
+      wbDrag.chip.classList.remove('is-dragging');
+      wbDrag.chip.style.transform = '';
+      if (wbDrag.moved) {
+        var target = document.elementFromPoint(e.clientX, e.clientY);
+        var blank = target && target.closest ? target.closest('.wb-blank') : null;
+        if (blank && blank.closest('.activity') === wbDrag.activityEl) {
+          var blankIdx = Number(blank.getAttribute('data-blank'));
+          var curState = getLessonActivityState(wbDrag.lessonNum);
+          var curFilled = curState.filled || {};
+          if (curFilled[blankIdx] === undefined) {
+            placeChipInBlank(wbDrag.lessonNum, blankIdx, wbDrag.chipIdx);
+          }
+        }
+        // A real drag just happened; drop any pending tap-to-select state
+        // so the next click doesn't act on a stale selection.
+        clearWbSelection();
+      }
+      wbDrag = null;
+      return;
+    }
     if (!seqDrag) return;
     seqDrag.item.classList.remove('is-dragging');
     seqDrag.item.style.transform = '';
@@ -1780,6 +2131,61 @@
       p.hidden = false;
     });
     saveLessonActivityState(lessonNum, { values: values, revealed: true });
+  }
+
+  function checkWordbank(btn, lessonNum) {
+    var wrap = btn.closest('.activity');
+    var cfg = findActivityConfig(lessonNum);
+    if (!cfg) return;
+    var state = getLessonActivityState(lessonNum);
+    var filled = state.filled || {};
+    var bankWords = (cfg.blanks || []).concat(cfg.distractors || []);
+    var bankOrder = state.bankOrder || [];
+    var total = (cfg.blanks || []).length;
+    var right = 0;
+    Object.keys(filled).forEach(function (bi) {
+      var word = bankWords[bankOrder[filled[bi]]];
+      if (word === cfg.blanks[Number(bi)]) right++;
+    });
+    saveLessonActivityState(lessonNum, { checked: true, done: true });
+    if (right === total) launchConfetti(wrap, { count: 46 });
+    wrap.outerHTML = activityHtml(lessonNum, cfg);
+  }
+
+  // Spins to a random segment, landing via an accumulated rotation so each
+  // spin continues smoothly from wherever the dial last stopped.
+  function spinWheel(activityEl) {
+    var dial = activityEl.querySelector('.wheel-dial');
+    if (!dial || dial.classList.contains('is-spinning')) return;
+    var lessonNum = activityEl.getAttribute('data-lesson');
+    var cfg = findActivityConfig(lessonNum);
+    if (!cfg || !cfg.segments || !cfg.segments.length) return;
+    var n = cfg.segments.length;
+    var segAngle = 360 / n;
+    var idx = Math.floor(Math.random() * n);
+    var current = Number(dial.getAttribute('data-rotation')) || 0;
+    var centerAngle = idx * segAngle + segAngle / 2;
+    var currentMod = ((current % 360) + 360) % 360;
+    var deltaToTarget = ((360 - centerAngle) - currentMod + 360) % 360;
+    var extraSpins = 5 * 360 + Math.floor(Math.random() * 3) * 360;
+    var target = current + extraSpins + deltaToTarget;
+
+    dial.classList.add('is-spinning');
+    dial.style.transition = 'transform 3.2s cubic-bezier(0.17, 0.67, 0.17, 1)';
+    dial.style.transform = 'rotate(' + target + 'deg)';
+    dial.setAttribute('data-rotation', target);
+    var spinBtn = activityEl.querySelector('.activity-wheel-spin-btn');
+    if (spinBtn) {
+      spinBtn.disabled = true;
+      spinBtn.textContent = 'Spinning…';
+    }
+
+    setTimeout(function () {
+      saveLessonActivityState(lessonNum, { rotation: target, landedIndex: idx, done: true });
+      var freshCfg = findActivityConfig(lessonNum);
+      var el = document.querySelector('.activity[data-lesson="' + lessonNum + '"]');
+      if (el && freshCfg) el.outerHTML = activityHtml(lessonNum, freshCfg);
+    }, 3300);
   }
 
   if (detailBack) {
