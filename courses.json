@@ -860,91 +860,283 @@
       "wordbank": {
         "kind": "wordbank",
         "prompt": "Drag each word into its blank. These pull from every module in the course.",
-        "template": "A great hook has to win the scroll in about three {0}. The direct-response structure every script follows is Hook, Agitate, Bridge, Offer, {1}. When a shadow looks harsh, {2} usually fixes it faster than moving the light. A retention graph shows you exactly where a viewer got {3} and left. Every UGC contract needs a {4} fee clause, or a cancelled job could pay you nothing.",
+        "template": "A great hook has to win the scroll in about three {0}. The direct-response structure every script follows is Hook, Agitate, Bridge, Offer, {1}. When a shadow looks harsh, {2} usually fixes it faster than moving the light. A retention graph shows you exactly where a viewer got {3} and left. Every UGC contract needs a {4} fee clause, or a cancelled job could pay you nothing. Views measure reach, but {5} and shares are what show a video actually connected. A brand running your video as a paid ad needs separate {6} terms, not just an organic repost. On a live shopping stream, the offer and urgency repeat the whole time instead of just {7}. Posting your own content regularly is proof of your style and consistency, which is why a real personal {8} tends to book more client work.",
         "blanks": [
           "seconds",
           "CTA",
           "diffusion",
           "bored",
-          "kill"
+          "kill",
+          "comments",
+          "whitelisting",
+          "once",
+          "brand"
         ],
         "distractors": [
           "minutes",
           "Bridge",
           "brightness",
           "excited",
-          "usage"
+          "usage",
+          "likes",
+          "organic",
+          "twice",
+          "following"
         ]
       },
       "wheel": {
         "kind": "wheel",
-        "prompt": "Spin to review. It skips topics you've already nailed and keeps retesting the ones you got wrong, until all 6 are cleared.",
+        "prompt": "Spin to review. It skips topics you've already nailed and keeps retesting the ones you got wrong, so every spin makes real progress.",
         "segments": [
           {
             "label": "Blueprint",
-            "q": "Which studio tier did the course price at roughly \u00a3600 / $760?",
-            "options": [
-              "Starter",
-              "Working Pro",
-              "Studio"
-            ],
-            "correct": 1,
-            "explain": "Working Pro is the mid-tier, the point where gear stops being the bottleneck for most creators."
+            "questions": [
+              {
+                "q": "Which studio tier did the course price at roughly \u00a3600 / $760?",
+                "options": [
+                  "Starter",
+                  "Working Pro",
+                  "Studio"
+                ],
+                "correct": 1,
+                "explain": "Working Pro is the mid-tier, the point where gear stops being the bottleneck for most creators."
+              },
+              {
+                "q": "In the 8-step production workflow, what should you confirm in writing before you even draft a script?",
+                "options": [
+                  "The final invoice amount",
+                  "Usage rights, deadline, and revision count",
+                  "Which platform the client prefers"
+                ],
+                "correct": 1,
+                "explain": "Usage rights, deadline, and revision count. Getting this in writing before you draft anything is what prevents scope-creep and payment disputes later."
+              }
+            ]
           },
           {
             "label": "Hooks",
-            "q": "How long does a viewer's scroll-stop decision actually take?",
-            "options": [
-              "About 10 seconds",
-              "About 3 seconds",
-              "Under 1 second"
-            ],
-            "correct": 2,
-            "explain": "Under a second. That's why the first frame matters more than the first sentence."
+            "questions": [
+              {
+                "q": "How long does a viewer's scroll-stop decision actually take?",
+                "options": [
+                  "About 10 seconds",
+                  "About 3 seconds",
+                  "Under 1 second"
+                ],
+                "correct": 2,
+                "explain": "Under a second. That's why the first frame matters more than the first sentence."
+              },
+              {
+                "q": "Which lever does a \u201cPOV: you just found out...\u201d hook use?",
+                "options": [
+                  "Bold Claim",
+                  "Relatable POV",
+                  "Direct Callout"
+                ],
+                "correct": 1,
+                "explain": "Relatable POV. It puts the viewer directly inside a scenario they recognize, a different mechanism than a claim or a direct callout."
+              }
+            ]
           },
           {
             "label": "Scripts",
-            "q": "What comes right after \u201cAgitate\u201d in the Hook, Agitate, Bridge, Offer, CTA structure?",
-            "options": [
-              "Offer",
-              "Bridge",
-              "CTA"
-            ],
-            "correct": 1,
-            "explain": "Bridge is the pivot, it moves from the problem into your product as the solution."
+            "questions": [
+              {
+                "q": "What comes right after \u201cAgitate\u201d in the Hook, Agitate, Bridge, Offer, CTA structure?",
+                "options": [
+                  "Offer",
+                  "Bridge",
+                  "CTA"
+                ],
+                "correct": 1,
+                "explain": "Bridge is the pivot, it moves from the problem into your product as the solution."
+              },
+              {
+                "q": "Which CTA type is built for a viewer who's already sold and just needs the next step?",
+                "options": [
+                  "Curiosity-Loop",
+                  "Direct-Command",
+                  "Risk-Reversal"
+                ],
+                "correct": 1,
+                "explain": "Direct-Command. Once someone's convinced, telling them exactly what to do next removes friction instead of adding more convincing."
+              }
+            ]
           },
           {
-            "label": "Production",
-            "q": "What's the minimum number of angles the course says a single b-roll beat needs?",
-            "options": [
-              "1",
-              "2",
-              "3"
-            ],
-            "correct": 2,
-            "explain": "Three angles minimum, so an editor actually has something to cut between."
+            "label": "Filming",
+            "questions": [
+              {
+                "q": "What's the minimum number of angles the course says a single b-roll beat needs?",
+                "options": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "correct": 2,
+                "explain": "Three angles minimum, so an editor actually has something to cut between."
+              },
+              {
+                "q": "What's the fix for a shot where the subject blends into an equally-bright background?",
+                "options": [
+                  "Add more key light",
+                  "Add separation by dimming or moving the background light",
+                  "Switch to a wider lens"
+                ],
+                "correct": 1,
+                "explain": "Separation. Without a brightness gap between subject and background, the shot reads flat no matter the angle."
+              }
+            ]
           },
           {
             "label": "Editing",
-            "q": "What does a steep drop in the first 3 seconds of a retention graph usually mean?",
-            "options": [
-              "The edit paced well",
-              "The hook didn't land",
-              "The captions were too small"
-            ],
-            "correct": 1,
-            "explain": "A steep early drop almost always traces back to a weak or missing hook."
+            "questions": [
+              {
+                "q": "What does a steep drop in the first 3 seconds of a retention graph usually mean?",
+                "options": [
+                  "The edit paced well",
+                  "The hook didn't land",
+                  "The captions were too small"
+                ],
+                "correct": 1,
+                "explain": "A steep early drop almost always traces back to a weak or missing hook."
+              },
+              {
+                "q": "What's the fastest way to clean up CapCut's auto-captions to broadcast quality?",
+                "options": [
+                  "Re-type every caption from scratch",
+                  "Fix the wrong words, then apply keyword emphasis to the ones that matter",
+                  "Turn captions off"
+                ],
+                "correct": 1,
+                "explain": "Auto-captions get you 90% there. Fixing the misheard words and adding keyword emphasis takes them the rest of the way, far faster than retyping."
+              }
+            ]
           },
           {
             "label": "Business",
-            "q": "Which contract clause protects you if a client cancels the job halfway through?",
-            "options": [
-              "Revision limit",
-              "Kill fee",
-              "Usage scope"
-            ],
-            "correct": 1,
-            "explain": "A kill fee means a cancelled job still pays you something for the work already done."
+            "questions": [
+              {
+                "q": "Which contract clause protects you if a client cancels the job halfway through?",
+                "options": [
+                  "Revision limit",
+                  "Kill fee",
+                  "Usage scope"
+                ],
+                "correct": 1,
+                "explain": "A kill fee means a cancelled job still pays you something for the work already done."
+              },
+              {
+                "q": "What's the fastest way to kill a cold pitch before it's even read?",
+                "options": [
+                  "A specific, researched first line",
+                  "A generic subject line and greeting",
+                  "Attaching a rate card"
+                ],
+                "correct": 1,
+                "explain": "A generic subject line and greeting reads as a mass email, and most inboxes never make it past that first glance."
+              }
+            ]
+          },
+          {
+            "label": "Analytics",
+            "questions": [
+              {
+                "q": "A video has huge views but almost no comments, saves, or shares. What does that usually mean?",
+                "options": [
+                  "It's a top performer",
+                  "It got seen but didn't actually connect",
+                  "The algorithm is broken"
+                ],
+                "correct": 1,
+                "explain": "Views alone measure reach, not resonance. Comments, saves, and shares are what show the content actually landed."
+              },
+              {
+                "q": "For a direct-response client ad, which single metric matters most?",
+                "options": [
+                  "Follower growth",
+                  "Conversion rate",
+                  "Total watch time across all videos"
+                ],
+                "correct": 1,
+                "explain": "Direct-response is about action, not attention. Conversion ties straight back to what the client is actually paying for."
+              }
+            ]
+          },
+          {
+            "label": "Rights",
+            "questions": [
+              {
+                "q": "A brand wants to run your video as a paid ad, not just repost it organically. What does that require?",
+                "options": [
+                  "Nothing extra, organic usage covers it",
+                  "Separate whitelisting/paid-usage terms and compensation",
+                  "Just crediting you in the caption"
+                ],
+                "correct": 1,
+                "explain": "Paid usage (ad-spend running behind your content) is a separate right from organic reposting, and it's priced separately."
+              },
+              {
+                "q": "A contract says usage is \u201cworldwide, all platforms, in perpetuity\u201d with no extra pay for it. What is that?",
+                "options": [
+                  "Standard and fine to sign",
+                  "A red flag, usage this broad should cost more or have a term limit",
+                  "Required by law"
+                ],
+                "correct": 1,
+                "explain": "Unlimited usage forever is one of the broadest asks a brand can make. If it's not priced or time-limited, it's worth pushing back on."
+              }
+            ]
+          },
+          {
+            "label": "Live Sales",
+            "questions": [
+              {
+                "q": "What's the main pacing difference between a scripted UGC video and a live shopping stream?",
+                "options": [
+                  "No difference, same structure works for both",
+                  "Live selling repeats the offer and urgency continuously, not once at the end",
+                  "Live streams should never mention price"
+                ],
+                "correct": 1,
+                "explain": "A static video pitches once. A live stream has to keep re-hooking new viewers who join mid-stream, so the offer repeats constantly."
+              },
+              {
+                "q": "How do most creators get paid for TikTok Shop / affiliate live selling?",
+                "options": [
+                  "A flat day rate only",
+                  "A commission on what actually sells through their link or stream",
+                  "Payment isn't possible on these platforms"
+                ],
+                "correct": 1,
+                "explain": "Affiliate commission tied to actual sales is the core model, on top of any flat fee a brand may add for a dedicated live session."
+              }
+            ]
+          },
+          {
+            "label": "Branding",
+            "questions": [
+              {
+                "q": "Why do creators who post their own content regularly tend to book more client work?",
+                "options": [
+                  "It doesn't actually affect bookings",
+                  "Brands can see real proof of their style and consistency, not just a reel",
+                  "Personal content counts as free client work"
+                ],
+                "correct": 1,
+                "explain": "A personal feed is proof you can produce content on your own, consistently. Brands read that as lower risk than a portfolio of one-off jobs."
+              },
+              {
+                "q": "What's a content pillar?",
+                "options": [
+                  "A single viral video",
+                  "A recurring topic or format you're known for, so your feed isn't random",
+                  "A paid promotion slot"
+                ],
+                "correct": 1,
+                "explain": "Pillars are the 2-3 recurring themes that make an audience know what to expect from you, which turns random viewers into followers."
+              }
+            ]
           }
         ]
       }
