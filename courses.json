@@ -21,7 +21,7 @@
             "num": "1.01",
             "title": "What \"Elite\" Actually Means in UGC",
             "overview": "Here's the lesson that saves you a year of guessing: UGC isn't \u201chold phone, talk to camera.\u201d It's a performance job. Brands don't rehire you because they liked you. They rehire you because your numbers did something. This lesson breaks down exactly what separates a one-off gig from a real retainer: reliability, brand-safety instincts, and shooting for the edit instead of just filming.",
-            "interactive": "Live teardown: students score 3 real UGC ads (amateur / competent / elite) on a 10-point Brief Fit / Hookiness / Editability rubric before the real performance data is revealed.",
+            "interactive": "Score 3 example ads (amateur, competent, elite) against a 10-point Brief Fit / Hookiness / Editability rubric, then compare your scores to how ClickClick's team would call it.",
             "deliverable": "Submit your 3 completed scorecards plus one paragraph naming the biggest gap between your instinct-score and the revealed score.",
             "activity": {
               "kind": "rubric",
@@ -54,7 +54,7 @@
             "num": "1.02",
             "title": "The Creator Workflow: Brief to Delivery",
             "overview": "Every missed deadline and every awkward client email traces back to the same broken step. This lesson walks the full pipeline a working creator runs on every paid job: brief, script, shot list, filming day, footage triage, delivery, and shows you exactly where it usually breaks. (Spoiler: it's almost always the shot list.)",
-            "interactive": "Card-sort exercise: students receive a real (anonymized) client brief and sequence an 8-step production checklist into the correct order.",
+            "interactive": "Take an 8-step production checklist and put it in the order you'd actually run it on a real job.",
             "deliverable": "Upload your completed checklist sequence and your own one-page \"Creator SOP\": the exact steps you commit to running on every job.",
             "activity": {
               "kind": "sequence",
@@ -75,7 +75,7 @@
             "num": "1.03",
             "title": "Building the Ultimate Home Studio, on Any Budget",
             "overview": "You don't need a studio to shoot like a pro, but the wrong gear will quietly cap everything you make. This lesson covers three real tiers, Starter (\u00a3150 / $190), Working Pro (\u00a3600 / $760), Studio (\u00a32,000+ / $2,500+), across lighting, audio, mounting, and background, and tells you straight which upgrade actually moves the needle for your kind of content.",
-            "interactive": "Budget simulator: students allocate a fixed \u00a3250 / $320 across a provided gear menu, then compare their build against two working creators' real kit lists.",
+            "interactive": "Allocate a fixed \u00a3250 / $320 across a gear menu, then compare your build against a model allocation.",
             "deliverable": "Submit your gear-allocation sheet plus a photo of your current setup, marked up with what you'd change first and why.",
             "activity": {
               "kind": "allocator",
@@ -115,7 +115,7 @@
             "num": "1.04",
             "title": "Your Creator Operating System",
             "overview": "This is the boring lesson that quietly decides whether you last a year in this or burn out by month three. Calendar, deal tracker, invoice template, file-naming convention: the unglamorous system that lets you scale instead of re-inventing your process on every single job.",
-            "interactive": "Template sprint: students take the provided deal-tracker and footage-naming templates and adapt them live to their own niche and file structure.",
+            "interactive": "Take the deal-tracker and footage-naming templates and adapt them to your own niche and file structure.",
             "deliverable": "Upload a screenshot of your customized deal tracker with at least 2 entries, and your finalized file-naming convention written out in full.",
             "activity": {
               "kind": "builder",
@@ -144,7 +144,7 @@
             "num": "2.01",
             "title": "The Psychology of the First 3 Seconds",
             "overview": "A thumb decides to stop scrolling before your brain even finishes the sentence you're saying. This lesson is the psychology behind that decision: four levers (curiosity gap, pattern interrupt, stakes, relatability) that force a thumb to stop moving, on command.",
-            "interactive": "Hook A/B simulator: students see two muted first-frames back to back and predict which outperformed in real ad data, then see the actual retention-graph result.",
+            "interactive": "See two openings back to back, predict which one would stop the scroll, then see the reasoning behind the answer.",
             "deliverable": "Submit your 5 predictions with accuracy score, and a written breakdown of the lever the top-performing hook used.",
             "activity": {
               "kind": "quiz",
@@ -184,7 +184,7 @@
             "num": "2.02",
             "title": "Hook Autopsy: 20 Viral Hooks, Broken Down",
             "overview": "Twenty hooks that actually worked, cut open and laid out flat. This is a structured teardown across beauty, tech, food, and fitness, sorted into the 6 archetypes that cover almost everything that scroll-stops: Problem-Agitate, Bold Claim, Relatable POV, Visual Pattern-Interrupt, Story Cold-Open, Direct Callout. Once you see the pattern, you can't unsee it.",
-            "interactive": "Live tagging exercise: students tag all 20 hooks against the 6-archetype key in a shared sheet, then compare against the instructor's answer key with rationale.",
+            "interactive": "Tag each hook line against the 6-archetype key, then check your answers with the reasoning behind each one.",
             "deliverable": "Upload your completed tagging sheet with your accuracy score, plus 3 hooks you'd personally steal-and-adapt for a ClickClick client.",
             "activity": {
               "kind": "match",
@@ -229,7 +229,7 @@
             "num": "2.03",
             "title": "The Pattern-Interrupt Scripting Framework",
             "overview": "Staring at a blank page is where most hooks die. This lesson kills that problem for good with a repeatable 4-line formula: Interrupt \u2192 Stakes \u2192 Promise \u2192 Proof-Tease, plus a bank of 30 fill-in-the-blank openers sorted by niche, so you're never starting from nothing again.",
-            "interactive": "Guided builder: students plug a real product (their own or assigned) into the 4-line formula, generating 3 full hook variants live in class.",
+            "interactive": "Plug a real product (yours or a given one) into the 4-line formula and build your own hook, then compare it against a worked example.",
             "deliverable": "Submit your 3 hook variants written out in full, each line labeled with the formula slot it fills.",
             "activity": {
               "kind": "builder",
@@ -262,7 +262,7 @@
             "num": "2.04",
             "title": "Hook Writing Sprint & Peer Review",
             "overview": "Twelve minutes. Eight hooks. One product you didn't pick. This lesson puts you under the same pressure a real job does, then hands your work to peer review: the fastest, cheapest way to find out your instincts are off before a client's actual budget finds out for you.",
-            "interactive": "Live peer-review circle: students post their 8 hooks to a shared board, score 3 classmates against the Module rubric, and leave one specific, actionable note each.",
+            "interactive": "Run your own 8 sprint hooks through this checklist before you post any of them.",
             "deliverable": "Upload your 8 sprint hooks, your 3 completed peer reviews, and your self-selected top 2 to carry into Module 3.",
             "activity": {
               "kind": "checklist",
@@ -294,7 +294,7 @@
             "num": "3.01",
             "title": "Direct-Response Fundamentals for Short-Form",
             "overview": "Stop writing movie scripts. A UGC script is a direct-response sales letter that's been shrunk down to 30 seconds, and it has a structure whether you've noticed it or not. This lesson maps Hook \u2192 Agitate \u2192 Bridge \u2192 Offer \u2192 CTA onto real short-form pacing so you can build one on purpose instead of by accident.",
-            "interactive": "Structure-labeling exercise: students receive 5 full scripts with structure stripped out and re-annotate every line to its role.",
+            "interactive": "Label each line of a real script to its role in the Hook, Agitate, Bridge, Offer, CTA structure.",
             "deliverable": "Submit your 5 annotated scripts, plus one line naming the structural mistake you catch most often in your own past work.",
             "activity": {
               "kind": "match",
@@ -334,7 +334,7 @@
             "num": "3.02",
             "title": "Value Propositions & Benefit Stacking",
             "overview": "\u201c12-hour battery\u201d is a spec. \u201cNever dies mid-shift\u201d is a reason to buy. This lesson lives in that gap, and shows you how to stack three real benefits inside 10 seconds without the script starting to sound like you're reading off the box.",
-            "interactive": "Timed translation drill: students take 10 raw product features from real (anonymized) spec sheets and rewrite each as a benefit line against the clock.",
+            "interactive": "Translate raw product features into benefit lines, against the clock.",
             "deliverable": "Upload your 10 translated lines and your strongest 3-benefit stack, submitted as a ready-to-read script excerpt.",
             "activity": {
               "kind": "builder",
@@ -362,8 +362,8 @@
             "num": "3.03",
             "title": "Writing CTAs That Actually Convert",
             "overview": "\u201cLink in bio\u201d is the single most wasted line in short-form video: it's your last chance to move someone, spent on nothing. This lesson gives you 5 real CTA types (Urgency, Social-Proof-Close, Risk-Reversal, Curiosity-Loop, Direct-Command) and exactly which funnel stage each one is built to close.",
-            "interactive": "CTA-swap lab: students write 5 different endings, one per type, for one fixed script body, then the class votes on which they'd actually click.",
-            "deliverable": "Submit your 5 CTA variants labeled by type, with the class-vote winner marked and one sentence on why it won.",
+            "interactive": "Match each CTA type to the funnel stage it's actually built to close.",
+            "deliverable": "Submit your 5 CTA variants labeled by type, with your own pick marked and one sentence on why it fits.",
             "activity": {
               "kind": "quiz",
               "prompt": "Pick the CTA type built for each funnel stage.",
@@ -405,7 +405,7 @@
             "num": "3.04",
             "title": "Full Script Assembly: Hook to CTA",
             "overview": "Everything from the last two modules comes together here: one complete, production-ready 30\u201345 second script, for a real or assigned product, timed against a stopwatch instead of a word count. This is the script you'll actually shoot.",
-            "interactive": "Live table-read: students perform a spoken read-through of their draft against a stopwatch to catch pacing issues text alone hides, then revise on the spot.",
+            "interactive": "Read your script out loud against a stopwatch, so you catch pacing issues text alone hides.",
             "deliverable": "Upload your final written script plus a voice-memo table-read, timed and under the 45-second cap.",
             "activity": {
               "kind": "checklist",
@@ -437,7 +437,7 @@
             "num": "4.01",
             "title": "Lighting on a Budget",
             "overview": "A great script filmed under bad light still looks like it was shot for free. This lesson adapts 3-point lighting for a bedroom or kitchen (one window, one cheap LED panel, one bounce card) and names the 4 lighting mistakes that quietly make even strong work look unpaid.",
-            "interactive": "Diagnosis gallery: students view 8 badly-lit clips and diagnose the specific fix (angle, colour temp, diffusion, position) for each before the answer is revealed.",
+            "interactive": "Diagnose the specific fix (angle, colour temp, diffusion, position) for four common lighting problems.",
             "deliverable": "Film and upload a 10-second test clip using only natural light plus one bounce card, applying the fix from your weakest diagnosis.",
             "activity": {
               "kind": "quiz",
@@ -490,7 +490,7 @@
             "num": "4.02",
             "title": "Framing, Angles & Camera Movement",
             "overview": "Six shot types cover almost every UGC video you'll ever film: talking-head medium, close-up reaction, POV hand-shot, over-shoulder demo, static product hero, walk-and-talk. Learn them on command and you'll never stand in a room wondering what to film next.",
-            "interactive": "Shot-matching challenge: students assign the correct shot type to every line of a rough script using the provided reference card.",
+            "interactive": "Assign the correct shot type to every line of a rough script.",
             "deliverable": "Submit your shot-annotated script, then film and upload one example each of your 2 weakest shot types.",
             "activity": {
               "kind": "match",
@@ -535,7 +535,7 @@
             "num": "4.03",
             "title": "Capturing Aesthetic, Real-Life Product B-Roll",
             "overview": "This is the skill the whole course is really built around. Not filming a product, making it look like it already belongs in someone's real, lived-in life instead of staged on a white table. Composition, prop-styling with stuff you already own, and the 3-angle-minimum rule for every beat of b-roll.",
-            "interactive": "Shot-list build: students build a 6-shot b-roll list for an assigned product using the provided environment and prop-styling checklist, before filming.",
+            "interactive": "Build a 6-shot b-roll list before you film, covering at least 3 different angle types.",
             "deliverable": "Film and upload your full 6-shot b-roll sequence of a real product in a real, lived-in setting: kitchen, desk, bathroom counter, car. No white background.",
             "activity": {
               "kind": "checklist",
@@ -591,7 +591,7 @@
             "num": "4.04",
             "title": "The Multi-Shot Product Story",
             "overview": "Individual shots are just footage. Sequenced right (context \u2192 interaction \u2192 payoff) they become a story that carries the script instead of just filling dead air. This is the exact skill that turns \u201cfootage\u201d into \u201ca cut.\u201d",
-            "interactive": "Sequencing lab: students arrange 8 unordered provided b-roll clips into the strongest 5-shot narrative order, then compare against the instructor's cut.",
+            "interactive": "Arrange 8 b-roll shots into the strongest context, interaction, payoff order.",
             "deliverable": "Upload your own filmed sequence, built from your 4.03 footage, edited into a 15\u201320 second silent story cut.",
             "activity": {
               "kind": "sequence",
@@ -618,7 +618,7 @@
             "num": "5.01",
             "title": "Timeline Pacing & the Retention Curve",
             "overview": "A retention graph doesn't lie. It shows you the exact second someone got bored and left. This lesson teaches you to read one and reverse-engineer the edit decisions, cut length, and moment placement that caused every drop.",
-            "interactive": "Retention-graph matching: students match 4 retention curves to 4 finished edits and identify the exact timestamp of the steepest drop in each.",
+            "interactive": "Match 4 retention curves to the edit style that caused each one.",
             "deliverable": "Submit your 4 matches with reasoning, plus one edited 5-second segment from your own footage cut to under 2-second average shot length.",
             "activity": {
               "kind": "match",
@@ -653,7 +653,7 @@
             "num": "5.02",
             "title": "Jump Cuts & Visual Rhythm in CapCut",
             "overview": "This is hands-on, inside CapCut: clean jump-cut execution, J/L-cut audio bridging, and building a rhythm so your cuts feel intentional, not like you just chopped out the boring bits and hoped nobody noticed.",
-            "interactive": "Guided sandbox build: students follow a live screen-share build of a 15-second jump-cut sequence inside CapCut, then replicate it on their own footage.",
+            "interactive": "Confirm each step of your own jump-cut build in CapCut against a short checklist.",
             "deliverable": "Export and upload your own 15-second jump-cut edit, built from your Module 4 footage.",
             "activity": {
               "kind": "checklist",
@@ -679,7 +679,7 @@
             "num": "5.03",
             "title": "Dynamic Captioning That Holds Attention",
             "overview": "Static bottom-third captions are basically wallpaper. Nobody's attention holds on them. This lesson covers keyword emphasis, caption timing matched to speech rhythm, and how to clean up CapCut's auto-captions to broadcast quality, fast.",
-            "interactive": "Styling lab: students apply 3 different CapCut caption presets to the same clip and A/B their own attention on a blind rewatch.",
+            "interactive": "Match the right caption treatment to the scenario it's built for.",
             "deliverable": "Upload your final captioned edit with keyword emphasis applied to at least 5 words across the clip.",
             "activity": {
               "kind": "quiz",
@@ -712,7 +712,7 @@
             "num": "5.04",
             "title": "Sound Design for Scroll-Stopping Content",
             "overview": "Sound is the last 10% nobody notices until it's missing. This lesson layers trending audio, SFX whooshes and impacts right on the cut points, and a basic voice-EQ pass: the difference between an edit that feels professional and one that just feels homemade.",
-            "interactive": "Sound-layering sandbox: students add one music bed, 3 SFX hits on cut points, and voice EQ to a provided template clip inside CapCut.",
+            "interactive": "Confirm your own sound design pass against a short checklist.",
             "deliverable": "Export and upload your fully sound-designed final edit: Module 4 b-roll, Module 3 script, and Module 5 editing, complete.",
             "activity": {
               "kind": "checklist",
@@ -741,7 +741,7 @@
             "num": "6.01",
             "title": "Building a Portfolio That Sells",
             "overview": "A brand decides whether to keep watching your reel in about 8 seconds, and most creators waste that window leading with their most recent clip instead of their strongest one. This lesson fixes that: what brands actually screen for, and how to structure a 5-video reel that leads with your best work, on purpose.",
-            "interactive": "Portfolio-order exercise: students select and order the strongest 5-clip reel from 8 sample clips, then compare against a brand buyer's real pick order.",
+            "interactive": "Pick and order your strongest 5-clip reel from 8 clips, the first 3 positions matter most.",
             "deliverable": "Upload your own 5-video portfolio reel, built entirely from work completed across this course.",
             "activity": {
               "kind": "sequence",
@@ -763,7 +763,7 @@
             "num": "6.02",
             "title": "Cold Outreach That Gets Replies",
             "overview": "Most cold pitches die unread. This lesson is the anatomy of the ones that don't: subject line, a first-line hook (yes, the same skill from Module 2, it works on brands too), research specific enough to prove you're not mass-emailing, and an ask with almost no friction.",
-            "interactive": "Pitch-rewrite drill: students rewrite 3 real weak cold pitches using the provided framework, then vote as a class on the strongest rewrite.",
+            "interactive": "Rewrite a weak cold-pitch opener using the framework, then compare it against a model rewrite.",
             "deliverable": "Submit one real cold pitch email, written for an actual brand you'd like to work with, ready to send.",
             "activity": {
               "kind": "builder",
@@ -781,7 +781,7 @@
             "num": "6.03",
             "title": "Pricing Your Work & Packaging Offers",
             "overview": "\u201cWhat should I charge?\u201d is the question that keeps creators broke for way longer than it should. This lesson replaces the guesswork with a real rate framework (usage rights, exclusivity, volume) and 3 ready-to-use package tiers: single-video, bundle, retainer, worked in both \u00a3 and $ so it travels with you.",
-            "interactive": "Rate-calculator walkthrough: students plug their experience level and a sample brief into the provided calculator to generate a defensible quote in \u00a3 or $.",
+            "interactive": "Plug your experience level and a sample brief into the calculator to generate a defensible quote in \u00a3 or $.",
             "deliverable": "Submit your calculated rate card across all 3 package tiers, in your own currency, with your reasoning for each price.",
             "activity": {
               "kind": "allocator",
@@ -823,7 +823,7 @@
             "num": "6.04",
             "title": "Contracts, Usage Rights & Getting Paid",
             "overview": "This is the lesson that actually gets you paid, or saves you from a client who was never going to pay you anyway. The 5 non-negotiable clauses every UGC contract needs: usage term, usage scope, revision limit, payment terms, kill fee, and the red flags that mean you walk, no matter how good the brand name looks.",
-            "interactive": "Red-flag hunt: students review a sample brand contract and flag every missing or unfavorable clause against the 5-clause checklist.",
+            "interactive": "Review a sample contract's clause list and flag every one that's missing or unfavorable.",
             "deliverable": "Submit your annotated red-flag list, plus your own filled-in contract template, ready to send to your next client: the course's final deliverable.",
             "activity": {
               "kind": "checklist",
