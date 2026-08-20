@@ -878,10 +878,10 @@
       },
       "wheel": {
         "kind": "wheel",
-        "prompt": "Spin for a random question pulled from one of the 6 modules.",
+        "prompt": "Spin to review. It skips topics you've already nailed and keeps retesting the ones you got wrong, until all 6 are cleared.",
         "segments": [
           {
-            "label": "Module 1",
+            "label": "Blueprint",
             "q": "Which studio tier did the course price at roughly \u00a3600 / $760?",
             "options": [
               "Starter",
@@ -892,7 +892,7 @@
             "explain": "Working Pro is the mid-tier, the point where gear stops being the bottleneck for most creators."
           },
           {
-            "label": "Module 2",
+            "label": "Hooks",
             "q": "How long does a viewer's scroll-stop decision actually take?",
             "options": [
               "About 10 seconds",
@@ -903,7 +903,7 @@
             "explain": "Under a second. That's why the first frame matters more than the first sentence."
           },
           {
-            "label": "Module 3",
+            "label": "Scripts",
             "q": "What comes right after \u201cAgitate\u201d in the Hook, Agitate, Bridge, Offer, CTA structure?",
             "options": [
               "Offer",
@@ -914,7 +914,7 @@
             "explain": "Bridge is the pivot, it moves from the problem into your product as the solution."
           },
           {
-            "label": "Module 4",
+            "label": "Production",
             "q": "What's the minimum number of angles the course says a single b-roll beat needs?",
             "options": [
               "1",
@@ -925,7 +925,7 @@
             "explain": "Three angles minimum, so an editor actually has something to cut between."
           },
           {
-            "label": "Module 5",
+            "label": "Editing",
             "q": "What does a steep drop in the first 3 seconds of a retention graph usually mean?",
             "options": [
               "The edit paced well",
@@ -936,7 +936,7 @@
             "explain": "A steep early drop almost always traces back to a weak or missing hook."
           },
           {
-            "label": "Module 6",
+            "label": "Business",
             "q": "Which contract clause protects you if a client cancels the job halfway through?",
             "options": [
               "Revision limit",

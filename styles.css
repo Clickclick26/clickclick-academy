@@ -1642,8 +1642,9 @@ input {
 
 .wb-blank {
   display: inline-block;
-  min-width: 74px;
-  padding: 0.08rem 0.55rem;
+  min-width: 82px;
+  min-height: 1.7em;
+  padding: 0.2rem 0.55rem;
   margin: 0 0.15rem;
   border-radius: 8px;
   background: var(--surface-soft);
@@ -1652,6 +1653,12 @@ input {
   color: var(--turquoise-deep);
   text-align: center;
   cursor: pointer;
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.wb-blank.is-drag-over {
+  background: rgba(0, 188, 212, 0.16);
+  box-shadow: inset 0 0 0 2px var(--turquoise);
 }
 
 .wb-blank.is-correct {
@@ -1720,10 +1727,17 @@ input {
   gap: 1rem;
 }
 
+.wheel-progress {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--mid);
+}
+
 .wheel-stage {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 240px;
+  height: 240px;
 }
 
 .wheel-dial {

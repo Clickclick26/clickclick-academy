@@ -917,12 +917,40 @@
   // wherever it last stopped rather than snapping back to 0). Landing on a
   // segment reveals that segment's quiz question, answered the same way a
   // normal quiz question is (instant reveal + pop/shake + confetti).
+  //
+  // The spin isn't pure chance: pickWheelIndex() only draws from topics not
+  // yet answered correctly, so every spin makes real progress toward
+  // clearing all of them, and a wrong answer keeps that topic in the pool
+  // instead of moving on. Once all are cleared it becomes a free replay.
   var WHEEL_COLORS = ['#00bcd4', '#7b5ea7', '#e83e8c', '#f5a623', '#22c55e', '#c2185b'];
+
+  function wheelMasteredCount(segments, answered) {
+    answered = answered || {};
+    var n = 0;
+    segments.forEach(function (s, i) {
+      if (answered[i] !== undefined && answered[i] === s.correct) n++;
+    });
+    return n;
+  }
+
+  function pickWheelIndex(segments, answered) {
+    answered = answered || {};
+    var pool = [];
+    segments.forEach(function (s, i) {
+      var mastered = answered[i] !== undefined && answered[i] === s.correct;
+      if (!mastered) pool.push(i);
+    });
+    if (!pool.length) pool = segments.map(function (s, i) { return i; });
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
   function activityWheelHtml(lessonNum, activity, state) {
     var segments = activity.segments || [];
     var n = segments.length;
     var seg = 360 / n;
     var rotation = state.rotation || 0;
+    var answeredMap = state.answered || {};
+    var mastered = wheelMasteredCount(segments, answeredMap);
     var gradientStops = segments
       .map(function (s, i) {
         var color = WHEEL_COLORS[i % WHEEL_COLORS.length];
@@ -933,7 +961,7 @@
       .map(function (s, i) {
         var center = i * seg + seg / 2;
         return (
-          '<span class="wheel-label" style="transform: translate(-50%, -50%) rotate(' + center + 'deg) translateY(-92px)">' +
+          '<span class="wheel-label" style="transform: translate(-50%, -50%) rotate(' + center + 'deg) translateY(-88px)">' +
           '<span style="display:inline-block; transform: rotate(' + -center + 'deg)">' + esc(s.label) + '</span>' +
           '</span>'
         );
@@ -943,8 +971,8 @@
     var landedIndex = state.landedIndex;
     var hasLanded = landedIndex !== undefined && landedIndex !== null;
     var seg_ = hasLanded ? segments[landedIndex] : null;
-    var answered = hasLanded && state.answered && state.answered[landedIndex] !== undefined;
-    var pickedIdx = answered ? state.answered[landedIndex] : null;
+    var answered = hasLanded && answeredMap[landedIndex] !== undefined;
+    var pickedIdx = answered ? answeredMap[landedIndex] : null;
 
     var resultHtml = '';
     if (hasLanded && seg_) {
@@ -974,6 +1002,8 @@
 
     return (
       '<div class="activity-wheel">' +
+      '<p class="wheel-progress">' + mastered + ' of ' + n + ' topics nailed' +
+      (mastered >= n ? ' &#127881; all cleared, spin away for fun' : '') + '</p>' +
       '<div class="wheel-stage">' +
       '<div class="wheel-pointer"></div>' +
       '<div class="wheel-dial" data-rotation="' + rotation + '" style="transform: rotate(' + rotation +
@@ -1708,11 +1738,17 @@
       var answeredMap = wheelState.answered || {};
       if (answeredMap[segIdx] !== undefined) return;
       var wheelPickedIdx = Number(wheelOpt.getAttribute('data-wheel-opt'));
+      var wasAllMastered = wheelMasteredCount(wheelCfg.segments, answeredMap) >= wheelCfg.segments.length;
       answeredMap[segIdx] = wheelPickedIdx;
       saveLessonActivityState(wheelLessonNum, { answered: answeredMap, done: true });
       if (wheelPickedIdx === segCfg.correct) {
+        var nowAllMastered = wheelMasteredCount(wheelCfg.segments, answeredMap) >= wheelCfg.segments.length;
         playFeedback(wheelOpt, 'anim-pop');
-        launchConfetti(wheelOpt, { count: 30 });
+        if (nowAllMastered && !wasAllMastered) {
+          launchConfetti(wheelActivityEl, { count: 90, spread: 12 });
+        } else {
+          launchConfetti(wheelOpt, { count: 30 });
+        }
       } else {
         playFeedback(wheelOpt, 'anim-shake');
       }
@@ -1897,6 +1933,30 @@
     } catch (err) {}
   });
 
+  // Real dropping is imprecise (fingers, fast mice), so the target isn't a
+  // pixel-exact hit test: it's whichever blank the pointer is within a
+  // generous radius of, which also lets the drop zone light up as you drag.
+  function findNearestBlank(activityEl, x, y) {
+    var THRESHOLD = 30;
+    var blanks = activityEl.querySelectorAll('.wb-blank');
+    var best = null;
+    var bestDist = Infinity;
+    blanks.forEach(function (b) {
+      var r = b.getBoundingClientRect();
+      var withinX = x >= r.left - THRESHOLD && x <= r.right + THRESHOLD;
+      var withinY = y >= r.top - THRESHOLD && y <= r.bottom + THRESHOLD;
+      if (!withinX || !withinY) return;
+      var cx = r.left + r.width / 2;
+      var cy = r.top + r.height / 2;
+      var dist = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = b;
+      }
+    });
+    return best;
+  }
+
   document.addEventListener('pointermove', function (e) {
     if (wbDrag) {
       var dx = e.clientX - wbDrag.startX;
@@ -1905,6 +1965,11 @@
       wbDrag.moved = true;
       wbDrag.chip.classList.add('is-dragging');
       wbDrag.chip.style.transform = 'translate(' + dx + 'px, ' + dy2 + 'px)';
+      var hoverBlank = findNearestBlank(wbDrag.activityEl, e.clientX, e.clientY);
+      wbDrag.activityEl.querySelectorAll('.wb-blank.is-drag-over').forEach(function (b) {
+        if (b !== hoverBlank) b.classList.remove('is-drag-over');
+      });
+      if (hoverBlank) hoverBlank.classList.add('is-drag-over');
       return;
     }
     if (!seqDrag) return;
@@ -1933,10 +1998,12 @@
     if (wbDrag) {
       wbDrag.chip.classList.remove('is-dragging');
       wbDrag.chip.style.transform = '';
+      wbDrag.activityEl.querySelectorAll('.wb-blank.is-drag-over').forEach(function (b) {
+        b.classList.remove('is-drag-over');
+      });
       if (wbDrag.moved) {
-        var target = document.elementFromPoint(e.clientX, e.clientY);
-        var blank = target && target.closest ? target.closest('.wb-blank') : null;
-        if (blank && blank.closest('.activity') === wbDrag.activityEl) {
+        var blank = findNearestBlank(wbDrag.activityEl, e.clientX, e.clientY);
+        if (blank) {
           var blankIdx = Number(blank.getAttribute('data-blank'));
           var curState = getLessonActivityState(wbDrag.lessonNum);
           var curFilled = curState.filled || {};
@@ -2162,7 +2229,8 @@
     if (!cfg || !cfg.segments || !cfg.segments.length) return;
     var n = cfg.segments.length;
     var segAngle = 360 / n;
-    var idx = Math.floor(Math.random() * n);
+    var priorState = getLessonActivityState(lessonNum);
+    var idx = pickWheelIndex(cfg.segments, priorState.answered);
     var current = Number(dial.getAttribute('data-rotation')) || 0;
     var centerAngle = idx * segAngle + segAngle / 2;
     var currentMod = ((current % 360) + 360) % 360;
@@ -2181,7 +2249,14 @@
     }
 
     setTimeout(function () {
-      saveLessonActivityState(lessonNum, { rotation: target, landedIndex: idx, done: true });
+      // A topic that was answered wrong before gets a genuinely fresh shot
+      // on this new landing rather than staying locked on the old miss;
+      // one already answered correctly stays locked in as mastered.
+      var priorState = getLessonActivityState(lessonNum);
+      var priorAnswered = priorState.answered || {};
+      var wasMastered = priorAnswered[idx] !== undefined && priorAnswered[idx] === cfg.segments[idx].correct;
+      if (!wasMastered && priorAnswered[idx] !== undefined) delete priorAnswered[idx];
+      saveLessonActivityState(lessonNum, { rotation: target, landedIndex: idx, done: true, answered: priorAnswered });
       var freshCfg = findActivityConfig(lessonNum);
       var el = document.querySelector('.activity[data-lesson="' + lessonNum + '"]');
       if (el && freshCfg) el.outerHTML = activityHtml(lessonNum, freshCfg);
