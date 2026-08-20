@@ -1,7 +1,7 @@
 /**
- * ClickClick Academy — pack-based access.
+ * ClickClick Academy: pack-based access.
  * Access codes unlock a pack of course IDs. Hidden courses stay hidden (no lock teasers).
- * Not real auth — replace before wide public launch.
+ * Not real auth, replace before wide public launch.
  */
 (function () {
   var STORAGE_KEY = 'clickclick_academy_session_v2';
@@ -171,7 +171,7 @@
     var lessons = Number(course.lessons) || 0;
 
     // Placeholder catalog entries (no href, no real lesson content) get an
-    // honest "Coming soon" badge instead of "Not started" — that copy
+    // honest "Coming soon" badge instead of "Not started"; that copy
     // implies there's something to start, which there isn't yet.
     var statusText = isInert ? 'Coming soon' : (course.status || 'Not started');
     var statusClass = isInert
@@ -228,7 +228,7 @@
     );
   }
 
-  // Flat, in-order list of every lesson's num across all modules — used to
+  // Flat, in-order list of every lesson's num across all modules, used to
   // find "the lesson before this one" for unlock checks.
   function flatLessonNums(course) {
     var nums = [];
@@ -244,7 +244,7 @@
   // State (answers/inputs/order + a "done" flag) is remembered per lesson in
   // localStorage, so leaving and coming back keeps exactly where a student
   // left off. It never gates the deliverable/unlock flow (that stays driven
-  // by academy_progress) — it's just not worth a server round trip. Each
+  // by academy_progress); it's just not worth a server round trip. Each
   // widget also gets its own Reset button to clear and start over.
   var ACTIVITY_STATE_KEY = 'clickclick_academy_activity_v2';
   function loadActivityState() {
@@ -304,6 +304,91 @@
       copy[j] = tmp;
     }
     return copy;
+  }
+
+  function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  // Small, dependency-free confetti burst: a canvas overlaid on the whole
+  // viewport, particles drawn from the origin element's position, gravity'd
+  // and faded out over ~1s, then the canvas removes itself. No-ops under
+  // prefers-reduced-motion.
+  var CONFETTI_COLORS = ['#00bcd4', '#7b5ea7', '#e83e8c', '#f5a623', '#22c55e'];
+  function launchConfetti(originEl, opts) {
+    if (prefersReducedMotion()) return;
+    opts = opts || {};
+    var count = opts.count || 36;
+    var rect = originEl && originEl.getBoundingClientRect
+      ? originEl.getBoundingClientRect()
+      : { left: window.innerWidth / 2, top: window.innerHeight / 3, width: 0, height: 0 };
+    var originX = rect.left + rect.width / 2;
+    var originY = rect.top + Math.min(rect.height, 40) / 2;
+
+    var canvas = document.createElement('canvas');
+    canvas.className = 'confetti-canvas';
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    document.body.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    var particles = [];
+    for (var i = 0; i < count; i++) {
+      particles.push({
+        x: originX,
+        y: originY,
+        vx: (Math.random() - 0.5) * (opts.spread || 9),
+        vy: -(Math.random() * 6 + 4),
+        size: Math.random() * 6 + 4,
+        color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 22,
+        life: 0,
+        maxLife: 55 + Math.random() * 30,
+      });
+    }
+
+    var gravity = 0.25;
+    function frame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var alive = false;
+      particles.forEach(function (p) {
+        if (p.life >= p.maxLife) return;
+        alive = true;
+        p.vy += gravity;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+        p.life++;
+        var alpha = Math.max(1 - p.life / p.maxLife, 0);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      });
+      if (alive) {
+        requestAnimationFrame(frame);
+      } else {
+        canvas.remove();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // Fires a quick pop/shake on an element without fighting a re-trigger;
+  // removing the class first forces the animation to restart if called twice.
+  function playFeedback(el, cls) {
+    if (!el || prefersReducedMotion()) return;
+    el.classList.remove('anim-pop', 'anim-shake');
+    void el.offsetWidth; // reflow, so re-adding the class restarts the animation
+    el.classList.add(cls);
   }
 
   function activityHtml(lessonNum, activity) {
@@ -409,7 +494,7 @@
     var order = state.order && state.order.length === items.length ? state.order : null;
     if (!order) {
       order = shuffled(items.map(function (text, i) { return i; }));
-      // Re-shuffle once if it happened to land in the exact correct order —
+      // Re-shuffle once if it happened to land in the exact correct order;
       // otherwise the exercise is trivially "already right."
       var isExact = order.every(function (v, i) { return v === i; });
       if (isExact && items.length > 1) {
@@ -618,7 +703,7 @@
       '</span> / ' + activity.total + ' ' + esc(activity.unit || '') + '</p>' +
       '<button type="button" class="btn primary activity-check-btn" data-check="allocator-budget">See a model allocation</button>' +
       '<p class="activity-result"' + (state.revealed ? '' : ' hidden') + '>' +
-      (state.revealed ? 'A model allocation — ' + esc(lines) + '.' : '') +
+      (state.revealed ? 'A model allocation: ' + esc(lines) + '.' : '') +
       '</p>' +
       '</div>'
     );
@@ -681,16 +766,37 @@
     var minRequired = activity.minRequired || 0;
     var requireDiversity = activity.requireTagDiversity || 0;
     if (minRequired && checkedCount < minRequired) {
-      return 'Pick at least ' + minRequired + ' — you have ' + checkedCount + ' so far.';
+      return 'Pick at least ' + minRequired + '. You have ' + checkedCount + ' so far.';
     }
     if (requireDiversity) {
       var distinct = Object.keys(tags).length;
       if (distinct < requireDiversity) {
-        return 'You have ' + checkedCount + ', but only ' + distinct + ' angle type(s) — cover at least ' + requireDiversity + '.';
+        return 'You have ' + checkedCount + ', but only ' + distinct + ' angle type(s). Cover at least ' + requireDiversity + '.';
       }
-      return 'Nice — ' + checkedCount + ' shots across ' + distinct + ' angle types, that’s diverse enough.';
+      return 'Nice, ' + checkedCount + ' shots across ' + distinct + ' angle types, that’s diverse enough.';
     }
-    return 'Marked complete — nice work.';
+    return 'Marked complete. Nice work.';
+  }
+
+  // True when the checklist reached a genuine "win" state: every flag
+  // found with no false alarms (graded), or the count/diversity bar was
+  // cleared (ungraded), used to decide whether it earns a confetti burst.
+  function checklistSucceeded(activity, checkedMap) {
+    var items = activity.items || [];
+    if (activity.graded) {
+      return items.every(function (it, i) { return !!checkedMap[i] === !!it.isFlag; });
+    }
+    var checkedCount = 0;
+    var tags = {};
+    items.forEach(function (it, i) {
+      if (checkedMap[i]) {
+        checkedCount++;
+        if (it.tag) tags[it.tag] = true;
+      }
+    });
+    if (activity.minRequired && checkedCount < activity.minRequired) return false;
+    if (activity.requireTagDiversity && Object.keys(tags).length < activity.requireTagDiversity) return false;
+    return true;
   }
 
   function activityBuilderHtml(lessonNum, activity, state) {
@@ -739,7 +845,7 @@
     },
   };
 
-  function lessonHtml(lesson, state) {
+  function lessonHtml(lesson, state, justUnlockedNum) {
     // state: 'locked' | 'open' | 'submitted'
     var statusBadge =
       state === 'submitted'
@@ -783,8 +889,11 @@
         '</div>';
     }
 
+    var justUnlocked = state === 'open' && lesson.num === justUnlockedNum;
     return (
-      '<article class="lesson-card lesson-card--' + state + '">' +
+      '<article class="lesson-card lesson-card--' + state +
+      (justUnlocked ? ' lesson-card--just-unlocked' : '') +
+      '" data-num="' + esc(lesson.num || '') + '">' +
       '<div class="lesson-card-head">' +
       '<span class="lesson-num">' + esc(lesson.num || '') + '</span>' +
       '<h4>' + esc(lesson.title || '') + '</h4>' +
@@ -805,7 +914,7 @@
     );
   }
 
-  function moduleHtml(mod, index, submittedByNum) {
+  function moduleHtml(mod, index, submittedByNum, justUnlockedNum) {
     var lessons = Array.isArray(mod.lessons) ? mod.lessons : [];
     return (
       '<section class="module-block">' +
@@ -816,7 +925,7 @@
       (mod.frame ? '<p class="module-block-frame">' + esc(mod.frame) + '</p>' : '') +
       lessons
         .map(function (lesson) {
-          return lessonHtml(lesson, lessonState(lesson, submittedByNum));
+          return lessonHtml(lesson, lessonState(lesson, submittedByNum), justUnlockedNum);
         })
         .join('') +
       '</section>'
@@ -838,13 +947,14 @@
     return submittedByNum[prevNum] ? 'open' : 'locked';
   }
 
-  function courseDetailHtml(course, submittedByNum) {
+  function courseDetailHtml(course, submittedByNum, justUnlockedNum) {
     var modules = Array.isArray(course.modules) ? course.modules : [];
     var lessonCount = modules.reduce(function (n, m) {
       return n + (Array.isArray(m.lessons) ? m.lessons.length : 0);
     }, 0);
     var doneCount = Object.keys(submittedByNum).length;
     currentAllNums = flatLessonNums(course);
+    var complete = lessonCount > 0 && doneCount >= lessonCount;
     return (
       '<div class="detail-head">' +
       '<span class="course-tag">' + esc(course.tag || '') + '</span>' +
@@ -855,9 +965,27 @@
       '<span>' + doneCount + ' / ' + lessonCount + ' lessons done</span>' +
       '<span>Level: ' + esc(course.level || '') + '</span>' +
       '</div>' +
+      '<div class="progress-track" role="progressbar" aria-valuenow="' + doneCount +
+      '" aria-valuemin="0" aria-valuemax="' + lessonCount + '"><div class="progress-fill"></div></div>' +
+      (complete
+        ? '<p class="course-complete-banner">&#127881; Every lesson done. That\'s the whole certification. Nice work.</p>'
+        : '') +
       '</div>' +
-      modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum); }).join('')
+      modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum); }).join('')
     );
+  }
+
+  // Runs the width from 0 to its real percentage on a rAF tick after mount,
+  // so the fill always animates in, including on a plain page load.
+  function animateProgressBar(doneCount, lessonCount) {
+    var fill = detailBody.querySelector('.progress-fill');
+    if (!fill) return;
+    var pct = lessonCount ? Math.round((doneCount / lessonCount) * 100) : 0;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        fill.style.width = pct + '%';
+      });
+    });
   }
 
   function identifyGateHtml(course) {
@@ -866,7 +994,7 @@
       '<span class="course-tag">' + esc(course.tag || '') + '</span>' +
       '<h1>' + esc(course.title || '') + '</h1>' +
       (course.description ? '<p class="detail-lead">' + esc(course.description) + '</p>' : '') +
-      '<p class="detail-lead">Tell us who you are so your progress is saved — each lesson unlocks the next once you submit its deliverable.</p>' +
+      '<p class="detail-lead">Tell us who you are so your progress is saved: each lesson unlocks the next once you submit its deliverable.</p>' +
       '<form id="identify-form" class="identify-form">' +
       '<input type="text" id="identify-name" placeholder="Your name" required />' +
       '<input type="email" id="identify-email" placeholder="Your email" required />' +
@@ -879,7 +1007,8 @@
 
   var currentDetailCourse = null;
 
-  function renderProgress(course) {
+  function renderProgress(course, opts) {
+    opts = opts || {};
     var student = loadStudent();
     if (!student) {
       detailBody.innerHTML = identifyGateHtml(course);
@@ -902,7 +1031,7 @@
             })
             .catch(function (err) {
               if (errEl) {
-                errEl.textContent = err.message || 'Could not save that — try again.';
+                errEl.textContent = err.message || 'Could not save that. Try again.';
                 errEl.hidden = false;
               }
             });
@@ -918,7 +1047,18 @@
         (data.progress || []).forEach(function (p) {
           byNum[p.lessonNum] = p;
         });
-        detailBody.innerHTML = courseDetailHtml(course, byNum);
+        detailBody.innerHTML = courseDetailHtml(course, byNum, opts.justUnlockedNum);
+        var lessonCount = flatLessonNums(course).length;
+        var doneCount = Object.keys(byNum).length;
+        animateProgressBar(doneCount, lessonCount);
+        if (opts.justSubmittedNum) {
+          if (lessonCount > 0 && doneCount >= lessonCount) {
+            launchConfetti(detailBody.querySelector('.course-complete-banner'), { count: 100, spread: 12 });
+          } else {
+            var submittedCard = detailBody.querySelector('.lesson-card[data-num="' + opts.justSubmittedNum + '"]');
+            if (submittedCard) launchConfetti(submittedCard, { count: 40 });
+          }
+        }
       })
       .catch(function () {
         detailBody.innerHTML = courseDetailHtml(course, {});
@@ -970,7 +1110,7 @@
             headers: { 'Content-Type': file.type || 'application/octet-stream' },
             body: file,
           }).then(function (res) {
-            if (!res.ok) throw new Error('File upload failed — try again.');
+            if (!res.ok) throw new Error('File upload failed. Try again.');
             return up.path;
           });
         })
@@ -988,7 +1128,9 @@
         });
       })
       .then(function () {
-        renderProgress(currentDetailCourse);
+        var idx = currentAllNums.indexOf(lessonNum);
+        var nextNum = idx >= 0 && idx < currentAllNums.length - 1 ? currentAllNums[idx + 1] : null;
+        renderProgress(currentDetailCourse, { justSubmittedNum: lessonNum, justUnlockedNum: nextNum });
       })
       .catch(function (err) {
         if (btn) {
@@ -996,7 +1138,7 @@
           btn.textContent = 'Submit & unlock next';
         }
         if (errEl) {
-          errEl.textContent = err.message || 'Could not submit — try again.';
+          errEl.textContent = err.message || 'Could not submit. Try again.';
           errEl.hidden = false;
         }
       });
@@ -1006,7 +1148,7 @@
   // internal/admin one, which sees every audience at once) reads as
   // sections instead of one flat 21-card wall. A single-audience pack
   // (what every real customer actually has) only ever has one group, so
-  // this renders as a plain grid for them — no redundant lone header.
+  // this renders as a plain grid for them, no redundant lone header.
   function groupedCoursesHtml(courses) {
     var order = [];
     var byTag = {};
@@ -1219,7 +1361,7 @@
     }
     var resubmitBtn = e.target.closest('.lesson-resubmit-btn');
     if (resubmitBtn && currentDetailCourse) {
-      // Re-render this lesson as its open (form) state so they can redo it —
+      // Re-render this lesson as its open (form) state so they can redo it;
       // simplest way is just re-fetching progress fresh and letting the
       // lesson map decide, minus this one lesson's existing submission.
       var num = resubmitBtn.getAttribute('data-lesson');
@@ -1233,6 +1375,7 @@
               if (p.lessonNum !== num) byNum[p.lessonNum] = p;
             });
             detailBody.innerHTML = courseDetailHtml(currentDetailCourse, byNum);
+            animateProgressBar(Object.keys(byNum).length, flatLessonNums(currentDetailCourse).length);
           });
       }
       return;
@@ -1265,6 +1408,12 @@
         });
         var explain = qWrap.querySelector('.activity-quiz-explain');
         if (explain) explain.hidden = false;
+        if (pickedIdx === correctIdx) {
+          playFeedback(quizOpt, 'anim-pop');
+          launchConfetti(quizOpt, { count: 16, spread: 6 });
+        } else {
+          playFeedback(quizOpt, 'anim-shake');
+        }
         var lessonNumQ = qWrap.closest('.activity').getAttribute('data-lesson');
         var qAll = qWrap.closest('.activity').querySelectorAll('.activity-quiz-q');
         var qi = Array.prototype.indexOf.call(qAll, qWrap);
@@ -1288,12 +1437,7 @@
         if (dir === 'up') list.insertBefore(li, sibling);
         else list.insertBefore(sibling, li);
       }
-      var seqLessonNum = seqMove.closest('.activity').getAttribute('data-lesson');
-      var newOrder = Array.prototype.map.call(
-        seqMove.closest('.activity').querySelectorAll('.activity-seq-item'),
-        function (item) { return Number(item.getAttribute('data-correct-idx')); }
-      );
-      saveLessonActivityState(seqLessonNum, { order: newOrder });
+      persistSeqOrder(seqMove.closest('.activity'));
       return;
     }
 
@@ -1406,6 +1550,68 @@
     }
   });
 
+  function persistSeqOrder(activityEl) {
+    var lessonNum = activityEl.getAttribute('data-lesson');
+    var order = Array.prototype.map.call(
+      activityEl.querySelectorAll('.activity-seq-item'),
+      function (item) { return Number(item.getAttribute('data-correct-idx')); }
+    );
+    saveLessonActivityState(lessonNum, { order: order });
+  }
+
+  // Real drag-to-reorder for sequence cards, on top of the up/down buttons
+  // (which stay for keyboard/accessibility). Pointer Events cover mouse and
+  // touch in one code path — classic "sortable list" swap-on-crossing-the-
+  // midpoint, not HTML5 native drag (which touch devices don't support).
+  var seqDrag = null; // { item, list, startY, startTop, moved }
+  document.addEventListener('pointerdown', function (e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    var item = e.target.closest('.activity-seq-item');
+    if (!item || e.target.closest('.activity-seq-move')) return;
+    var list = item.closest('.activity-seq-list');
+    if (!list) return;
+    seqDrag = { item: item, list: list, startY: e.clientY, startTop: item.offsetTop, moved: false };
+    try {
+      item.setPointerCapture(e.pointerId);
+    } catch (err) {}
+  });
+
+  document.addEventListener('pointermove', function (e) {
+    if (!seqDrag) return;
+    var dy = e.clientY - seqDrag.startY;
+    if (!seqDrag.moved && Math.abs(dy) < 4) return;
+    seqDrag.moved = true;
+    var item = seqDrag.item;
+    item.classList.add('is-dragging');
+    item.style.transform = 'translateY(' + dy + 'px)';
+
+    var sibling = dy > 0 ? item.nextElementSibling : item.previousElementSibling;
+    if (sibling) {
+      var siblingMid = sibling.offsetTop + sibling.offsetHeight / 2;
+      var dragMid = item.offsetTop + dy + item.offsetHeight / 2;
+      var crossed = dy > 0 ? dragMid > siblingMid : dragMid < siblingMid;
+      if (crossed) {
+        if (dy > 0) seqDrag.list.insertBefore(sibling, item);
+        else seqDrag.list.insertBefore(item, sibling);
+        seqDrag.startY = e.clientY;
+        item.style.transform = '';
+      }
+    }
+  });
+
+  function endSeqDrag() {
+    if (!seqDrag) return;
+    seqDrag.item.classList.remove('is-dragging');
+    seqDrag.item.style.transform = '';
+    if (seqDrag.moved) {
+      var activityEl = seqDrag.list.closest('.activity');
+      if (activityEl) persistSeqOrder(activityEl);
+    }
+    seqDrag = null;
+  }
+  document.addEventListener('pointerup', endSeqDrag);
+  document.addEventListener('pointercancel', endSeqDrag);
+
   function checkSequence(btn, lessonNum) {
     var wrap = btn.closest('.activity');
     var list = wrap.querySelector('.activity-seq-list');
@@ -1425,9 +1631,11 @@
         rightCount++;
         li.classList.add('is-correct');
         if (mark) mark.innerHTML = '&#10003;';
+        playFeedback(li, 'anim-pop');
       } else {
         li.classList.add('is-wrong');
         if (mark) mark.innerHTML = '&#10007;';
+        playFeedback(li, 'anim-shake');
       }
     });
     var result = wrap.querySelector('.activity-result');
@@ -1435,6 +1643,7 @@
       result.hidden = false;
       result.textContent = rightCount + ' of ' + target + ' in the right spot.';
     }
+    if (rightCount === target) launchConfetti(wrap, { count: 50 });
     saveLessonActivityState(lessonNum, { order: order, checked: true });
   }
 
@@ -1457,9 +1666,11 @@
         right++;
         row.classList.add('is-correct');
         if (mark) mark.innerHTML = '&#10003;';
+        playFeedback(row, 'anim-pop');
       } else {
         row.classList.add('is-wrong');
         if (mark) mark.innerHTML = '&#10007;';
+        playFeedback(row, 'anim-shake');
       }
     });
     var result = wrap.querySelector('.activity-result');
@@ -1467,6 +1678,7 @@
       result.hidden = false;
       result.textContent = right + ' of ' + rows.length + ' correct.';
     }
+    if (rows.length && right === rows.length) launchConfetti(wrap, { count: 50 });
     saveLessonActivityState(lessonNum, { selections: selections, checked: true });
   }
 
@@ -1506,7 +1718,7 @@
     var result = wrap.querySelector('.activity-result');
     if (result) {
       result.hidden = false;
-      result.textContent = 'A model allocation — ' + lines.join(', ') + '.';
+      result.textContent = 'A model allocation: ' + lines.join(', ') + '.';
     }
     saveLessonActivityState(lessonNum, { values: values, revealed: true });
   }
@@ -1537,7 +1749,9 @@
       item.classList.remove('is-correct', 'is-wrong');
       if (graded) {
         var isFlag = item.getAttribute('data-flag') === 'true';
-        item.classList.add(checkedMap[ii] === isFlag ? 'is-correct' : 'is-wrong');
+        var itemRight = checkedMap[ii] === isFlag;
+        item.classList.add(itemRight ? 'is-correct' : 'is-wrong');
+        playFeedback(item, itemRight ? 'anim-pop' : 'anim-shake');
       }
     });
     var activityLike = {
@@ -1552,6 +1766,7 @@
       result.hidden = false;
       result.textContent = checklistResultText(activityLike, checkedMap);
     }
+    if (checklistSucceeded(activityLike, checkedMap)) launchConfetti(wrap, { count: 44 });
     saveLessonActivityState(lessonNum, { checked: checkedMap, submitted: true });
   }
 

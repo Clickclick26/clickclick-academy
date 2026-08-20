@@ -10,11 +10,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- Bump ?v= on every deploy that touches styles.css or app.js — this static
+  <!-- Bump ?v= on every deploy that touches styles.css or app.js: this static
        site has no build step to fingerprint filenames, and browsers were
        caching stale CSS/JS across deploys (confirmed live: a visitor's
        browser mixed new HTML with cached old CSS and rendered broken). -->
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
   <!-- Gate -->
@@ -66,7 +66,7 @@
         <div>
           <p class="eyebrow">ClickClick Academy</p>
           <h1 class="greeting">Hello</h1>
-          <p class="pack-line">Pack: <span id="pack-label">—</span></p>
+          <p class="pack-line">Pack: <span id="pack-label">&middot;</span></p>
         </div>
         <label class="search">
           <span class="sr-only">Search courses</span>
@@ -94,7 +94,7 @@
               <span>Started</span>
             </div>
             <div class="chip">
-              <strong>—</strong>
+              <strong>&middot;</strong>
               <span>Coaching</span>
             </div>
           </div>
@@ -128,6 +128,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>
