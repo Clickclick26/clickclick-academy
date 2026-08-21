@@ -1,7 +1,7 @@
 [
   {
     "id": "ugc-creator-program",
-    "title": "The UGC Creator Program",
+    "title": "The UGC Creator Programme",
     "description": "Hooks that stop a scroll. Scripts that sell without sounding like an ad. Footage that looks like real life, not a studio. Edits people actually finish watching. And a pitch that gets you paid for it. That's the whole path: 28 lessons, and every single one leaves you with something built, filmed, or sent, not just watched.",
     "tag": "UGC Certification",
     "audience": [
@@ -116,7 +116,7 @@
             "title": "Your Creator Operating System",
             "overview": "This is the boring lesson that quietly decides whether you last a year in this or burn out by month three. Calendar, deal tracker, invoice template, file-naming convention: the unglamorous system that lets you scale instead of re-inventing your process on every single job.",
             "interactive": "Take the deal-tracker and footage-naming templates and adapt them to your own niche and file structure.",
-            "deliverable": "Upload a screenshot of your customized deal tracker with at least 2 entries, and your finalized file-naming convention written out in full.",
+            "deliverable": "Upload a screenshot of your customised deal tracker with at least 2 entries, and your finalised file-naming convention written out in full.",
             "activity": {
               "kind": "builder",
               "prompt": "Adapt these two templates to your own niche.",
@@ -346,7 +346,7 @@
                   "model": "\u201cCharge it Sunday night, forget about it till Friday.\u201d"
                 },
                 {
-                  "label": "\u201cRecycled aluminum body\u201d",
+                  "label": "\u201cRecycled aluminium body\u201d",
                   "placeholder": "your benefit line",
                   "model": "\u201cDrop-tested: mine's survived two flights of stairs and a dog.\u201d"
                 },
@@ -862,7 +862,7 @@
           {
             "num": "7.01",
             "title": "Reading Your Numbers Like a Pro",
-            "overview": "A view is not a result. This lesson breaks down what your numbers are actually telling you: reach metrics that show how far something traveled, resonance metrics that show whether anyone cared, and conversion metrics that show whether it made anyone act, so you stop chasing the wrong one.",
+            "overview": "A view is not a result. This lesson breaks down what your numbers are actually telling you: reach metrics that show how far something travelled, resonance metrics that show whether anyone cared, and conversion metrics that show whether it made anyone act, so you stop chasing the wrong one.",
             "interactive": "Match five real post scenarios to the metric category that actually judges them: reach, resonance, or conversion.",
             "deliverable": "Submit a real post of yours (any platform) with its view count, comment/save/share count, and one sentence on which metric mattered most for what that post was actually trying to do.",
             "activity": {
@@ -1074,7 +1074,7 @@
                   "Direct Callout"
                 ],
                 "correct": 1,
-                "explain": "Relatable POV. It puts the viewer directly inside a scenario they recognize, a different mechanism than a claim or a direct callout."
+                "explain": "Relatable POV. It puts the viewer directly inside a scenario they recognise, a different mechanism than a claim or a direct callout."
               }
             ]
           },
