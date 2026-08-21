@@ -1060,25 +1060,31 @@
     },
   };
 
-  // Turns a pasted YouTube or Vimeo link into a responsive embed. Anything
-  // else (blank, or a URL we don't recognize) just renders nothing, so a
-  // lesson with no video yet looks exactly like it did before this existed.
+  // Turns a pasted YouTube, Vimeo, or Instagram Reel/post link into a
+  // responsive embed. Anything else (blank, or a URL we don't recognize)
+  // just renders nothing, so a lesson with no video yet looks exactly like
+  // it did before this existed.
   function lessonVideoEmbedSrc(url) {
     if (!url) return null;
     var s = String(url).trim();
     var yt = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
-    if (yt) return 'https://www.youtube.com/embed/' + yt[1];
+    if (yt) return { platform: 'youtube', src: 'https://www.youtube.com/embed/' + yt[1] };
     var vimeo = s.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-    if (vimeo) return 'https://player.vimeo.com/video/' + vimeo[1];
+    if (vimeo) return { platform: 'vimeo', src: 'https://player.vimeo.com/video/' + vimeo[1] };
+    // Instagram only serves an embeddable player off the singular "/reel/"
+    // path, so "/reels/" and "/p/" links both get normalized to it.
+    var ig = s.match(/instagram\.com\/(?:reel|reels|p)\/([a-zA-Z0-9_-]+)/);
+    if (ig) return { platform: 'instagram', src: 'https://www.instagram.com/reel/' + ig[1] + '/embed' };
     return null;
   }
 
   function lessonVideoHtml(video) {
-    var src = lessonVideoEmbedSrc(video);
-    if (!src) return '';
+    var info = lessonVideoEmbedSrc(video);
+    if (!info) return '';
+    var cls = info.platform === 'instagram' ? 'lesson-video lesson-video--instagram' : 'lesson-video';
     return (
-      '<div class="lesson-video">' +
-      '<iframe src="' + esc(src) + '" title="Lesson video" loading="lazy" allowfullscreen ' +
+      '<div class="' + cls + '">' +
+      '<iframe src="' + esc(info.src) + '" title="Lesson video" loading="lazy" allowfullscreen ' +
       'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>' +
       '</div>'
     );

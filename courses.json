@@ -21,11 +21,11 @@
             "num": "1.01",
             "title": "What Actually Separates a Pro From an Amateur in UGC",
             "overview": "Here's the lesson that saves you a year of guessing: UGC isn't \u201chold phone, talk to camera.\u201d It's a performance job. Brands don't rehire you because they liked you. They rehire you because your numbers did something. This lesson breaks down exactly what separates a one-off gig from a real retainer: reliability, brand-safety instincts, and shooting for the edit instead of just filming.",
-            "interactive": "Score 3 example ads (one is a real UGC ad breakdown you can watch, two are written scenarios) against a 10-point Brief Fit / Hookiness / Editability rubric, then compare your scores to how ClickClick's team would call it.",
+            "interactive": "Score 3 real UGC ad examples from working creators against a 10-point Brief Fit / Hookiness / Editability rubric, then compare your scores to how ClickClick's team would call it.",
             "deliverable": "Submit your 3 completed scorecards plus one paragraph naming the biggest gap between your instinct-score and the revealed score.",
             "activity": {
               "kind": "rubric",
-              "prompt": "Score these 3 examples on the rubric below (1\u201310 each). The pro example is a real ad you can watch; the other two are written scenarios. Compare your scores against how ClickClick's team would score them.",
+              "prompt": "Score these 3 real ad examples on the rubric below (1\u201310 each), then compare against how ClickClick's team would score them.",
               "criteria": [
                 "Brief Fit",
                 "Hookiness",
@@ -33,20 +33,22 @@
               ],
               "subjects": [
                 {
-                  "label": "Amateur: hand-held selfie, product named before any hook, no clear CTA",
-                  "reference": 9,
-                  "note": "Low on all three. Nothing here gives an editor anything to cut to, and there's no reason to keep watching past second one."
+                  "label": "Example 1: a cast-iron cookware ad for a cooking-niche client (real UGC, by @maddyoutdoors.coach)",
+                  "video": "https://www.instagram.com/reels/DVi-lTpFnyP/",
+                  "reference": 21,
+                  "note": "The product is held up and named almost immediately, and the on-screen text does the job a verbal hook usually does. Solid Brief Fit and Editability; there's room to make the opening moment itself more of a scroll-stopper."
                 },
                 {
-                  "label": "Competent: clean lighting, states one benefit by second 3, but ends on a generic \u201clink in bio\u201d",
-                  "reference": 19,
-                  "note": "Solid Brief Fit and Editability, but Hookiness caps it: a generic opener means it's competing on production value alone."
+                  "label": "Example 2: a tumbler/drinkware ad for an outdoor-niche client (real UGC, by @maddyoutdoors.coach)",
+                  "video": "https://www.instagram.com/reels/DW7ZKS1iS6G/",
+                  "reference": 22,
+                  "note": "The close-up pour shot gives an editor something to cut to straight away, and the branding is clearly visible without feeling like a product shot. A clean, native-feeling example of shooting for the edit."
                 },
                 {
-                  "label": "Pro (real ad): Ridge Wallet's UGC ad campaign, reviewed by a real creative-analytics YouTuber, watch the breakdown below",
-                  "reference": 27,
-                  "note": "The reviewer calls out the product demo, the blend of high-quality branded graphics with low-fi UGC footage, and how polished but native it looks, exactly the mix that makes an ad blend into the feed instead of reading as an ad.",
-                  "video": "https://www.youtube.com/watch?v=fCZGNwESzjU"
+                  "label": "Example 3: a prenatal vitamin ad for Naternal Vitamins (real UGC, by @ugcwithmaddyt)",
+                  "video": "https://www.instagram.com/reel/Dbl56pERD7l/",
+                  "reference": 24,
+                  "note": "No on-screen text doing the work here, just two real people sharing a genuine-feeling moment with the product. That's harder to pull off than it looks, which is why it scores highest on Hookiness: it doesn't read as an ad at all."
                 }
               ]
             }
