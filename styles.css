@@ -914,6 +914,22 @@ input {
   border: 0;
 }
 
+/* Instagram's embed widget is a fixed-height vertical card (video plus its
+   own header/like-row chrome), not a clean 16:9 box, so it gets its own
+   compact, centered treatment instead of the full-width 16:9 padding hack. */
+.lesson-video--instagram {
+  padding-top: 0;
+  height: 640px;
+  max-width: 340px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.lesson-video--instagram iframe {
+  position: static;
+  height: 100%;
+}
+
 .lesson-status {
   margin-left: auto;
   font-size: 0.7rem;
