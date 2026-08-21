@@ -638,6 +638,7 @@
             esc(s.note || '') +
             '">' +
             '<p class="activity-rubric-label">' + esc(s.label) + '</p>' +
+            (s.video ? lessonVideoHtml(s.video) : '') +
             '<div class="activity-rubric-inputs">' + inputsHtml + '</div>' +
             '<p class="activity-rubric-compare"' + (state.compared ? '' : ' hidden') + '>' +
             compareHtml +
