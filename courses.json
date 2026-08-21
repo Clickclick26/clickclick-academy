@@ -21,15 +21,24 @@
             "num": "1.01",
             "title": "What Actually Separates a Pro From an Amateur in UGC",
             "overview": "Here's the lesson that saves you a year of guessing: UGC isn't \u201chold phone, talk to camera.\u201d It's a performance job. Brands don't rehire you because they liked you. They rehire you because your numbers did something. This lesson breaks down exactly what separates a one-off gig from a real retainer: reliability, brand-safety instincts, and shooting for the edit instead of just filming.",
-            "interactive": "Score 3 real UGC ad examples from working creators against a 10-point Brief Fit / Hookiness / Editability rubric, then compare your scores to how ClickClick's team would call it.",
-            "deliverable": "Submit your 3 completed scorecards plus one paragraph naming the biggest gap between your instinct-score and the revealed score.",
+            "interactive": "Watch 3 real ad examples below. Give each one a score from 1 to 10 on three things, then compare your scores to ours.",
+            "deliverable": "Submit your 3 scores (Brief Fit, Hookiness, Editability for each ad) and 2\u20133 sentences on which one you scored most differently from ClickClick's team, and why.",
             "activity": {
               "kind": "rubric",
-              "prompt": "Score these 3 real ad examples on the rubric below (1\u201310 each), then compare against how ClickClick's team would score them.",
+              "prompt": "For each ad, score it 1\u201310 on Brief Fit, Hookiness, and Editability (see what each one means next to the boxes). Then tap Compare to see how ClickClick's team scored it.",
               "criteria": [
-                "Brief Fit",
-                "Hookiness",
-                "Editability"
+                {
+                  "label": "Brief Fit",
+                  "hint": "Did it do what the brand actually asked for?"
+                },
+                {
+                  "label": "Hookiness",
+                  "hint": "Does it grab you in the first second?"
+                },
+                {
+                  "label": "Editability",
+                  "hint": "Does it give an editor good clips to cut to?"
+                }
               ],
               "subjects": [
                 {

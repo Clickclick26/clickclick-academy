@@ -1385,6 +1385,14 @@ input {
   font-weight: 600;
 }
 
+.activity-rubric-hint {
+  font-size: 0.66rem;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.3;
+  margin-top: -0.15rem;
+}
+
 .activity-rubric-input {
   width: 52px;
   border: 0;

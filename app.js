@@ -606,7 +606,11 @@
   }
 
   function activityRubricHtml(lessonNum, activity, state) {
+    // Criteria can be plain strings (old shape) or { label, hint } objects;
+    // the hint renders as a small line under the label so a criterion like
+    // "Hookiness" isn't just left for the student to guess the meaning of.
     var criteria = activity.criteria || [];
+    var maxTotal = criteria.length * 10;
     var scores = state.scores || {};
     return (
       '<div class="activity-rubric">' +
@@ -618,9 +622,12 @@
             .map(function (c, ci) {
               var v = subjScores[ci];
               subjTotal += Number(v) || 0;
+              var label = typeof c === 'string' ? c : c.label;
+              var hint = typeof c === 'string' ? '' : c.hint;
               return (
                 '<label class="activity-rubric-crit">' +
-                esc(c) +
+                esc(label) +
+                (hint ? '<span class="activity-rubric-hint">' + esc(hint) + '</span>' : '') +
                 '<input type="number" min="1" max="10" class="activity-rubric-input"' +
                 (v !== undefined && v !== null && v !== '' ? ' value="' + esc(v) + '"' : '') +
                 ' />' +
@@ -629,7 +636,8 @@
             })
             .join('');
           var compareHtml = state.compared
-            ? 'Your total: ' + subjTotal + '.  Instructor: ' + s.reference + '. ' + esc(s.note || '')
+            ? 'Your score: ' + subjTotal + ' out of ' + maxTotal + '.  Ours: ' + s.reference +
+              ' out of ' + maxTotal + '. ' + esc(s.note || '')
             : '';
           return (
             '<div class="activity-rubric-subject" data-reference="' +
@@ -648,7 +656,7 @@
         })
         .join('') +
       '</div>' +
-      '<button type="button" class="btn primary activity-check-btn" data-check="rubric">Compare to instructor</button>'
+      '<button type="button" class="btn primary activity-check-btn" data-check="rubric">Compare to our scores</button>'
     );
   }
 
@@ -2167,11 +2175,13 @@
       scores[si] = subjScores;
       var reference = subj.getAttribute('data-reference');
       var note = subj.getAttribute('data-note');
+      var maxTotal = inputs.length * 10;
       var compare = subj.querySelector('.activity-rubric-compare');
       if (compare) {
         compare.hidden = false;
         compare.textContent =
-          'Your total: ' + total + '.  Instructor: ' + reference + '. ' + note;
+          'Your score: ' + total + ' out of ' + maxTotal + '.  Ours: ' + reference +
+          ' out of ' + maxTotal + '. ' + note;
       }
     });
     saveLessonActivityState(lessonNum, { scores: scores, compared: true });
