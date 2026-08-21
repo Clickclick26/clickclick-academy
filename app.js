@@ -154,7 +154,7 @@
     if (packLabelEl) packLabelEl.textContent = label;
     if (welcomeCopy) {
       welcomeCopy.textContent =
-        'These are the courses in your pack. Other catalogs stay hidden.';
+        'These are the courses in your pack. Other catalogues stay hidden.';
     }
     if (coursesSub) {
       coursesSub.textContent = label + ' · short lessons';
