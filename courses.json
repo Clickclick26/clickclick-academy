@@ -2,12 +2,12 @@
   {
     "id": "ugc-creator-program",
     "title": "The UGC Creator Programme",
-    "description": "Hooks that stop a scroll. Scripts that sell without sounding like an ad. Footage that looks like real life, not a studio. Edits people actually finish watching. And a pitch that gets you paid for it. That's the whole path: 28 lessons, and every single one leaves you with something built, filmed, or sent, not just watched.",
+    "description": "Hooks that stop a scroll. Scripts that sell without sounding like an ad. Footage that looks like real life, not a studio. Edits people actually finish watching. And a pitch that gets you paid for it. That's the whole path: 32 lessons, and every single one leaves you with something built, filmed, or sent, not just watched.",
     "tag": "UGC Certification",
     "audience": [
       "creator"
     ],
-    "lessons": 28,
+    "lessons": 32,
     "level": "Certification",
     "status": "Not started",
     "icon": "\u2605",
@@ -1001,6 +1001,162 @@
                   ],
                   "correct": 1,
                   "explain": "2-3 is enough to feel consistent without boxing you in. Too many and nothing reads as a pattern; just one gets stale fast."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Barter, Gifting & Product Deals",
+        "frame": "Not every brand you want to work with has a marketing budget, and that doesn't make them not worth working with. This module is about the deals that involve product, not payment: when they're actually worth your time, how to pitch one that gets a yes, what to get in writing even when no money changes hands, and how to turn free-product work into your next paid booking instead of your last one.",
+        "lessons": [
+          {
+            "num": "8.01",
+            "title": "When a Barter Deal Is Actually Worth It",
+            "overview": "Internet advice loves to say working for free product is an insult. On the ground, it's more complicated than that. A local coffee roaster or a small skincare line often genuinely can't afford agency rates, but they do have real stock with a real RRP, and if it's something you'd buy anyway, a fair trade removes a real expense and builds your portfolio before any cash is on the table. The skill isn't refusing every gifting offer on principle. It's telling a good one apart from a bad one fast.",
+            "interactive": "Decide whether you'd take 3 real-style gifting offers, then see the reasoning behind each call.",
+            "deliverable": "Pick one gifting offer you could realistically get this month (real or made up), and write 2\u20133 sentences on whether you'd take it and why, using the same reasoning.",
+            "activity": {
+              "kind": "quiz",
+              "prompt": "Take it, or pass? Decide first, then see how ClickClick's team would call it.",
+              "questions": [
+                {
+                  "q": "A local matcha caf\u00e9 offers you a monthly product supply worth about \u00a3120 in exchange for 3 short organic videos a month. You already go there twice a week.",
+                  "options": [
+                    "Take it",
+                    "Pass"
+                  ],
+                  "correct": 0,
+                  "explain": "Take it. Real value close to what you'd already spend, for a product you genuinely use, from a brand that almost certainly can't afford your cash rate anyway. This is what a good barter deal looks like."
+                },
+                {
+                  "q": "A large fashion retailer with a national ad budget offers you one \u00a315 t-shirt in exchange for 5 videos, full usage rights, and first refusal on your other brand deals for 6 months.",
+                  "options": [
+                    "Take it",
+                    "Pass"
+                  ],
+                  "correct": 1,
+                  "explain": "Pass. Low product value against a high ask, and a brand this size can clearly afford to pay cash. An exclusivity clause like \u201cfirst refusal\u201d belongs in a paid contract, not a free t-shirt."
+                },
+                {
+                  "q": "A new skincare brand with no reviews yet offers a full product bundle (RRP around \u00a390) for one video, with no rights beyond reposting it on their own page.",
+                  "options": [
+                    "Take it",
+                    "Pass"
+                  ],
+                  "correct": 0,
+                  "explain": "Take it. Solid product value, one clear deliverable, no rights grab. Exactly the kind of low-risk trade worth doing early on, while you're still building proof of what you can shoot."
+                }
+              ]
+            }
+          },
+          {
+            "num": "8.02",
+            "title": "Pitching a Barter Deal Like a Pro",
+            "overview": "Most gifting pitches get ignored, and it's rarely because the brand hates free content. It's because the message gave them nothing to say yes to: no proof, no specifics, no reason to trust a stranger with their stock. A good barter pitch reads like a real, low-effort trade between two people who already like the same thing, not a cold ask for a handout.",
+            "interactive": "Two creators DM the same small brand asking for a barter deal. Only one gets a reply. Read both, then answer.",
+            "deliverable": "Write your own 3\u20134 sentence barter pitch to a real (or imagined) small brand you'd actually want product from. Include proof you're a genuine fan, the exact trade you're offering, and how often.",
+            "activity": {
+              "kind": "quiz",
+              "prompt": "Read both pitches to the same small brand, then answer.",
+              "questions": [
+                {
+                  "q": "Pitch A: \u201cHiii I love your brand, could I get some free stuff to post about? I have a big following lol.\u201d\nPitch B: \u201cHi! I'm in most weeks and already order your oat matcha 2\u20133x a week, here's a video I shot there last month: [link]. I'd love to trade 3 short organic videos a month for a standing product supply, happy to keep it casual, just let me know if that's useful for you.\u201d\nWhich pitch actually gets a reply?",
+                  "options": [
+                    "Pitch A",
+                    "Pitch B"
+                  ],
+                  "correct": 1,
+                  "explain": "Pitch B. It proves they're already a real customer, links actual proof they can shoot content, states an exact trade, and makes it a low-effort yes. Pitch A asks for something with zero proof and a vague, self-focused reason."
+                },
+                {
+                  "q": "What's the one thing missing from Pitch A that makes it easy to reject?",
+                  "options": [
+                    "A follower count",
+                    "Any proof they can actually shoot good content",
+                    "A funny opening line"
+                  ],
+                  "correct": 1,
+                  "explain": "Proof. Brands doing barter deals still want to see you can produce something worth trading for: a portfolio link, a past example, or at least a real reason you're already a customer."
+                },
+                {
+                  "q": "Which detail in Pitch B makes it easy for the brand to say yes fast?",
+                  "options": [
+                    "It's short and casual",
+                    "It names an exact number of videos on an exact cadence, not a vague \u201clet's collab\u201d",
+                    "It uses more emojis"
+                  ],
+                  "correct": 1,
+                  "explain": "The specifics. \u201c3 videos a month\u201d is a decision a busy small-brand owner can say yes to in ten seconds. \u201cLet's collab sometime\u201d is a decision they have to think about, so it usually gets ignored."
+                }
+              ]
+            }
+          },
+          {
+            "num": "8.03",
+            "title": "What to Get in Writing, Even for Free Product",
+            "overview": "No money changing hands doesn't mean nothing needs agreeing. A barter deal still needs a real scope (how many, how often, for how long), and in the UK and US you're still legally required to disclose gifted product, #ad or #gifted, on every post, no exceptions. A one-paragraph agreement before you film protects you from the most common barter problem: a brand quietly expecting more than what you agreed to.",
+            "interactive": "Fill in the 4 lines of a lightweight barter agreement using your own real or planned deal.",
+            "deliverable": "Submit your filled-in 4-line barter agreement, ready to send before your next trade.",
+            "activity": {
+              "kind": "builder",
+              "prompt": "Fill in these 4 lines before you say yes to your next barter deal.",
+              "fields": [
+                {
+                  "label": "What exactly are you trading?",
+                  "placeholder": "the deliverables and the cadence",
+                  "model": "3 x 30\u201345 second videos per month, in exchange for a standing product supply."
+                },
+                {
+                  "label": "How will you disclose it?",
+                  "placeholder": "your disclosure line",
+                  "model": "#gifted or #ad on every post, clearly and every time. This isn't optional in the UK or US."
+                },
+                {
+                  "label": "What can they do with your content?",
+                  "placeholder": "usage rights, spelled out",
+                  "model": "Brand can repost to their own social pages for 6 months. No paid ad usage without a new conversation."
+                },
+                {
+                  "label": "What happens if they ask for more later?",
+                  "placeholder": "your scope-creep line",
+                  "model": "Anything beyond the agreed videos per month is a new, paid ask, agreed in writing before you film it."
+                }
+              ]
+            }
+          },
+          {
+            "num": "8.04",
+            "title": "Turning Barter Work Into Paid Bookings",
+            "overview": "A barter deal is a starting point, not a permanent arrangement. The whole reason it's worth doing is what it builds towards: real footage, a working relationship, and proof of what your content actually does for a brand. The skill is spotting the moment a free trade has earned the right to become a paid one.",
+            "interactive": "Match each real barter outcome to the move it justifies.",
+            "deliverable": "Write the exact message you'd send to turn one of your own barter deals into a paid booking.",
+            "activity": {
+              "kind": "match",
+              "prompt": "Match each situation to the right next move.",
+              "categories": [
+                "Screenshot it and pitch a retainer",
+                "Ask for a rate card review",
+                "Offer a paid usage extension",
+                "Still building, keep trading"
+              ],
+              "items": [
+                {
+                  "label": "Your barter post for the caf\u00e9 got 40k views and real comments asking where it is.",
+                  "correct": 0
+                },
+                {
+                  "label": "You've done 4 months of free trades with the same skincare brand, and they keep asking for more videos.",
+                  "correct": 1
+                },
+                {
+                  "label": "A brand you traded with wants to run your gifted video as a paid Meta ad.",
+                  "correct": 2
+                },
+                {
+                  "label": "You've done one trade with one brand and have no other proof yet.",
+                  "correct": 3
                 }
               ]
             }
