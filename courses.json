@@ -2,12 +2,12 @@
   {
     "id": "ugc-elite-program",
     "title": "The Elite UGC Creator Program",
-    "description": "Hooks that stop a scroll. Scripts that sell without sounding like an ad. Footage that looks like real life, not a studio. Edits people actually finish watching. And a pitch that gets you paid for it. That's the whole path: 24 lessons, and every single one leaves you with something built, filmed, or sent, not just watched.",
+    "description": "Hooks that stop a scroll. Scripts that sell without sounding like an ad. Footage that looks like real life, not a studio. Edits people actually finish watching. And a pitch that gets you paid for it. That's the whole path: 28 lessons, and every single one leaves you with something built, filmed, or sent, not just watched.",
     "tag": "UGC Certification",
     "audience": [
       "creator"
     ],
-    "lessons": 24,
+    "lessons": 28,
     "level": "Certification",
     "status": "Not started",
     "icon": "\u2605",
@@ -849,6 +849,146 @@
                 {
                   "text": "There is no kill fee clause anywhere in the contract",
                   "isFlag": true
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Beyond the Client Job",
+        "frame": "Client work pays the bills, but it's not the whole game. This module covers the parts that don't show up in a brief: reading your own numbers, getting paid for how a video actually gets used, selling live instead of just posting, and building an audience of your own so brands start coming to you instead of the other way around.",
+        "lessons": [
+          {
+            "num": "7.01",
+            "title": "Reading Your Numbers Like a Pro",
+            "overview": "A view is not a result. This lesson breaks down what your numbers are actually telling you: reach metrics that show how far something traveled, resonance metrics that show whether anyone cared, and conversion metrics that show whether it made anyone act, so you stop chasing the wrong one.",
+            "interactive": "Match five real post scenarios to the metric category that actually judges them: reach, resonance, or conversion.",
+            "deliverable": "Submit a real post of yours (any platform) with its view count, comment/save/share count, and one sentence on which metric mattered most for what that post was actually trying to do.",
+            "activity": {
+              "kind": "match",
+              "prompt": "Match each scenario to the metric category that actually judges it.",
+              "categories": [
+                "Reach",
+                "Resonance",
+                "Conversion"
+              ],
+              "items": [
+                {
+                  "label": "Total view count on a brand-awareness campaign",
+                  "correct": 0
+                },
+                {
+                  "label": "Follower growth after a video goes semi-viral",
+                  "correct": 0
+                },
+                {
+                  "label": "Comments and saves on a video that resonated",
+                  "correct": 1
+                },
+                {
+                  "label": "Shares from people tagging friends",
+                  "correct": 1
+                },
+                {
+                  "label": "Link-clicks and purchases from a direct-response ad",
+                  "correct": 2
+                }
+              ]
+            }
+          },
+          {
+            "num": "7.02",
+            "title": "Getting Paid What You're Owed",
+            "overview": "Two creators can shoot the identical video and get paid completely different amounts, because usage is priced separately from the shoot. This lesson breaks down what usage scope, whitelisting, and exclusivity actually mean, so you stop pricing a video like it's only ever going on the brand's own page.",
+            "interactive": "Review a usage-rights request and flag every line that's missing or unfavorable, same skill as the contract check, aimed specifically at usage.",
+            "deliverable": "Submit your annotated flag list, plus one sentence on what you'd ask the brand to add or change before signing.",
+            "activity": {
+              "kind": "checklist",
+              "graded": true,
+              "prompt": "Review this usage-rights request and flag every line that's missing or unfavorable.",
+              "items": [
+                {
+                  "text": "Usage scope explicitly says \u201corganic only\u201d, with paid usage listed as a separate, additional fee",
+                  "isFlag": false
+                },
+                {
+                  "text": "The brief says \u201cusage: everywhere, forever\u201d with no separate paid-usage line",
+                  "isFlag": true
+                },
+                {
+                  "text": "Exclusivity (you can't work with competitor brands) is mentioned with no time limit",
+                  "isFlag": true
+                },
+                {
+                  "text": "Whitelisting access is requested with no mention of ad spend duration or platform",
+                  "isFlag": true
+                },
+                {
+                  "text": "The paid-usage fee is stated as a flat add-on, separate from the shoot fee",
+                  "isFlag": false
+                }
+              ]
+            }
+          },
+          {
+            "num": "7.03",
+            "title": "Selling Live Without Freezing Up",
+            "overview": "A static video pitches once and moves on. A live stream has to keep re-selling the same product to new people joining every few seconds, which means the structure has to loop instead of run in a straight line. This lesson breaks down the segment order that keeps a live selling stream working the whole way through.",
+            "interactive": "Put this live-selling segment loop into the order that actually keeps a stream working.",
+            "deliverable": "Submit your own live-selling segment outline for a real or assumed product, following this loop structure, timed to roughly how long you'd run each segment.",
+            "activity": {
+              "kind": "sequence",
+              "prompt": "Arrange this live-selling loop into the order that keeps a stream working.",
+              "items": [
+                "Welcome new viewers and restate what's being sold, for anyone who just joined",
+                "Show the product in use, not just held up to camera",
+                "State the price and the deal clearly, out loud",
+                "Create urgency, a countdown, limited stock, or a time-boxed discount",
+                "Answer 1-2 real comments on screen, by name",
+                "Loop back to the welcome and restate the offer again"
+              ]
+            }
+          },
+          {
+            "num": "7.04",
+            "title": "Building Your Own Audience While You Work for Others",
+            "overview": "Brands don't just hire talent, they hire proof. A creator who posts consistently under their own name is showing exactly what a client would get, before the client ever has to risk a booking on them. This lesson is about building that proof: picking a small number of recurring topics, called content pillars, so your own feed reads as something instead of random.",
+            "interactive": "Answer a few quick questions on what actually makes a content pillar work.",
+            "deliverable": "Submit your own 2-3 content pillars, plus one real post idea for each.",
+            "activity": {
+              "kind": "quiz",
+              "prompt": "Quick check: what actually makes a content pillar work?",
+              "questions": [
+                {
+                  "q": "Which is a real content pillar, not just a random post?",
+                  "options": [
+                    "A one-off giveaway video",
+                    "A recurring \u201cproducts that actually work\u201d series you post weekly",
+                    "A trending sound you jumped on once"
+                  ],
+                  "correct": 1,
+                  "explain": "A pillar is something an audience can expect again. A one-off post, even a good one, doesn't build that expectation."
+                },
+                {
+                  "q": "Why do content pillars matter more than posting frequency alone?",
+                  "options": [
+                    "They don't, frequency is all that matters",
+                    "They give your feed a reason to be followed, not just watched once",
+                    "They're required by every platform's algorithm"
+                  ],
+                  "correct": 1,
+                  "explain": "Frequency without a throughline just produces more random content. Pillars are what turn a viewer into a follower, because they know what they'll get next time."
+                },
+                {
+                  "q": "How many content pillars does the lesson recommend starting with?",
+                  "options": [
+                    "As many as possible, 8-10",
+                    "2-3",
+                    "Just 1, forever"
+                  ],
+                  "correct": 1,
+                  "explain": "2-3 is enough to feel consistent without boxing you in. Too many and nothing reads as a pattern; just one gets stale fast."
                 }
               ]
             }
