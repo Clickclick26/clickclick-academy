@@ -1059,6 +1059,30 @@
     },
   };
 
+  // Turns a pasted YouTube or Vimeo link into a responsive embed. Anything
+  // else (blank, or a URL we don't recognize) just renders nothing, so a
+  // lesson with no video yet looks exactly like it did before this existed.
+  function lessonVideoEmbedSrc(url) {
+    if (!url) return null;
+    var s = String(url).trim();
+    var yt = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+    if (yt) return 'https://www.youtube.com/embed/' + yt[1];
+    var vimeo = s.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (vimeo) return 'https://player.vimeo.com/video/' + vimeo[1];
+    return null;
+  }
+
+  function lessonVideoHtml(video) {
+    var src = lessonVideoEmbedSrc(video);
+    if (!src) return '';
+    return (
+      '<div class="lesson-video">' +
+      '<iframe src="' + esc(src) + '" title="Lesson video" loading="lazy" allowfullscreen ' +
+      'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>' +
+      '</div>'
+    );
+  }
+
   function lessonHtml(lesson, state, justUnlockedNum) {
     // state: 'locked' | 'open' | 'submitted'
     var statusBadge =
@@ -1113,6 +1137,7 @@
       '<h4>' + esc(lesson.title || '') + '</h4>' +
       statusBadge +
       '</div>' +
+      lessonVideoHtml(lesson.video) +
       (lesson.overview ? '<p class="lesson-overview">' + esc(lesson.overview) + '</p>' : '') +
       '<div class="lesson-field lesson-field--interactive">' +
       '<span class="lesson-field-label">Interactive</span>' +
