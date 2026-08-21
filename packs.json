@@ -24,7 +24,7 @@
     "label": "Creator UGC",
     "audience": "creator",
     "courseIds": [
-      "ugc-elite-program",
+      "ugc-creator-program",
       "coach-book"
     ]
   },
@@ -46,7 +46,7 @@
     "label": "Internal (all courses)",
     "audience": "internal",
     "courseIds": [
-      "ugc-elite-program",
+      "ugc-creator-program",
       "coach-book"
     ]
   },
@@ -54,9 +54,9 @@
     "label": "Internal (all courses)",
     "audience": "internal",
     "courseIds": [
-      "ugc-elite-program",
+      "ugc-creator-program",
       "coach-book"
     ],
-    "note": "Legacy master code \u2014 same as internal. Keep until Kathryn rotates codes."
+    "note": "Legacy master code, same as internal. Keep until Kathryn rotates codes."
   }
 }

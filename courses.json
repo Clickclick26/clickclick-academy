@@ -1,7 +1,7 @@
 [
   {
-    "id": "ugc-elite-program",
-    "title": "The Elite UGC Creator Program",
+    "id": "ugc-creator-program",
+    "title": "The UGC Creator Program",
     "description": "Hooks that stop a scroll. Scripts that sell without sounding like an ad. Footage that looks like real life, not a studio. Edits people actually finish watching. And a pitch that gets you paid for it. That's the whole path: 28 lessons, and every single one leaves you with something built, filmed, or sent, not just watched.",
     "tag": "UGC Certification",
     "audience": [
@@ -14,14 +14,14 @@
     "tone": "#f3e8ff",
     "modules": [
       {
-        "title": "The Elite UGC Creator Blueprint",
+        "title": "The UGC Creator Blueprint",
         "frame": "Before you film a single second, you need to know what you're actually being paid for, and it isn't \u201cholding a phone and talking.\u201d This module sets the bar, gets your setup production-ready, and installs the habits every module after this one leans on.",
         "lessons": [
           {
             "num": "1.01",
-            "title": "What \"Elite\" Actually Means in UGC",
+            "title": "What Actually Separates a Pro From an Amateur in UGC",
             "overview": "Here's the lesson that saves you a year of guessing: UGC isn't \u201chold phone, talk to camera.\u201d It's a performance job. Brands don't rehire you because they liked you. They rehire you because your numbers did something. This lesson breaks down exactly what separates a one-off gig from a real retainer: reliability, brand-safety instincts, and shooting for the edit instead of just filming.",
-            "interactive": "Score 3 example ads (amateur, competent, elite) against a 10-point Brief Fit / Hookiness / Editability rubric, then compare your scores to how ClickClick's team would call it.",
+            "interactive": "Score 3 example ads (amateur, competent, pro) against a 10-point Brief Fit / Hookiness / Editability rubric, then compare your scores to how ClickClick's team would call it.",
             "deliverable": "Submit your 3 completed scorecards plus one paragraph naming the biggest gap between your instinct-score and the revealed score.",
             "activity": {
               "kind": "rubric",
@@ -43,7 +43,7 @@
                   "note": "Solid Brief Fit and Editability, but Hookiness caps it: a generic opener means it's competing on production value alone."
                 },
                 {
-                  "label": "Elite: pattern-interrupt visual in the first second, one specific benefit, native b-roll cutaways, urgency CTA",
+                  "label": "Pro: pattern-interrupt visual in the first second, one specific benefit, native b-roll cutaways, urgency CTA",
                   "reference": 27,
                   "note": "Every second is doing a job. This is the bar: reliable, on-brief, and built to be cut."
                 }
