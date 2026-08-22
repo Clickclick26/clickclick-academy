@@ -1091,6 +1091,12 @@
                   "explain": "The specifics. \u201c3 videos a month\u201d is a decision a busy small-brand owner can say yes to in ten seconds. \u201cLet's collab sometime\u201d is a decision they have to think about, so it usually gets ignored."
                 }
               ]
+            },
+            "dmMockup": {
+              "badName": "Local Brand",
+              "bad": "Hiii I love your brand, could I get some free stuff to post about? I have a big following lol.",
+              "goodName": "Local Brand",
+              "good": "Hi! I'm in most weeks and already order your oat matcha 2\u20133x a week, here's a video I shot there last month: [link]. I'd love to trade 3 short organic videos a month for a standing product supply, happy to keep it casual, just let me know if that's useful for you."
             }
           },
           {

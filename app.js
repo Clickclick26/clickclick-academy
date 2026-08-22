@@ -1098,6 +1098,33 @@
     );
   }
 
+  // A fake, clearly-illustrative DM screenshot pair (bad pitch vs good pitch,
+  // or any two-message contrast) for lessons that need a visual example but
+  // have no real real-world screenshot to show. Never render real people's
+  // private messages here, this is a mockup, styled generically so it
+  // doesn't pretend to be any specific app's real UI.
+  function dmMockupHtml(mockup) {
+    if (!mockup || !mockup.bad || !mockup.good) return '';
+    function bubble(kind, tag, name, text) {
+      return (
+        '<div class="dm-mockup dm-mockup--' + kind + '">' +
+        '<span class="dm-mockup-tag dm-mockup-tag--' + kind + '">' + esc(tag) + '</span>' +
+        '<div class="dm-mockup-header">' +
+        '<span class="dm-mockup-avatar" aria-hidden="true"></span>' +
+        '<span class="dm-mockup-name">' + esc(name) + '</span>' +
+        '</div>' +
+        '<div class="dm-mockup-bubble">' + esc(text) + '</div>' +
+        '</div>'
+      );
+    }
+    return (
+      '<div class="dm-mockup-pair">' +
+      bubble('bad', 'Gets ignored', mockup.badName || 'Local Brand', mockup.bad) +
+      bubble('good', 'Gets a reply', mockup.goodName || 'Local Brand', mockup.good) +
+      '</div>'
+    );
+  }
+
   function lessonHtml(lesson, state, justUnlockedNum) {
     // state: 'locked' | 'open' | 'submitted'
     var statusBadge =
@@ -1154,6 +1181,7 @@
       '</div>' +
       lessonVideoHtml(lesson.video) +
       (lesson.overview ? '<p class="lesson-overview">' + esc(lesson.overview) + '</p>' : '') +
+      dmMockupHtml(lesson.dmMockup) +
       '<div class="lesson-field lesson-field--interactive">' +
       '<span class="lesson-field-label">Interactive</span>' +
       '<span class="lesson-field-body">' + esc(lesson.interactive || '') + '</span>' +

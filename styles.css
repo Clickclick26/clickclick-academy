@@ -930,6 +930,83 @@ input {
   height: 100%;
 }
 
+/* A fake, generic-looking DM mockup (not styled to mimic any specific real
+   app) used where a lesson needs a visual before/after example but has no
+   real screenshot to show. */
+.dm-mockup-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+
+@media (max-width: 640px) {
+  .dm-mockup-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dm-mockup {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 0.7rem 0.8rem 0.8rem;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dm-mockup-tag {
+  align-self: flex-start;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+.dm-mockup-tag--bad {
+  background: rgba(232, 62, 140, 0.14);
+  color: var(--pink);
+}
+
+.dm-mockup-tag--good {
+  background: rgba(34, 197, 94, 0.14);
+  color: #178a45;
+}
+
+.dm-mockup-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dm-mockup-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--cream);
+  border: 1.5px solid rgba(20, 20, 20, 0.08);
+  flex: none;
+}
+
+.dm-mockup-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--mid);
+}
+
+.dm-mockup-bubble {
+  background: var(--cream);
+  border-radius: 12px;
+  border-top-left-radius: 4px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
 .lesson-status {
   margin-left: auto;
   font-size: 0.7rem;
