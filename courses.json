@@ -1454,11 +1454,12 @@
           }
         ]
       }
-    }
+    },
+    "cover": "https://images.pexels.com/photos/12673799/pexels-photo-12673799.jpeg?auto=compress&cs=tinysrgb&w=800"
   },
   {
     "id": "coach-book",
-    "title": "Book free coaching",
+    "title": "Book your 1:1",
     "description": "Book a 1:1 coaching call with ClickClick.",
     "tag": "Coaching",
     "audience": [
@@ -1479,77 +1480,58 @@
   {
     "id": "clocal-creator-playbook",
     "title": "The CLocal Creator Playbook",
-    "description": "Your Creator plan already unlocked 90-second clips, gift deals, and a real way to get paid for content you're probably already making. This is how to actually use all of it: what a 90-second review needs that a 45-second one doesn't, how to walk into a shop and get the shot, what claiming a gift really commits you to, and how your code turns into money in your pocket.",
-    "tag": "Creator Plan",
+    "description": "Part Two of the Creator Track, less about the basics and more about how this actually turns into income: getting chosen by shops in the first place, what a 90-second clip is good for that isn't just \"longer\", judging whether a deal is genuinely worth your hours, and reading your own numbers so each shoot teaches you something for the next one. Coaching comes with it too, whenever you want to use it.",
+    "tag": "Creator Track",
     "audience": [
       "clocal-creator"
     ],
     "lessons": 8,
-    "level": "Creator Plan",
+    "level": "Part Two",
     "status": "Not started",
     "icon": "\ud83d\udccd",
     "tone": "#e3f5ec",
+    "selfPaced": true,
+    "cover": "https://images.pexels.com/photos/18999439/pexels-photo-18999439.jpeg?auto=compress&cs=tinysrgb&w=800",
     "modules": [
       {
-        "title": "Your 90 Seconds",
-        "frame": "Free creators get 45 seconds. You've got 90, and that extra time only helps you if you actually know what to do with it. This module is the craft: the shape a good 90-second review takes, how to film inside a real shop without it feeling awkward, the hook that only works because your audience is local, and what actually gets a shop owner asking you back.",
+        "title": "Getting Chosen",
+        "frame": "Anyone can post a review. What actually gets you picked, again and again, by shops on the same street, is a different set of habits. This module is about being the creator a shop owner thinks of first.",
         "lessons": [
           {
             "num": "1.01",
-            "title": "What 90 Seconds Actually Lets You Do",
-            "overview": "45 seconds is barely enough for a hook and a verdict. 90 seconds is enough to actually show a place: where you are, what it's like, what's good, and why someone nearby should care. This lesson is the shape a 90-second review takes so the extra time reads as more content, not more rambling.",
-            "interactive": "Put the 5 beats of a 90-second CLocal review into the order that actually works.",
-            "deliverable": "Post one real 90-second review using this structure and paste the link. Not approved yet? Film it, save it, and post it the day you are.",
-            "activity": {
-              "kind": "sequence",
-              "prompt": "Put these 5 beats of a 90-second review into the order a working CLocal creator actually shoots them.",
-              "items": [
-                "Open on where you are, so it's obvious this is a real, specific place",
-                "Show the thing: the dish, the product, the space, whatever they came for",
-                "Get the owner or staff in frame for a few seconds, even just a nod",
-                "Give your honest verdict in one line",
-                "Close with why someone nearby should actually go"
-              ]
-            }
-          },
-          {
-            "num": "1.02",
-            "title": "Filming Inside a Real Shop Without Feeling Awkward",
-            "overview": "This isn't a studio and there's no retake budget. A real shop has real customers, real lighting, and a real owner watching you film. This lesson is the practical stuff nobody tells you: what to ask before you film, what to do when it's busy, and how to make a dark caf\u00e9 look like somewhere you'd actually want to sit.",
-            "interactive": "Run through this checklist before you press record in someone else's shop.",
-            "deliverable": "Submit which 2 items on this checklist you'd have skipped before this lesson, and why they matter now.",
+            "title": "Picking a Patch, Not Just a Shop",
+            "overview": "One video for one shop is a fine start. Owning a street, an area, or a category is a different game, shop owners talk to each other, and the creator who's already reviewed three places on the same road tends to be the one who gets mentioned next. Worth thinking about which patch is actually yours.",
+            "interactive": "A few questions worth sitting with about your own patch.",
+            "deliverable": "If it's useful: sketch out 3 shops that make sense as your patch, and why.",
             "activity": {
               "kind": "checklist",
               "graded": false,
-              "prompt": "Before you press record in someone else's shop, check each one.",
+              "prompt": "Questions worth sitting with when you're picking a patch.",
               "items": [
                 {
-                  "text": "You've told the owner or staff what you're filming and roughly how long it'll take"
+                  "text": "Is there a street or area you're already in most weeks anyway?"
                 },
                 {
-                  "text": "You've checked nobody's face or table is in frame without them knowing"
+                  "text": "Is there a category (coffee, food, fitness) you naturally notice more than others?"
                 },
                 {
-                  "text": "If it's dark, you're filming towards the light, not with it behind you"
+                  "text": "Would 3 shops on the same patch actually see each other's posts?"
                 },
                 {
-                  "text": "You've got a quieter moment picked out for the one line you actually need clean audio on"
-                },
-                {
-                  "text": "You know your one clear shot before you start, not just \"I'll figure it out filming\""
+                  "text": "Is this somewhere you'd want to be known, not just post once and move on?"
                 }
               ]
             }
           },
           {
-            "num": "1.03",
+            "num": "1.02",
             "title": "The Local Hook: Why \u201cBest on This Street\u201d Wins",
-            "overview": "A generic hook is competing with the whole internet. A local hook is only competing with the three other coffee shops on the same road, and everyone watching already knows exactly where that road is. Naming the actual street or area is what makes a CLocal video feel like it's actually for the person watching it.",
-            "interactive": "Build a local hook for a real (or made-up) shop near you using this template.",
-            "deliverable": "Submit your 3 finished local hooks, each for a different real or imagined local shop.",
+            "overview": "A generic hook is competing with the whole internet. A local hook is only up against the other three coffee shops on the same road, and the person watching already knows exactly where that road is. Naming the actual street or area is usually what makes a review feel like it's for the person watching it, not just anyone.",
+            "interactive": "Have a go at a local hook for a few different shops, using this as a starting template.",
+            "deliverable": "If you want to try it: write 3 local hooks, one for a different real or imagined shop each.",
             "activity": {
               "kind": "builder",
-              "prompt": "Fill in a local hook for 3 different shops using this template.",
+              "prompt": "A starting template for a local hook, for 3 different shops.",
               "fields": [
                 {
                   "label": "Shop 1: [type of shop] on [street name]",
@@ -1570,11 +1552,73 @@
             }
           },
           {
+            "num": "1.03",
+            "title": "90 Seconds Is a Different Product, Not a Longer One",
+            "overview": "It's tempting to think of 90 seconds as just more of a 45-second video. What it's actually good for is different: a cut a shop could put on their own page, not just yours. That's a genuinely different use, not a duration difference, and it's worth filming with that in mind from the start rather than padding out a shorter idea.",
+            "interactive": "Match each extra beat a 90-second clip has room for to what it's actually doing.",
+            "deliverable": "If you want to try it: reshoot one of your existing reviews at 90 seconds with the shop's own page in mind.",
+            "activity": {
+              "kind": "match",
+              "prompt": "Match each beat to what it's actually doing for a 90-second clip.",
+              "categories": [
+                "Gives the shop something to repost",
+                "Builds trust before the verdict",
+                "Makes the space feel real"
+              ],
+              "items": [
+                {
+                  "label": "A few extra seconds on the owner or staff, not just the product",
+                  "correct": 1
+                },
+                {
+                  "label": "A wider shot that shows the actual room, not just a close-up",
+                  "correct": 2
+                },
+                {
+                  "label": "A clean closing line that works even with your voice cut out",
+                  "correct": 0
+                }
+              ]
+            }
+          },
+          {
             "num": "1.04",
-            "title": "What Makes a Shop Owner Ask You Back",
-            "overview": "One good video gets you one shop. A reputation for being reliable gets you asked back, tagged in their own posts, and recommended to other shop owners on the same street. This is almost never about the footage, it's about showing up, turning it around fast, and actually sending the file.",
-            "interactive": "Decide what a shop owner is really reacting to in each of these 3 real-style scenarios.",
-            "deliverable": "Write 2\u20133 sentences on which of these 3 habits you're weakest at, honestly, and one thing you'll change this week.",
+            "title": "Making Something the Shop Will Actually Repost",
+            "overview": "Sending the shop owner a copy of the finished file, not just a link to your own page, is a small habit that changes a lot. A file they can actually repost, hand to staff, or save is a different thing to them than a link they'd have to remember to check.",
+            "interactive": "A few habits worth building into how you hand work over.",
+            "deliverable": "If it's useful: next time you finish a review, send the actual file, not just a link, and see if it changes anything.",
+            "activity": {
+              "kind": "checklist",
+              "graded": false,
+              "prompt": "Habits worth building into how you hand a finished review over.",
+              "items": [
+                {
+                  "text": "Send the actual video file, not just a link to your page"
+                },
+                {
+                  "text": "Mention they're welcome to repost it, so it's clearly not just yours"
+                },
+                {
+                  "text": "Turn it around within a few days, not a few weeks"
+                },
+                {
+                  "text": "Say thanks and name the next thing you'd like to film there, if there is one"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "title": "Turning It Into Income",
+        "frame": "The habits above get you chosen. This module is about what happens once you are: judging which deals are actually worth your time, approaching shops yourself, and reading your own numbers so each shoot teaches you something.",
+        "lessons": [
+          {
+            "num": "2.01",
+            "title": "What Makes a Shop Ask You Back",
+            "overview": "One good video gets you one shop. Getting asked back, tagged in their own posts, and recommended to other shop owners is almost never about the footage, it tends to come down to a few habits around it.",
+            "interactive": "What's actually driving the shop owner's reaction in each of these moments?",
+            "deliverable": "Worth a moment: which of these 3 habits are you weakest at, honestly, and one thing worth changing this week.",
             "activity": {
               "kind": "quiz",
               "prompt": "What's actually driving the shop owner's reaction here?",
@@ -1583,13 +1627,13 @@
                   "q": "You said you'd film on Tuesday. You show up on Tuesday, on time, and it takes 15 minutes like you said it would. The owner seems almost surprised.",
                   "options": [
                     "Your camera gear",
-                    "Basic reliability, doing exactly what you said you'd do"
+                    "Basic reliability, doing what you said you'd do"
                   ],
                   "correct": 1,
                   "explain": "Reliability. Most creators are vague about timing, so simply doing what you said is already memorable."
                 },
                 {
-                  "q": "You post the video 3 weeks later, after the owner's already emailed you twice asking about it.",
+                  "q": "You post the video 3 weeks later, after the owner's already asked about it twice.",
                   "options": [
                     "A slow turnaround, even good footage, reads as unreliable",
                     "It doesn't matter as long as it's good"
@@ -1601,10 +1645,207 @@
                   "q": "You never actually send the shop owner a copy of the finished file, just a link to your own page.",
                   "options": [
                     "Fine, they can just watch it on your page",
-                    "A missed chance, they can't repost, save, or show it to staff without you"
+                    "A missed chance, they can't repost or show it to staff without you"
                   ],
                   "correct": 1,
-                  "explain": "Send the file. It costs you nothing and it's the easiest way to make a shop owner feel like this was actually done for them."
+                  "explain": "Send the file. It costs nothing and makes a shop owner feel like this was actually done for them."
+                }
+              ]
+            }
+          },
+          {
+            "num": "2.02",
+            "title": "Walking Into a Shop That Isn't on CLocal Yet",
+            "overview": "Every shop on CLocal started as one that wasn't. Bringing one on yourself is one of the more reliable ways to guarantee you've always got somewhere to film, and it's a real, useful pitch once you've got a way to say it.",
+            "interactive": "Two creators approach the same local shop about being on CLocal. Read both, then see which one you'd bet on.",
+            "deliverable": "If it's useful: approach a few local shops that aren't on CLocal yet, and keep a note of each one for yourself.",
+            "dmMockup": {
+              "badName": "Local Shop",
+              "bad": "hey do you want to be on my tiktok",
+              "goodName": "Local Shop",
+              "good": "Hi! I'm a CLocal creator, I review local spots on the app and I'd love to feature you. It's a quick 90-second video, no cost to you, and it puts you in front of people nearby who're already looking for exactly this. Would this week work?"
+            },
+            "activity": {
+              "kind": "quiz",
+              "prompt": "Read both approaches to the same local shop, then answer.",
+              "questions": [
+                {
+                  "q": "Pitch A: \u201chey do you want to be on my tiktok\u201d\nPitch B: \u201cHi! I'm a CLocal creator, I review local spots on the app and I'd love to feature you. It's a quick 90-second video, no cost to you, and it puts you in front of people nearby who're already looking for exactly this. Would this week work?\u201d\nWhich one would you bet gets a reply?",
+                  "options": [
+                    "Pitch A",
+                    "Pitch B"
+                  ],
+                  "correct": 1,
+                  "explain": "Pitch B tends to do better. It names the actual app, the actual format, the actual cost (none), and asks a specific question the owner can say yes to quickly."
+                },
+                {
+                  "q": "What's the one thing Pitch B does that makes it easy to say yes to fast?",
+                  "options": [
+                    "It mentions TikTok",
+                    "It suggests an exact, low-effort format and asks about a specific timeframe",
+                    "It's longer"
+                  ],
+                  "correct": 1,
+                  "explain": "Specifics. \u201cThis week\u201d and \u201c90-second video, no cost\u201d turn a vague favour into a small, concrete yes."
+                }
+              ]
+            }
+          },
+          {
+            "num": "2.03",
+            "title": "Judging Whether a Deal Is Worth Your Hours",
+            "overview": "Not every gift deal is worth claiming, and that's fine, it's your call either way. Worth weighing up roughly what the product's actually worth against how long it'll realistically take you, and knowing it's fine to ask for a bit more before you commit, or just pass.",
+            "interactive": "Would you take these deals, pass, or ask for more first? Have a think, then see how others tend to call it.",
+            "deliverable": "If it's useful: next time you're offered a deal, actually weigh product value against your hours before deciding.",
+            "activity": {
+              "kind": "quiz",
+              "prompt": "Take it, pass, or ask for more first?",
+              "questions": [
+                {
+                  "q": "A caf\u00e9 offers a \u00a36 pastry bundle for one video that'll take you about 20 minutes, somewhere you already go anyway.",
+                  "options": [
+                    "Take it",
+                    "Pass",
+                    "Ask for more first"
+                  ],
+                  "correct": 0,
+                  "explain": "Reasonable value for the time, and you're there anyway. A solid, low-effort yes."
+                },
+                {
+                  "q": "A homeware shop offers one candle (roughly \u00a38) for 3 videos and exclusive rights for 6 months.",
+                  "options": [
+                    "Take it",
+                    "Pass",
+                    "Ask for more first"
+                  ],
+                  "correct": 2,
+                  "explain": "Worth asking first. The ask (3 videos, 6-month exclusivity) is a lot for one candle, a quick message asking for more product or fewer videos costs you nothing."
+                },
+                {
+                  "q": "A new gym offers a free week's pass for one video, no exclusivity, no extra terms.",
+                  "options": [
+                    "Take it",
+                    "Pass",
+                    "Ask for more first"
+                  ],
+                  "correct": 0,
+                  "explain": "Clear terms, reasonable trade, no catch. Worth taking if it's a place you'd genuinely visit."
+                }
+              ]
+            }
+          },
+          {
+            "num": "2.04",
+            "title": "Reading Your Own Numbers",
+            "overview": "Creator Studio shows your total views and how many videos you've posted, worth checking every so often rather than never. The point isn't to obsess over one number, it's noticing which clips actually got watched and what they had in common, so the next shoot isn't a total guess. Worth getting your payout details saved too, so there's nothing to chase later once money's moving.",
+            "interactive": "A few questions worth asking next time you check your numbers.",
+            "deliverable": "If it's useful: pick your best-performing review so far and write a sentence on what you think made it work.",
+            "activity": {
+              "kind": "checklist",
+              "graded": false,
+              "prompt": "Worth asking yourself next time you check your numbers.",
+              "items": [
+                {
+                  "text": "Which review has the most views so far, and what's different about it?"
+                },
+                {
+                  "text": "Is there a shop type or hook style showing up more than once in your best clips?"
+                },
+                {
+                  "text": "Are your payout details actually saved, so nothing's held up later?"
+                },
+                {
+                  "text": "Is there one thing worth trying differently on your next shoot?"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "clocal-creator-starter",
+    "title": "The CLocal Creator Field Guide",
+    "description": "You're approved and you're posting, that's the part most people never get past. This walks through how CLocal actually works, what you can do in your first half hour, and the things that decide whether a review lands: a 45-second shape worth trying, filming in a real shop, and claiming your first gift deal. Nothing here is the only way to do it, just a place to start. Part One of the Creator Track.",
+    "tag": "Creator Track",
+    "audience": [
+      "clocal-creator-free"
+    ],
+    "lessons": 7,
+    "level": "Part One",
+    "status": "Not started",
+    "icon": "\ud83c\udf31",
+    "tone": "#fdf0dd",
+    "selfPaced": true,
+    "cover": "https://images.pexels.com/photos/6612700/pexels-photo-6612700.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "modules": [
+      {
+        "title": "How CLocal Works",
+        "frame": "Before any filming technique, it helps to actually see how the app fits together, and to do a few low-stakes things inside it so it stops feeling brand new. Nothing in this module involves a shop or a camera.",
+        "lessons": [
+          {
+            "num": "1.01",
+            "title": "What CLocal Actually Is",
+            "overview": "It's a loop, not a list of features. People nearby open CLocal to find somewhere to go. Your review sits on the feed and the map next to a real shop. Shops on CLocal put up gift deals and pay for visibility. Your referral code brings in members. Each part feeds the next one.",
+            "interactive": "See if you can guess the order this loop actually runs in, there's no wrong way to start.",
+            "deliverable": "If it helps, sketch this loop out somewhere you'll see it again, in your own words.",
+            "activity": {
+              "kind": "sequence",
+              "prompt": "Have a go at ordering how this loop actually connects, then see how close you were.",
+              "items": [
+                "Someone nearby opens CLocal looking for somewhere to go",
+                "Your review shows up on the feed and the map next to a real shop",
+                "Shops on CLocal post gift deals and pay for visibility",
+                "Your referral code brings in new members"
+              ]
+            }
+          },
+          {
+            "num": "1.02",
+            "title": "The Four Ways Something Comes Back to You",
+            "overview": "There's more than one way this pays off, and they land on different timelines. A gift deal can land the same day. Your referral code adds up week by week, and it's recurring, not a one-off, for as long as that person stays a member. A shop asking you back happens over weeks. Your profile becoming real leverage takes months. None of these need the others to be worth doing.",
+            "interactive": "See what a few different referral counts could actually add up to.",
+            "deliverable": "Worth a look: work out roughly what your own numbers might be, whenever you've got a few referrals to plug in.",
+            "activity": {
+              "kind": "allocator",
+              "mode": "calculator",
+              "formula": "clocalBreakeven",
+              "prompt": "See what a few real referral counts could look like over a month.",
+              "unit": "\u00a3",
+              "fields": [
+                {
+                  "key": "referrals",
+                  "label": "VIP referrals through your code this month",
+                  "type": "number",
+                  "placeholder": "e.g. 5"
+                }
+              ],
+              "modelNote": "Commission payouts are being switched on soon, so treat this as the model to understand now, not cash landing immediately. It's recurring though, not a one-off: every referral keeps paying out monthly for as long as they stay a member, and it stacks as you add more. Build up to 200 active referrals over time (roughly 4 a week for a year) and that's about \u00a3599 landing every month, on repeat."
+            }
+          },
+          {
+            "num": "1.03",
+            "title": "Your First Half Hour in the App",
+            "overview": "Before you go anywhere near a shop, there's a handful of things worth doing inside the app itself, none of them need a camera. Getting these done first tends to make everything after feel less like starting from nothing.",
+            "interactive": "A few small things worth doing in the app before your first shoot.",
+            "deliverable": "If it helps: work through these at your own pace, in whatever order suits you.",
+            "activity": {
+              "kind": "checklist",
+              "graded": false,
+              "prompt": "Nothing here needs a shop or a camera, just a few minutes in the app.",
+              "items": [
+                {
+                  "text": "Add a real photo and a one-line description to your profile"
+                },
+                {
+                  "text": "Find your referral link and save it somewhere you can grab it fast"
+                },
+                {
+                  "text": "Browse the open gift deals and shortlist a few you'd genuinely claim"
+                },
+                {
+                  "text": "Save a few shops near you that you'd like to review"
                 }
               ]
             }
@@ -1612,15 +1853,60 @@
         ]
       },
       {
-        "title": "Getting Paid on CLocal",
-        "frame": "This is the part that actually puts money in your pocket: what claiming a gift really commits you to, how to bring a shop onto CLocal yourself, what your referral code is worth, and finishing with a Creator profile that does the selling for you.",
+        "title": "Your First Reviews",
+        "frame": "The craft side: a shape for a 45-second review worth trying, a few things worth checking before you film in someone else's shop, and what claiming a gift deal actually involves.",
         "lessons": [
           {
             "num": "2.01",
-            "title": "How Gift Deals Actually Work",
-            "overview": "Claiming a gift isn't just \u201cfree stuff\u201d, it's a small contract. The terms you saw the moment you claimed are the terms that count, even if the shop changes their offer afterwards, and even if you get busy. Understanding this properly is what keeps you getting invited back to claim more.",
-            "interactive": "Answer honestly: what have you actually agreed to in each of these gift-claim scenarios?",
-            "deliverable": "Submit one sentence on the one rule from this lesson you didn't already know.",
+            "title": "What 45 Seconds Actually Needs",
+            "overview": "45 seconds isn't much room for a slow build. One shape that tends to work: a hook, the thing itself, and a verdict, nothing more. It's one option, not the only one, but it's a solid place to start if you're not sure.",
+            "interactive": "One order that tends to work for a 45-second review, have a go at putting it together.",
+            "deliverable": "If you want to try it: post one and paste the link, just for your own reference.",
+            "activity": {
+              "kind": "sequence",
+              "prompt": "One order that tends to work. Move it around if yours works better.",
+              "items": [
+                "Open on where you are and what you're about to show",
+                "Show the thing: the dish, the product, the space",
+                "Give your honest one-line verdict and close"
+              ]
+            }
+          },
+          {
+            "num": "2.02",
+            "title": "Filming Inside a Real Shop Without Feeling Awkward",
+            "overview": "It's a real shop with real customers, not a studio, and there's no retake budget. A few things other creators say they wish they'd checked before their first few shoots.",
+            "interactive": "Things creators say they wish they'd checked before filming in a shop.",
+            "deliverable": "Worth noticing: which of these you'd have skipped before this lesson, and why it matters now.",
+            "activity": {
+              "kind": "checklist",
+              "graded": false,
+              "prompt": "Things creators say they wish they'd checked before filming in a shop.",
+              "items": [
+                {
+                  "text": "Told the owner or staff what you're filming"
+                },
+                {
+                  "text": "Checked nobody's face is in frame without them knowing"
+                },
+                {
+                  "text": "Filmed towards the light rather than with it behind you, if it's dark"
+                },
+                {
+                  "text": "Picked a quieter moment for the one line you need clean audio on"
+                },
+                {
+                  "text": "Knew your one shot before starting, rather than figuring it out mid-take"
+                }
+              ]
+            }
+          },
+          {
+            "num": "2.03",
+            "title": "Claiming Your First Gift Deal",
+            "overview": "Claiming a gift is a small agreement, worth understanding properly. Whatever the offer said the moment you claimed it is what it stays, even if the shop changes it afterwards, and even if you get busy. Getting this right is what keeps gift deals open to creators generally.",
+            "interactive": "What have you actually agreed to in each of these gift-claim moments?",
+            "deliverable": "If you're ready: claim one real gift deal, and keep a note of which shop it was with.",
             "activity": {
               "kind": "quiz",
               "prompt": "What have you actually agreed to?",
@@ -1639,7 +1925,7 @@
                   "q": "A week after you claim, the bakery changes their public offer to ask for 2 videos instead of 1. Do you now owe 2?",
                   "options": [
                     "Yes, always match the latest version",
-                    "No, your terms were snapshotted the moment you claimed"
+                    "No, your terms were locked in the moment you claimed"
                   ],
                   "correct": 1,
                   "explain": "No. Your terms are locked in at claim time. What they post afterwards doesn't change what you already agreed to."
@@ -1647,221 +1933,39 @@
                 {
                   "q": "You claimed a gift, got busy, and never filmed anything. What's the actual cost?",
                   "options": [
-                    "Nothing really, it's only a free coffee",
+                    "Nothing really, it's only a coffee",
                     "The shop loses trust in CLocal creators generally, and you may lose access to future gifts"
                   ],
                   "correct": 1,
-                  "explain": "It's bigger than one coffee. Unfulfilled claims are the fastest way for a shop, and CLocal, to stop trusting creators with gifts at all."
+                  "explain": "It's bigger than one coffee. Unfulfilled claims are the fastest way for a shop, and CLocal, to stop trusting creators with gifts."
                 }
               ]
-            }
-          },
-          {
-            "num": "2.02",
-            "title": "Walking Into a Shop That Isn't on CLocal Yet",
-            "overview": "Every shop on CLocal started as a shop that wasn't. Bringing one on yourself is the single fastest way to guarantee you've always got somewhere to film, and it's a real, useful pitch, not a cold ask, once you know how to say it.",
-            "interactive": "Two creators approach the same local shop about being on CLocal. Only one gets a yes. Read both, then answer.",
-            "deliverable": "Approach 3 local shops that aren't on CLocal yet. Note down each name and street for your own list.",
-            "dmMockup": {
-              "badName": "Local Shop",
-              "bad": "hey do you want to be on my tiktok",
-              "goodName": "Local Shop",
-              "good": "Hi! I'm a CLocal creator, I review local spots on the app and I'd love to feature you. It's a quick 90-second video, no cost to you, and it puts you in front of people nearby who're already looking for exactly this. Would this week work?"
-            },
-            "activity": {
-              "kind": "quiz",
-              "prompt": "Read both approaches to the same local shop, then answer.",
-              "questions": [
-                {
-                  "q": "Pitch A: \u201chey do you want to be on my tiktok\u201d\nPitch B: \u201cHi! I'm a CLocal creator, I review local spots on the app and I'd love to feature you. It's a quick 90-second video, no cost to you, and it puts you in front of people nearby who're already looking for exactly this. Would this week work?\u201d\nWhich pitch actually gets a reply?",
-                  "options": [
-                    "Pitch A",
-                    "Pitch B"
-                  ],
-                  "correct": 1,
-                  "explain": "Pitch B. It names the actual app, the actual format, the actual cost (none), and asks a specific question the owner can say yes to in ten seconds. Pitch A gives them nothing to picture."
-                },
-                {
-                  "q": "What's the one thing Pitch B does that makes it easy to say yes to fast?",
-                  "options": [
-                    "It mentions TikTok",
-                    "It suggests an exact, low-effort format and asks about a specific timeframe",
-                    "It's longer"
-                  ],
-                  "correct": 1,
-                  "explain": "Specifics. \u201cThis week\u201d and \u201c90-second video, no cost\u201d turn a vague favour into a small, concrete yes."
-                }
-              ]
-            }
-          },
-          {
-            "num": "2.03",
-            "title": "Your Referral Code and What It's Worth",
-            "overview": "Every VIP signup through your code earns you 30% of their \u00a39.99, about \u00a33 a month, for as long as they stay a VIP member. It genuinely adds up, though commission payouts are still being switched on, so treat this as the maths to understand now, not a payment landing in your account next week.",
-            "interactive": "Work out what your referral code is actually worth at a few different referral counts.",
-            "deliverable": "Submit your own referral link and one place you'll actually share it this week.",
-            "activity": {
-              "kind": "allocator",
-              "mode": "calculator",
-              "formula": "clocalBreakeven",
-              "prompt": "See what a few real referral counts are actually worth.",
-              "unit": "\u00a3",
-              "fields": [
-                {
-                  "key": "referrals",
-                  "label": "VIP referrals through your code this month",
-                  "type": "number",
-                  "placeholder": "e.g. 5"
-                }
-              ],
-              "modelNote": "Commission payouts are being switched on soon, this is the model to understand now, not a promise of cash landing immediately."
             }
           },
           {
             "num": "2.04",
-            "title": "Finishing Strong: Your Creator Profile",
-            "overview": "Your profile is what a shop owner sees before they ever meet you, and it's doing half the pitch for you before you say a word. This last lesson is about making sure it's actually finished, and about claiming the free coaching call that came with your plan.",
-            "interactive": "Run your Creator profile through this finishing checklist.",
-            "deliverable": "Submit a link to your finished Creator profile, and confirm you've booked your free coaching call.",
+            "title": "You've Done One Shop, What's Next?",
+            "overview": "Once you've posted a review and claimed a deal, a natural question shows up: how do you stop doing this one shop at a time? That's really what Part Two of the Creator Track is about, longer clips, a different way of getting chosen by shops, and turning gift deals into repeat, paid work. No rush either way, it's there whenever it's useful.",
+            "interactive": "A short reflection on how your first shop actually went.",
+            "deliverable": "Worth a moment: write 2\u20133 sentences on what surprised you most about your first shop.",
             "activity": {
               "kind": "checklist",
               "graded": false,
-              "prompt": "Before you call your profile done, check each one.",
+              "prompt": "A few things worth checking in on now that you've done one shop.",
               "items": [
                 {
-                  "text": "A real, recent photo of you, not a logo or a blank avatar"
+                  "text": "Posted at least one review you're happy with"
                 },
                 {
-                  "text": "Your 3 best clips linked, not just your most recent ones"
+                  "text": "Claimed or shortlisted a gift deal"
                 },
                 {
-                  "text": "A one-line description of the kind of shops you review best"
+                  "text": "Shared your referral link somewhere real"
                 },
                 {
-                  "text": "Your referral link saved somewhere you can paste it fast"
-                },
-                {
-                  "text": "Your free coaching call actually booked, not just planned"
+                  "text": "Have a rough idea which shop you'd want to film again"
                 }
               ]
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "clocal-creator-starter",
-    "title": "The CLocal Creator Starter Guide",
-    "description": "You're approved and posting, that's the hard part done. This is how to make your first 45-second reviews actually good, claim your first gift deal, and start earning from your own referral code from day one, no upgrade required for any of it.",
-    "tag": "Free Creator",
-    "audience": [
-      "clocal-creator-free"
-    ],
-    "lessons": 4,
-    "level": "Starter",
-    "status": "Not started",
-    "icon": "\ud83c\udf31",
-    "tone": "#fdf0dd",
-    "modules": [
-      {
-        "title": "Your First Reviews",
-        "frame": "You've got 45 seconds and everything else a Creator has: gift deals, a referral code, and shops that want reviewing. This is how to make the most of exactly what you've already got.",
-        "lessons": [
-          {
-            "num": "1.01",
-            "title": "What 45 Seconds Actually Needs",
-            "overview": "45 seconds is not enough time to warm up. There's no room for an intro, a slow build, or a second idea, just a hook, the thing itself, and a verdict. This lesson is the shape that makes 45 seconds feel complete instead of rushed.",
-            "interactive": "Put the 3 beats of a 45-second review into the order that actually works.",
-            "deliverable": "Post one real 45-second review using this structure and paste the link.",
-            "activity": {
-              "kind": "sequence",
-              "prompt": "Put these 3 beats of a 45-second review into the order a working CLocal creator actually shoots them.",
-              "items": [
-                "Open on where you are and what you're about to show",
-                "Show the thing: the dish, the product, the space",
-                "Give your honest one-line verdict and close"
-              ]
-            }
-          },
-          {
-            "num": "1.02",
-            "title": "Filming Inside a Real Shop Without Feeling Awkward",
-            "overview": "It's a real shop with real customers, not a studio, and there's no retake budget. A few small habits are the difference between footage that looks confident and footage that looks like you weren't sure you were allowed to be there.",
-            "interactive": "Run through this checklist before you press record in someone else's shop.",
-            "deliverable": "Submit which item on this checklist you'd have skipped before this lesson, and why it matters now.",
-            "activity": {
-              "kind": "checklist",
-              "graded": false,
-              "prompt": "Before you press record in someone else's shop, check each one.",
-              "items": [
-                {
-                  "text": "You've told the owner or staff what you're filming"
-                },
-                {
-                  "text": "You've checked nobody's face is in frame without them knowing"
-                },
-                {
-                  "text": "You've picked your one shot before you start filming, not mid-take"
-                },
-                {
-                  "text": "Your verdict line is ready in your head before you say it on camera"
-                }
-              ]
-            }
-          },
-          {
-            "num": "1.03",
-            "title": "Claiming Your First Gift Deal",
-            "overview": "Gift deals aren't a paid-only perk, you can claim one right now. Claiming one is a small agreement though: whatever the offer said the moment you claimed it is exactly what you owe back, one review video, on those terms.",
-            "interactive": "Answer honestly: what have you actually agreed to in each of these gift-claim scenarios?",
-            "deliverable": "Claim one real gift deal, and submit which shop it was with.",
-            "activity": {
-              "kind": "quiz",
-              "prompt": "What have you actually agreed to?",
-              "questions": [
-                {
-                  "q": "You claim a gift offer from a bakery. What have you actually agreed to?",
-                  "options": [
-                    "Nothing until you feel like it",
-                    "One review video, on the terms shown at the moment you claimed it"
-                  ],
-                  "correct": 1,
-                  "explain": "One video, on the terms locked in when you claimed. That's the whole deal."
-                },
-                {
-                  "q": "You claimed a gift, got busy, and never filmed anything. What's the actual cost?",
-                  "options": [
-                    "Nothing really, it's only a free coffee",
-                    "The shop loses trust in CLocal creators, and you may lose access to future gifts"
-                  ],
-                  "correct": 1,
-                  "explain": "It's bigger than one coffee. Unfulfilled claims are the fastest way to stop being trusted with gifts at all."
-                }
-              ]
-            }
-          },
-          {
-            "num": "1.04",
-            "title": "Your Referral Code From Day One",
-            "overview": "You don't need to upgrade to start earning. Every VIP signup through your code earns you 30% of their \u00a39.99, about \u00a33 a month, for as long as they stay a member, whether you're free or paid. Upgrading adds longer clips, the full Creator Playbook course, and free coaching on top, but your referral code works from today.",
-            "interactive": "Work out what your referral code is actually worth at a few different referral counts.",
-            "deliverable": "Submit your own referral link and one place you'll actually share it this week.",
-            "activity": {
-              "kind": "allocator",
-              "mode": "calculator",
-              "formula": "clocalBreakeven",
-              "prompt": "See what a few real referral counts are actually worth.",
-              "unit": "\u00a3",
-              "fields": [
-                {
-                  "key": "referrals",
-                  "label": "VIP referrals through your code this month",
-                  "type": "number",
-                  "placeholder": "e.g. 5"
-                }
-              ],
-              "modelNote": "Commission payouts are being switched on soon, this is the model to understand now, not a promise of cash landing immediately. That \u00a314.99 line is what upgrading to the Creator plan costs, not something you owe as a free creator."
             }
           }
         ]

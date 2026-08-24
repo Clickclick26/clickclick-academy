@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Course Manager — ClickClick Academy</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#efe9da" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="admin-wrap">
+    <div class="admin-head">
+      <p class="eyebrow">ClickClick Academy · Course Manager</p>
+      <h1>Add or edit a course</h1>
+      <p>
+        Fill the form, then download the two files it produces and drop them into the
+        <code>clickclick-academy</code> folder (replacing the old ones). Then deploy as usual.
+      </p>
+    </div>
+
+    <div class="admin-banner">
+      <strong>This page is a local tool, not part of the live app.</strong>
+      It doesn't save anything by itself — you still download the updated
+      <code>courses.json</code> / <code>packs.json</code> and push them yourself. It has no
+      password, so don't link it from anywhere public; treat the URL like a backstage door.
+      It also can't host video — put the real lesson (Loom, Google Drive, YouTube unlisted,
+      Lark Docs…) behind the "Link" field below, and the course card will open it.
+    </div>
+
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h2 id="form-title">New course</h2>
+        <p class="sub">Required fields are marked *.</p>
+
+        <div class="field">
+          <label for="f-title">Title *</label>
+          <input id="f-title" type="text" placeholder="e.g. Hook in 3 seconds" />
+        </div>
+
+        <div class="field">
+          <label for="f-id">
+            Course ID
+            <span class="help">— auto-made from the title, used to link it into packs</span>
+          </label>
+          <input id="f-id" type="text" />
+        </div>
+
+        <div class="field">
+          <label for="f-desc">Description</label>
+          <textarea id="f-desc" placeholder="One line — shows under the title on the card."></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-tag">Tag</label>
+            <input id="f-tag" type="text" placeholder="e.g. UGC" />
+          </div>
+          <div class="field">
+            <label for="f-lessons">Lessons</label>
+            <input id="f-lessons" type="number" min="1" step="1" value="3" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-level">Level</label>
+            <input id="f-level" list="level-options" type="text" value="Core" />
+            <datalist id="level-options">
+              <option value="Start here"></option>
+              <option value="Core"></option>
+              <option value="Next"></option>
+              <option value="Advanced"></option>
+              <option value="1:1"></option>
+            </datalist>
+          </div>
+          <div class="field">
+            <label for="f-status">Status text</label>
+            <input id="f-status" list="status-options" type="text" value="Not started" />
+            <datalist id="status-options">
+              <option value="Not started"></option>
+              <option value="Book call"></option>
+            </datalist>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="check-pill" style="width: fit-content">
+            <input id="f-highlight" type="checkbox" />
+            Highlight status in pink (like the coaching call button)
+          </label>
+        </div>
+
+        <div class="field">
+          <label>Who is this for? (audience)</label>
+          <div class="check-grid" id="audience-checks"></div>
+        </div>
+
+        <div class="field">
+          <label>Icon</label>
+          <div class="icon-pick" id="icon-pick"></div>
+        </div>
+
+        <div class="field">
+          <label>Card colour</label>
+          <div class="swatches" id="tone-swatches"></div>
+        </div>
+
+        <div class="field">
+          <label for="f-link">
+            Link <span class="help">— where the lesson actually lives (optional)</span>
+          </label>
+          <input id="f-link" type="url" placeholder="https://…" />
+        </div>
+
+        <div class="field">
+          <label>Add to which packs?</label>
+          <div class="check-grid" id="pack-checks"></div>
+        </div>
+
+        <div class="admin-actions">
+          <button class="cta" id="btn-save" type="button">Add course</button>
+          <button class="btn-secondary" id="btn-reset" type="button">New course (clear form)</button>
+        </div>
+        <p class="status-msg" id="form-status"></p>
+      </div>
+
+      <div>
+        <div class="admin-card">
+          <h2>Preview</h2>
+          <p class="sub">What this card looks like in the app.</p>
+          <div class="preview-slot" id="preview-slot"></div>
+        </div>
+
+        <div class="admin-card" style="margin-top: 1.5rem">
+          <h2>Existing courses</h2>
+          <p class="sub">Click Edit to load one back into the form.</p>
+          <div class="existing-list" id="existing-list"></div>
+        </div>
+
+        <div class="admin-card download-card">
+          <h2>Save your changes<span class="pending-flag" id="pending-flag" hidden>● unsaved</span></h2>
+          <p class="sub">Download both files after every change — packs.json changes even if you only touched one pack.</p>
+          <div class="admin-actions">
+            <button class="btn" id="btn-download-courses" type="button" disabled>Download courses.json</button>
+            <button class="btn" id="btn-download-packs" type="button" disabled>Download packs.json</button>
+          </div>
+          <ol class="steps">
+            <li>Download both files above.</li>
+            <li>Move them into your <code>clickclick-academy</code> folder, replacing the old ones.</li>
+            <li>Run <code>git add -A && git commit -m "Add course" && git push origin main</code>.</li>
+            <li>GitHub Pages rebuilds — check the live site in a minute.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -29,7 +29,7 @@
     ]
   },
   "clocal-creator": {
-    "label": "CLocal Creator",
+    "label": "CLocal Creator · Part Two",
     "audience": "clocal-creator",
     "courseIds": [
       "clocal-creator-playbook",
@@ -37,7 +37,7 @@
     ]
   },
   "clocal-free": {
-    "label": "CLocal Creator (Free)",
+    "label": "CLocal Creator · Part One",
     "audience": "clocal-creator-free",
     "courseIds": [
       "clocal-creator-starter"

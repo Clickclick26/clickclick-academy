@@ -192,8 +192,9 @@
       openAttr +
       detailAttr +
       '>' +
-      '<div class="course-visual" style="background:' +
+      '<div class="course-visual" style="background-color:' +
       esc(course.tone || '#ebe4f5') +
+      (course.cover ? ';background-image:url(\'' + esc(course.cover) + '\')' : '') +
       '">' +
       '<span class="course-lessons">' +
       lessons +
@@ -1141,18 +1142,26 @@
     );
   }
 
-  function lessonHtml(lesson, state, justUnlockedNum) {
-    // state: 'locked' | 'open' | 'submitted'
+  function lessonHtml(lesson, state, justUnlockedNum, selfPaced) {
+    // state: 'locked' | 'open' | 'submitted'. selfPaced courses (no
+    // deliverable grading, e.g. the CLocal creator courses) skip the
+    // lock/submit mechanic entirely: every lesson is just open, always, no
+    // "submit to unlock the next one" gate. The deliverable text still
+    // shows, as a suggested real-world action, just with nothing to hand in.
     var statusBadge =
-      state === 'submitted'
-        ? '<span class="lesson-status lesson-status--done">&#10003; Submitted</span>'
-        : state === 'locked'
-          ? '<span class="lesson-status lesson-status--locked">Locked</span>'
-          : '';
-    var submitted = state === 'submitted' ? lesson._submitted : null;
+      selfPaced
+        ? ''
+        : state === 'submitted'
+          ? '<span class="lesson-status lesson-status--done">&#10003; Submitted</span>'
+          : state === 'locked'
+            ? '<span class="lesson-status lesson-status--locked">Locked</span>'
+            : '';
+    var submitted = !selfPaced && state === 'submitted' ? lesson._submitted : null;
 
     var actionHtml;
-    if (state === 'locked') {
+    if (selfPaced) {
+      actionHtml = '';
+    } else if (state === 'locked') {
       actionHtml =
         '<p class="lesson-locked-note">Submit the lesson before this one to unlock it.</p>';
     } else if (state === 'submitted') {
@@ -1204,7 +1213,7 @@
       '</div>' +
       (lesson.activity ? activityHtml(lesson.num, lesson.activity) : '') +
       '<div class="lesson-field lesson-field--deliverable">' +
-      '<span class="lesson-field-label">Deliverable</span>' +
+      '<span class="lesson-field-label">' + (selfPaced ? 'Worth trying' : 'Deliverable') + '</span>' +
       '<span class="lesson-field-body">' + esc(lesson.deliverable || '') + '</span>' +
       '</div>' +
       actionHtml +
@@ -1212,7 +1221,7 @@
     );
   }
 
-  function moduleHtml(mod, index, submittedByNum, justUnlockedNum) {
+  function moduleHtml(mod, index, submittedByNum, justUnlockedNum, selfPaced) {
     var lessons = Array.isArray(mod.lessons) ? mod.lessons : [];
     return (
       '<section class="module-block">' +
@@ -1223,7 +1232,8 @@
       (mod.frame ? '<p class="module-block-frame">' + esc(mod.frame) + '</p>' : '') +
       lessons
         .map(function (lesson) {
-          return lessonHtml(lesson, lessonState(lesson, submittedByNum), justUnlockedNum);
+          var state = selfPaced ? 'open' : lessonState(lesson, submittedByNum);
+          return lessonHtml(lesson, state, justUnlockedNum, selfPaced);
         })
         .join('') +
       '</section>'
@@ -1250,9 +1260,13 @@
     var lessonCount = modules.reduce(function (n, m) {
       return n + (Array.isArray(m.lessons) ? m.lessons.length : 0);
     }, 0);
+    // selfPaced courses (the CLocal creator courses) aren't graded, so there's
+    // nothing to "submit" or lock, no done-count, no progress bar, no
+    // completion banner, just lessons to browse and try at your own pace.
+    var selfPaced = !!course.selfPaced;
     var doneCount = Object.keys(submittedByNum).length;
     currentAllNums = flatLessonNums(course);
-    var complete = lessonCount > 0 && doneCount >= lessonCount;
+    var complete = !selfPaced && lessonCount > 0 && doneCount >= lessonCount;
     return (
       '<div class="detail-head">' +
       '<span class="course-tag">' + esc(course.tag || '') + '</span>' +
@@ -1260,16 +1274,23 @@
       (course.description ? '<p class="detail-lead">' + esc(course.description) + '</p>' : '') +
       '<div class="detail-meta">' +
       '<span>' + modules.length + (modules.length === 1 ? ' module' : ' modules') + '</span>' +
-      '<span>' + doneCount + ' / ' + lessonCount + ' lessons done</span>' +
+      '<span>' +
+      (selfPaced
+        ? lessonCount + (lessonCount === 1 ? ' lesson' : ' lessons') + ', go at your own pace'
+        : doneCount + ' / ' + lessonCount + ' lessons done'
+      ) + '</span>' +
       '<span>Level: ' + esc(course.level || '') + '</span>' +
       '</div>' +
-      '<div class="progress-track" role="progressbar" aria-valuenow="' + doneCount +
-      '" aria-valuemin="0" aria-valuemax="' + lessonCount + '"><div class="progress-fill"></div></div>' +
+      (selfPaced
+        ? ''
+        : '<div class="progress-track" role="progressbar" aria-valuenow="' + doneCount +
+          '" aria-valuemin="0" aria-valuemax="' + lessonCount + '"><div class="progress-fill"></div></div>'
+      ) +
       (complete
         ? '<p class="course-complete-banner">&#127881; Every lesson done. That\'s the whole certification. Nice work.</p>'
         : '') +
       '</div>' +
-      modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum); }).join('') +
+      modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum, selfPaced); }).join('') +
       bonusActivitiesHtml(course)
     );
   }
