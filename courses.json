@@ -1749,5 +1749,123 @@
         ]
       }
     ]
+  },
+  {
+    "id": "clocal-creator-starter",
+    "title": "The CLocal Creator Starter Guide",
+    "description": "You're approved and posting, that's the hard part done. This is how to make your first 45-second reviews actually good, claim your first gift deal, and start earning from your own referral code from day one, no upgrade required for any of it.",
+    "tag": "Free Creator",
+    "audience": [
+      "clocal-creator-free"
+    ],
+    "lessons": 4,
+    "level": "Starter",
+    "status": "Not started",
+    "icon": "\ud83c\udf31",
+    "tone": "#fdf0dd",
+    "modules": [
+      {
+        "title": "Your First Reviews",
+        "frame": "You've got 45 seconds and everything else a Creator has: gift deals, a referral code, and shops that want reviewing. This is how to make the most of exactly what you've already got.",
+        "lessons": [
+          {
+            "num": "1.01",
+            "title": "What 45 Seconds Actually Needs",
+            "overview": "45 seconds is not enough time to warm up. There's no room for an intro, a slow build, or a second idea, just a hook, the thing itself, and a verdict. This lesson is the shape that makes 45 seconds feel complete instead of rushed.",
+            "interactive": "Put the 3 beats of a 45-second review into the order that actually works.",
+            "deliverable": "Post one real 45-second review using this structure and paste the link.",
+            "activity": {
+              "kind": "sequence",
+              "prompt": "Put these 3 beats of a 45-second review into the order a working CLocal creator actually shoots them.",
+              "items": [
+                "Open on where you are and what you're about to show",
+                "Show the thing: the dish, the product, the space",
+                "Give your honest one-line verdict and close"
+              ]
+            }
+          },
+          {
+            "num": "1.02",
+            "title": "Filming Inside a Real Shop Without Feeling Awkward",
+            "overview": "It's a real shop with real customers, not a studio, and there's no retake budget. A few small habits are the difference between footage that looks confident and footage that looks like you weren't sure you were allowed to be there.",
+            "interactive": "Run through this checklist before you press record in someone else's shop.",
+            "deliverable": "Submit which item on this checklist you'd have skipped before this lesson, and why it matters now.",
+            "activity": {
+              "kind": "checklist",
+              "graded": false,
+              "prompt": "Before you press record in someone else's shop, check each one.",
+              "items": [
+                {
+                  "text": "You've told the owner or staff what you're filming"
+                },
+                {
+                  "text": "You've checked nobody's face is in frame without them knowing"
+                },
+                {
+                  "text": "You've picked your one shot before you start filming, not mid-take"
+                },
+                {
+                  "text": "Your verdict line is ready in your head before you say it on camera"
+                }
+              ]
+            }
+          },
+          {
+            "num": "1.03",
+            "title": "Claiming Your First Gift Deal",
+            "overview": "Gift deals aren't a paid-only perk, you can claim one right now. Claiming one is a small agreement though: whatever the offer said the moment you claimed it is exactly what you owe back, one review video, on those terms.",
+            "interactive": "Answer honestly: what have you actually agreed to in each of these gift-claim scenarios?",
+            "deliverable": "Claim one real gift deal, and submit which shop it was with.",
+            "activity": {
+              "kind": "quiz",
+              "prompt": "What have you actually agreed to?",
+              "questions": [
+                {
+                  "q": "You claim a gift offer from a bakery. What have you actually agreed to?",
+                  "options": [
+                    "Nothing until you feel like it",
+                    "One review video, on the terms shown at the moment you claimed it"
+                  ],
+                  "correct": 1,
+                  "explain": "One video, on the terms locked in when you claimed. That's the whole deal."
+                },
+                {
+                  "q": "You claimed a gift, got busy, and never filmed anything. What's the actual cost?",
+                  "options": [
+                    "Nothing really, it's only a free coffee",
+                    "The shop loses trust in CLocal creators, and you may lose access to future gifts"
+                  ],
+                  "correct": 1,
+                  "explain": "It's bigger than one coffee. Unfulfilled claims are the fastest way to stop being trusted with gifts at all."
+                }
+              ]
+            }
+          },
+          {
+            "num": "1.04",
+            "title": "Your Referral Code From Day One",
+            "overview": "You don't need to upgrade to start earning. Every VIP signup through your code earns you 30% of their \u00a39.99, about \u00a33 a month, for as long as they stay a member, whether you're free or paid. Upgrading adds longer clips, the full Creator Playbook course, and free coaching on top, but your referral code works from today.",
+            "interactive": "Work out what your referral code is actually worth at a few different referral counts.",
+            "deliverable": "Submit your own referral link and one place you'll actually share it this week.",
+            "activity": {
+              "kind": "allocator",
+              "mode": "calculator",
+              "formula": "clocalBreakeven",
+              "prompt": "See what a few real referral counts are actually worth.",
+              "unit": "\u00a3",
+              "fields": [
+                {
+                  "key": "referrals",
+                  "label": "VIP referrals through your code this month",
+                  "type": "number",
+                  "placeholder": "e.g. 5"
+                }
+              ],
+              "modelNote": "Commission payouts are being switched on soon, this is the model to understand now, not a promise of cash landing immediately. That \u00a314.99 line is what upgrading to the Creator plan costs, not something you owe as a free creator."
+            }
+          }
+        ]
+      }
+    ]
   }
 ]

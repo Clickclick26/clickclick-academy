@@ -36,6 +36,13 @@
       "coach-book"
     ]
   },
+  "clocal-free": {
+    "label": "CLocal Creator (Free)",
+    "audience": "clocal-creator-free",
+    "courseIds": [
+      "clocal-creator-starter"
+    ]
+  },
   "staff-onboard": {
     "label": "Staff onboarding",
     "audience": "staff",
@@ -56,6 +63,7 @@
     "courseIds": [
       "ugc-creator-program",
       "clocal-creator-playbook",
+      "clocal-creator-starter",
       "coach-book"
     ]
   },
@@ -65,6 +73,7 @@
     "courseIds": [
       "ugc-creator-program",
       "clocal-creator-playbook",
+      "clocal-creator-starter",
       "coach-book"
     ],
     "note": "Legacy master code, same as internal. Keep until Kathryn rotates codes."
