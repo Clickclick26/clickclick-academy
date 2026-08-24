@@ -521,6 +521,11 @@ input {
   display: grid;
   place-items: center;
   padding: 1rem;
+  background-size: cover;
+  background-position: center;
+  /* Tints a real photo toward the course's pastel tone instead of a flat
+     colour, so it still reads as on-brand rather than a bare stock photo. */
+  background-blend-mode: multiply;
 }
 
 .course-lessons {

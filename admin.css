@@ -1,0 +1,294 @@
+/* Course Manager (admin.html) — local tool only, not part of the public app shell. */
+
+.admin-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.admin-head {
+  margin-bottom: 1.5rem;
+}
+
+.admin-head h1 {
+  font-size: clamp(1.5rem, 3.5vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.admin-head p {
+  color: var(--mid);
+  font-size: 0.92rem;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.admin-banner {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 0.9rem 1.1rem;
+  margin: 1rem 0 1.75rem;
+  font-size: 0.85rem;
+  color: var(--mid);
+  border-left: 4px solid var(--pink);
+}
+
+.admin-banner strong {
+  color: var(--ink);
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.admin-card h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.admin-card .sub {
+  color: var(--mid);
+  font-size: 0.82rem;
+  margin-bottom: 1.1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.field .help {
+  font-size: 0.76rem;
+  color: var(--light);
+  font-weight: 400;
+}
+
+.field input[type="text"],
+.field input[type="number"],
+.field input[type="url"],
+.field textarea,
+.field select {
+  border: 0;
+  border-radius: 14px;
+  padding: 0.7rem 0.85rem;
+  background: var(--surface-soft);
+  box-shadow: inset 0 0 0 1.5px rgba(20, 20, 20, 0.06);
+  font: inherit;
+  width: 100%;
+}
+
+.field input:disabled {
+  opacity: 0.6;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(0, 188, 212, 0.45);
+}
+
+.field textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.check-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.check-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--surface-soft);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.check-pill input {
+  accent-color: var(--turquoise-deep);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatch.is-selected {
+  border-color: var(--ink);
+}
+
+.icon-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.icon-btn.is-selected {
+  border-color: var(--turquoise-deep);
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.btn-secondary {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1.1rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: var(--surface-soft);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--cream-deep);
+}
+
+.status-msg {
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  min-height: 1.1em;
+}
+
+.status-msg.ok {
+  color: #1c9d5f;
+}
+
+.status-msg.warn {
+  color: #b00020;
+}
+
+.existing-list {
+  display: grid;
+  gap: 0.4rem;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 1.25rem;
+}
+
+.existing-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: var(--surface-soft);
+  border-radius: 12px;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.existing-row button {
+  border: 0;
+  background: none;
+  color: var(--turquoise-deep);
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.preview-slot {
+  width: 220px;
+  margin: 0 auto 1.25rem;
+}
+
+.download-card {
+  margin-top: 1.5rem;
+}
+
+.download-card .admin-actions .btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(135deg, #00bcd4, #7b5ea7 55%, #c2185b);
+}
+
+.download-card .admin-actions .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.steps {
+  margin-top: 1rem;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: var(--mid);
+  line-height: 1.7;
+}
+
+.pending-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--pink);
+  margin-left: 0.5rem;
+}
