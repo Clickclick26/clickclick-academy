@@ -1066,6 +1066,22 @@
         '.  Monthly retainer (4 videos): £' + retainerGBP + ' / $' + retainerUSD + '.'
       );
     },
+    // 30% of the £9.99 VIP plan per referral, and how many referrals it
+    // takes to cover the £14.99 Creator plan itself.
+    clocalBreakeven: function (inputs) {
+      var referrals = Math.max(0, parseFloat(inputs.referrals) || 0);
+      var perReferral = 9.99 * 0.3;
+      var monthly = referrals * perReferral;
+      var breakeven = Math.ceil(14.99 / perReferral);
+      var coversPlan = monthly >= 14.99;
+      return (
+        referrals + ' referral' + (referrals === 1 ? '' : 's') + ' at 30% of £9.99 is about £' +
+        monthly.toFixed(2) + ' a month.  It takes ' + breakeven + ' referrals to cover your £14.99 ' +
+        'plan.  ' + (coversPlan
+          ? "At this rate you're covering your own plan and then some."
+          : "Not quite there yet, keep sharing your code.")
+      );
+    },
   };
 
   // Turns a pasted YouTube, Vimeo, or Instagram Reel/post link into a
