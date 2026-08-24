@@ -1364,6 +1364,13 @@
 
   function renderProgress(course, opts) {
     opts = opts || {};
+    // selfPaced courses have nothing to track by identity (no deliverable
+    // submission, no locking), so skip the name/email gate and the progress
+    // API call entirely and just render the lessons straight away.
+    if (course.selfPaced) {
+      detailBody.innerHTML = courseDetailHtml(course, {}, opts.justUnlockedNum);
+      return;
+    }
     var student = loadStudent();
     if (!student) {
       detailBody.innerHTML = identifyGateHtml(course);
