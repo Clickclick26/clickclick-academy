@@ -1455,7 +1455,7 @@
         ]
       }
     },
-    "cover": "https://images.pexels.com/photos/12673799/pexels-photo-12673799.jpeg?auto=compress&cs=tinysrgb&w=800"
+    "cover": "images/cover-ugc.jpg"
   },
   {
     "id": "coach-book",
@@ -1491,7 +1491,7 @@
     "icon": "\ud83d\udccd",
     "tone": "#e3f5ec",
     "selfPaced": true,
-    "cover": "https://images.pexels.com/photos/18999439/pexels-photo-18999439.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "cover": "images/cover-clocal-playbook.jpg",
     "modules": [
       {
         "title": "Getting Chosen",
@@ -1778,7 +1778,7 @@
     "icon": "\ud83c\udf31",
     "tone": "#fdf0dd",
     "selfPaced": true,
-    "cover": "https://images.pexels.com/photos/6612700/pexels-photo-6612700.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "cover": "images/cover-clocal-starter.jpg",
     "modules": [
       {
         "title": "How CLocal Works",
