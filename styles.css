@@ -2001,10 +2001,9 @@ input {
   box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.15);
 }
 
-.course-tag--clocal {
-  color: #fff;
-  background: linear-gradient(135deg, var(--clocal-teal), var(--clocal-turquoise));
-}
+/* Deliberately no colour override here any more: the tag should read
+   identically to every other course's tag, just the CLocal wordmark
+   (below) distinguishes it, per Kathryn. */
 
 .detail-head--clocal {
   border-top: 3px solid var(--clocal-teal);
