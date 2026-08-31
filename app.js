@@ -1400,11 +1400,80 @@
     });
   }
 
-  function drawCertificate(courseTitle, studentName) {
+  // A small drawn medallion (rings + a star + ribbon tails), not an emoji,
+  // so it renders identically everywhere instead of depending on whichever
+  // emoji font happens to be installed.
+  // Lazy-loads and caches the real shutter mark cropped from the actual
+  // ClickClick logo (brand/shutter-icon.png), so the certificate seal draws
+  // the genuine brand icon instead of a hand-drawn approximation of it.
+  var shutterIconPromise = null;
+  function loadShutterIcon() {
+    if (!shutterIconPromise) {
+      shutterIconPromise = new Promise(function (resolve) {
+        var img = new Image();
+        img.onload = function () {
+          resolve(img);
+        };
+        img.onerror = function () {
+          resolve(null);
+        };
+        img.src = 'brand/shutter-icon.png';
+      });
+    }
+    return shutterIconPromise;
+  }
+
+  function drawCertificateSeal(ctx, cx, cy, shutterImg) {
+    var r = 54;
+    ctx.save();
+
+    ctx.fillStyle = '#00BCD4';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#F3EFE4';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#7B5EA7';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 16, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // The real ClickClick shutter mark (the aperture dot over the "i" in
+    // the wordmark), drawn from the actual logo asset, not redrawn by hand.
+    if (shutterImg) {
+      var iconSize = (r - 20) * 2;
+      ctx.drawImage(shutterImg, cx - iconSize / 2, cy - iconSize / 2, iconSize, iconSize);
+    }
+
+    // Ribbon tails hanging below the medallion.
+    ctx.fillStyle = '#00BCD4';
+    ctx.beginPath();
+    ctx.moveTo(cx - 30, cy + r - 14);
+    ctx.lineTo(cx - 6, cy + r + 58);
+    ctx.lineTo(cx - 20, cy + r + 58);
+    ctx.lineTo(cx - 44, cy + r - 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + 30, cy + r - 14);
+    ctx.lineTo(cx + 6, cy + r + 58);
+    ctx.lineTo(cx + 20, cy + r + 58);
+    ctx.lineTo(cx + 44, cy + r - 6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawCertificate(courseTitle, studentName, shutterImg) {
     var canvas = document.createElement('canvas');
     canvas.width = 1600;
     canvas.height = 1131;
     var ctx = canvas.getContext('2d');
+    var midX = canvas.width / 2;
 
     ctx.fillStyle = '#F3EFE4';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1418,13 +1487,30 @@
 
     ctx.textAlign = 'center';
 
+    // Even vertical rhythm from here down, one deliberate gap per line
+    // rather than a cramped cluster followed by a lot of dead space.
+    drawCertificateSeal(ctx, midX, 175, shutterImg);
+
     ctx.fillStyle = '#7B5EA7';
-    ctx.font = '700 28px Poppins, sans-serif';
-    ctx.fillText('CLICKCLICK ACADEMY', canvas.width / 2, 190);
+    ctx.font = '700 24px Poppins, sans-serif';
+    ctx.fillText('CLICKCLICK ACADEMY', midX, 320);
 
     ctx.fillStyle = '#1A1A1A';
     ctx.font = '700 34px Poppins, sans-serif';
-    ctx.fillText('Certificate of Completion', canvas.width / 2, 250);
+    ctx.fillText('Certificate of Completion', midX, 368);
+
+    // A short decorative rule, not text, to separate the header from the
+    // name rather than relying on whitespace alone to do that job.
+    ctx.strokeStyle = 'rgba(20, 20, 20, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(midX - 70, 410);
+    ctx.lineTo(midX + 70, 410);
+    ctx.stroke();
+
+    ctx.font = '400 24px Poppins, sans-serif';
+    ctx.fillStyle = '#6B6B6B';
+    ctx.fillText('This certifies that', midX, 470);
 
     // Shrink the name to fit an unusually long one (long legal names,
     // double-barrelled surnames) rather than letting it run into the border.
@@ -1437,24 +1523,41 @@
       ctx.font = '700 ' + nameSize + 'px Poppins, sans-serif';
     }
     ctx.fillStyle = '#00BCD4';
-    ctx.fillText(nameText, canvas.width / 2, 420);
+    ctx.fillText(nameText, midX, 550);
 
     ctx.font = '400 26px Poppins, sans-serif';
     ctx.fillStyle = '#6B6B6B';
-    ctx.fillText('has successfully completed', canvas.width / 2, 470);
+    ctx.fillText('has successfully completed', midX, 605);
 
-    ctx.font = '700 42px Poppins, sans-serif';
+    ctx.font = '700 40px Poppins, sans-serif';
     ctx.fillStyle = '#1A1A1A';
-    wrapCanvasText(ctx, courseTitle || '', canvas.width / 2, 540, 1200, 52);
+    wrapCanvasText(ctx, courseTitle || '', midX, 675, 1200, 52);
 
-    var dateStr = new Date().toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+    // Signature line + date, side by side near the foot, the way a printed
+    // certificate signs off rather than a lone timestamp floating in space.
+    var footY = canvas.height - 150;
+    var colGap = 260;
+    [
+      { x: midX - colGap, label: 'ClickClick Academy' },
+      {
+        x: midX + colGap,
+        label: new Date().toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }),
+      },
+    ].forEach(function (col) {
+      ctx.strokeStyle = 'rgba(20, 20, 20, 0.25)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(col.x - 110, footY);
+      ctx.lineTo(col.x + 110, footY);
+      ctx.stroke();
+      ctx.font = '400 20px Poppins, sans-serif';
+      ctx.fillStyle = '#6B6B6B';
+      ctx.fillText(col.label, col.x, footY + 32);
     });
-    ctx.font = '400 24px Poppins, sans-serif';
-    ctx.fillStyle = '#6B6B6B';
-    ctx.fillText(dateStr, canvas.width / 2, canvas.height - 120);
 
     return canvas;
   }
@@ -1462,7 +1565,7 @@
   function downloadCertificate(course) {
     var student = loadStudent();
     var name = (student && student.name) || 'Creator';
-    var ready =
+    var fontsReady =
       document.fonts && document.fonts.load
         ? Promise.all([
             document.fonts.load('700 64px Poppins'),
@@ -1470,8 +1573,9 @@
             document.fonts.load('700 42px Poppins'),
           ]).catch(function () {})
         : Promise.resolve();
-    ready.then(function () {
-      var canvas = drawCertificate(course.title, name);
+    Promise.all([fontsReady, loadShutterIcon()]).then(function (results) {
+      var shutterImg = results[1];
+      var canvas = drawCertificate(course.title, name, shutterImg);
       var link = document.createElement('a');
       link.download = 'ClickClick-Academy-Certificate.png';
       link.href = canvas.toDataURL('image/png');
