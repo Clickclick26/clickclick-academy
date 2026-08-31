@@ -80,6 +80,21 @@ Audience vibes on packs: `corporate`, `agency`, `creator`, `staff`, `live-host`,
 
 **Add pack / code:** new key in `packs.json` with `label`, `audience`, `courseIds`.
 
+**Course-level extras (optional, per course in `courses.json`):**
+- `"brand": "clocal"` — CLocal wordmark + teal badge/accents (see Rule 2).
+- `"intro": { "lead", "body": [..], "points": { "heading", "items": [..] }, "note" }` — rich context block shown between the header and the first module. All keys optional.
+
+**Lesson-level media (optional, per lesson):**
+- `"video": "<url>"` — YouTube / Vimeo / Instagram link, renders an embed.
+- `"videoNote": "<text>"` — while `video` is empty, shows a dashed "Video to add" placeholder with this note. Fill `video` later and the placeholder disappears.
+- `"figure": { "src", "alt", "caption" }` — an image. Empty `src` shows a dashed "Image to add" placeholder using `caption` as the note.
+
+**Module-level upgrade nudge (optional, per module):**
+- `"part": "two"` — tags the module as Part Two.
+- `"upgrade": { "heading", "body", "cta": { "label", "href" } }` — a soft "open to everyone, more with the paid plan" panel above the lessons. Not a lock. `cta` is optional and currently unused: creators upgrade **inside the CLocal app** (Profile → Creator plan), there's no web upgrade URL, so the "where to upgrade" line is baked into `body`.
+
+**Activity kind `flip`:** `{ "kind": "flip", "prompt", "cards": [ { "front", "back" } ] }` — tap-to-flip cards, no right answer, "Got it" marks it done.
+
 ---
 
 ## Deploy
@@ -98,7 +113,7 @@ If custom domain breaks github.io (redirect to dead DNS): temporarily remove `CN
 ## Rules
 
 1. Do not put Academy inside `clickclick-landing`.
-2. Branding = **ClickClick Academy** only (cream / soft cards).
+2. Branding = **ClickClick Academy** only (cream / soft cards). One exception Kathryn asked for: a course with `"brand": "clocal"` in `courses.json` (currently `clocal-creator-track`) gets a small CLocal wordmark + teal badge + teal accents on its own card and detail page. Cream Academy styling stays everywhere else.
 3. Do not expose other packs’ courses when a limited code is used.
 4. Keep Kathryn’s `Clickclick123` working unless she asks to remove it.
 

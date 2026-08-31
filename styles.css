@@ -1923,3 +1923,265 @@ input {
   text-transform: uppercase;
   color: var(--purple);
 }
+
+/* ============================================================
+   CLocal Creator Track — logo + badge, intro block, upgrade
+   panel, media placeholders, flip cards. Cream Academy styling
+   stays; this is a light CLocal accent on the one course.
+   ============================================================ */
+
+:root {
+  --clocal-teal: #008080;
+  --clocal-teal-deep: #026b6b;
+  --clocal-turquoise: #00c2c2;
+}
+
+.clocal-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  color: var(--clocal-teal-deep);
+  margin-bottom: 0.55rem;
+}
+
+.clocal-mark-dot {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--clocal-teal), var(--clocal-turquoise));
+  box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.15);
+}
+
+.course-tag--clocal {
+  color: #fff;
+  background: linear-gradient(135deg, var(--clocal-teal), var(--clocal-turquoise));
+}
+
+.detail-head--clocal {
+  border-top: 3px solid var(--clocal-teal);
+}
+
+/* Intro block */
+.course-intro {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 1.5rem 1.75rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.course-intro-lead {
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.course-intro-p {
+  color: var(--mid);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+.course-intro-points {
+  background: var(--surface-soft);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  border-left: 3px solid var(--clocal-teal);
+}
+
+.course-intro-points-head {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--clocal-teal-deep);
+  margin-bottom: 0.6rem;
+}
+
+.course-intro-points ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.course-intro-points li {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.course-intro-note {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--mid);
+  font-style: italic;
+  border-top: 1px solid var(--cream-deep);
+  padding-top: 0.85rem;
+}
+
+/* Part Two upgrade panel */
+.module-upgrade {
+  background: linear-gradient(135deg, rgba(0, 128, 128, 0.09), rgba(0, 194, 194, 0.09));
+  border: 1px solid rgba(0, 128, 128, 0.25);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.module-upgrade-head {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--clocal-teal-deep);
+}
+
+.module-upgrade-body {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--mid);
+  max-width: 64ch;
+}
+
+.module-upgrade-cta {
+  justify-self: start;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--clocal-teal), var(--clocal-turquoise));
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+.module-upgrade-cta:hover {
+  filter: brightness(1.05);
+}
+
+/* Media placeholders (filled in later) */
+.lesson-media-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border: 1.5px dashed rgba(0, 128, 128, 0.4);
+  border-radius: var(--radius);
+  background: rgba(0, 128, 128, 0.05);
+  padding: 0.9rem 1rem;
+  margin: 0.6rem 0 0.9rem;
+}
+
+.lesson-media-placeholder-tag {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--clocal-teal-deep);
+}
+
+.lesson-media-placeholder-note {
+  font-size: 0.85rem;
+  color: var(--mid);
+  line-height: 1.45;
+}
+
+/* Real lesson image */
+.lesson-figure {
+  margin: 0.6rem 0 0.9rem;
+}
+
+.lesson-figure img {
+  width: 100%;
+  border-radius: var(--radius);
+  display: block;
+}
+
+.lesson-figure figcaption {
+  font-size: 0.8rem;
+  color: var(--light);
+  margin-top: 0.4rem;
+}
+
+/* Flip cards */
+.activity-flip-prompt {
+  font-size: 0.85rem;
+  color: var(--mid);
+  margin-bottom: 0.7rem;
+}
+
+.activity-flip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
+}
+
+.flip-card {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  min-height: 130px;
+  perspective: 900px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.flip-card-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 130px;
+  transition: transform 0.5s cubic-bezier(0.4, 0.1, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flip-card.is-flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  box-shadow: var(--shadow-soft);
+}
+
+.flip-card-front {
+  background: #fff;
+  border: 1px solid var(--cream-deep);
+  font-weight: 700;
+}
+
+.flip-card-front::after {
+  content: "Tap to flip";
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.8rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--light);
+}
+
+.flip-card-back {
+  background: linear-gradient(150deg, var(--clocal-teal), var(--clocal-teal-deep));
+  color: #fff;
+  transform: rotateY(180deg);
+  font-weight: 500;
+}

@@ -10,22 +10,22 @@
     "lessons": 32,
     "level": "Certification",
     "status": "Not started",
-    "icon": "\u2605",
+    "icon": "★",
     "tone": "#f3e8ff",
     "modules": [
       {
         "title": "The UGC Creator Blueprint",
-        "frame": "Before you film a single second, you need to know what you're actually being paid for, and it isn't \u201cholding a phone and talking.\u201d This module sets the bar, gets your setup production-ready, and installs the habits every module after this one leans on.",
+        "frame": "Before you film a single second, you need to know what you're actually being paid for, and it isn't “holding a phone and talking.” This module sets the bar, gets your setup production-ready, and installs the habits every module after this one leans on.",
         "lessons": [
           {
             "num": "1.01",
             "title": "What Actually Separates a Pro From an Amateur in UGC",
-            "overview": "Here's the lesson that saves you a year of guessing: UGC isn't \u201chold phone, talk to camera.\u201d It's a performance job. Brands don't rehire you because they liked you. They rehire you because your numbers did something. This lesson breaks down exactly what separates a one-off gig from a real retainer: reliability, brand-safety instincts, and shooting for the edit instead of just filming.",
+            "overview": "Here's the lesson that saves you a year of guessing: UGC isn't “hold phone, talk to camera.” It's a performance job. Brands don't rehire you because they liked you. They rehire you because your numbers did something. This lesson breaks down exactly what separates a one-off gig from a real retainer: reliability, brand-safety instincts, and shooting for the edit instead of just filming.",
             "interactive": "Watch 3 real ad examples below. Give each one a score from 1 to 10 on three things, then compare your scores to ours.",
-            "deliverable": "Submit your 3 scores (Brief Fit, Hookiness, Editability for each ad) and 2\u20133 sentences on which one you scored most differently from ClickClick's team, and why.",
+            "deliverable": "Submit your 3 scores (Brief Fit, Hookiness, Editability for each ad) and 2–3 sentences on which one you scored most differently from ClickClick's team, and why.",
             "activity": {
               "kind": "rubric",
-              "prompt": "For each ad, score it 1\u201310 on Brief Fit, Hookiness, and Editability (see what each one means next to the boxes). Then tap Compare to see how ClickClick's team scored it.",
+              "prompt": "For each ad, score it 1–10 on Brief Fit, Hookiness, and Editability (see what each one means next to the boxes). Then tap Compare to see how ClickClick's team scored it.",
               "criteria": [
                 {
                   "label": "Brief Fit",
@@ -86,14 +86,14 @@
           {
             "num": "1.03",
             "title": "Building the Ultimate Home Studio, on Any Budget",
-            "overview": "You don't need a studio to shoot like a pro, but the wrong gear will quietly cap everything you make. This lesson covers three real tiers, Starter (\u00a3150 / $190), Working Pro (\u00a3600 / $760), Studio (\u00a32,000+ / $2,500+), across lighting, audio, mounting, and background, and tells you straight which upgrade actually moves the needle for your kind of content.",
-            "interactive": "Allocate a fixed \u00a3250 / $320 across a gear menu, then compare your build against a model allocation.",
+            "overview": "You don't need a studio to shoot like a pro, but the wrong gear will quietly cap everything you make. This lesson covers three real tiers, Starter (£150 / $190), Working Pro (£600 / $760), Studio (£2,000+ / $2,500+), across lighting, audio, mounting, and background, and tells you straight which upgrade actually moves the needle for your kind of content.",
+            "interactive": "Allocate a fixed £250 / $320 across a gear menu, then compare your build against a model allocation.",
             "deliverable": "Submit your gear-allocation sheet plus a photo of your current setup, marked up with what you'd change first and why.",
             "activity": {
               "kind": "allocator",
               "mode": "budget",
-              "prompt": "Allocate a fixed \u00a3250 / $320 across this gear menu. Nothing has to be spent on every line, so go over on one if you skip another.",
-              "unit": "\u00a3 / $",
+              "prompt": "Allocate a fixed £250 / $320 across this gear menu. Nothing has to be spent on every line, so go over on one if you skip another.",
+              "unit": "£ / $",
               "total": 250,
               "items": [
                 {
@@ -141,7 +141,7 @@
                 {
                   "label": "Your footage file-naming convention",
                   "placeholder": "e.g. CLIENT_DATE_SHOTTYPE_TAKE",
-                  "model": "BRAND_YYYYMMDD_SHOTTYPE_TAKE##  \u2192  e.g. NIVEA_20260819_CLOSEUP_03"
+                  "model": "BRAND_YYYYMMDD_SHOTTYPE_TAKE##  →  e.g. NIVEA_20260819_CLOSEUP_03"
                 }
               ]
             }
@@ -163,7 +163,7 @@
               "prompt": "Which opening actually stopped the scroll? Pick one, then see why.",
               "questions": [
                 {
-                  "q": "Opener A: \u201cHi guys, so today I wanted to show you\u2026\u201d  vs  Opener B: \u201cI got fired for doing this on camera.\u201d",
+                  "q": "Opener A: “Hi guys, so today I wanted to show you…”  vs  Opener B: “I got fired for doing this on camera.”",
                   "options": [
                     "A",
                     "B"
@@ -181,13 +181,13 @@
                   "explain": "B, pattern interrupt. It looks like you scrolled into the middle of something already happening, which reads as more real than a staged product shot."
                 },
                 {
-                  "q": "Opener A: \u201c3 things nobody tells you about [product]\u201d  vs  Opener B: \u201cThis product is really good, here's why\u201d",
+                  "q": "Opener A: “3 things nobody tells you about [product]”  vs  Opener B: “This product is really good, here's why”",
                   "options": [
                     "A",
                     "B"
                   ],
                   "correct": 0,
-                  "explain": "A, the specific number plus \u201cnobody tells you\u201d is a concrete curiosity gap. B is a bold claim with nothing pulling the viewer forward."
+                  "explain": "A, the specific number plus “nobody tells you” is a concrete curiosity gap. B is a bold claim with nothing pulling the viewer forward."
                 }
               ]
             }
@@ -211,27 +211,27 @@
               ],
               "items": [
                 {
-                  "label": "\u201cIf your skin does this in the shower, stop scrolling.\u201d",
+                  "label": "“If your skin does this in the shower, stop scrolling.”",
                   "correct": 5
                 },
                 {
-                  "label": "\u201cNobody warns you how bad hotel pillows actually are.\u201d",
+                  "label": "“Nobody warns you how bad hotel pillows actually are.”",
                   "correct": 0
                 },
                 {
-                  "label": "\u201cThis is the only product that's ever actually worked for my hair.\u201d",
+                  "label": "“This is the only product that's ever actually worked for my hair.”",
                   "correct": 1
                 },
                 {
-                  "label": "\u201cPOV: you just found out your ex is dating your dentist.\u201d",
+                  "label": "“POV: you just found out your ex is dating your dentist.”",
                   "correct": 2
                 },
                 {
-                  "label": "[Camera whip-pans to a messy desk] \u201cOkay so THIS is what I've been hiding.\u201d",
+                  "label": "[Camera whip-pans to a messy desk] “Okay so THIS is what I've been hiding.”",
                   "correct": 3
                 },
                 {
-                  "label": "\u201cSo it's 2am and I get this text from my landlord\u2026\u201d",
+                  "label": "“So it's 2am and I get this text from my landlord…”",
                   "correct": 4
                 }
               ]
@@ -240,7 +240,7 @@
           {
             "num": "2.03",
             "title": "The Pattern-Interrupt Scripting Framework",
-            "overview": "Staring at a blank page is where most hooks die. This lesson kills that problem for good with a repeatable 4-line formula: Interrupt \u2192 Stakes \u2192 Promise \u2192 Proof-Tease, plus a bank of 30 fill-in-the-blank openers sorted by niche, so you're never starting from nothing again.",
+            "overview": "Staring at a blank page is where most hooks die. This lesson kills that problem for good with a repeatable 4-line formula: Interrupt → Stakes → Promise → Proof-Tease, plus a bank of 30 fill-in-the-blank openers sorted by niche, so you're never starting from nothing again.",
             "interactive": "Plug a real product (yours or a given one) into the 4-line formula and build your own hook, then compare it against a worked example.",
             "deliverable": "Submit your 3 hook variants written out in full, each line labeled with the formula slot it fills.",
             "activity": {
@@ -250,22 +250,22 @@
                 {
                   "label": "Interrupt",
                   "placeholder": "the pattern-break line",
-                  "model": "\u201cI've bought six water bottles this year. This is the last one.\u201d"
+                  "model": "“I've bought six water bottles this year. This is the last one.”"
                 },
                 {
                   "label": "Stakes",
                   "placeholder": "what's at risk if they don't act",
-                  "model": "\u201cBecause the other five all did the same thing: cracked, leaked, or started smelling like a gym bag after a month.\u201d"
+                  "model": "“Because the other five all did the same thing: cracked, leaked, or started smelling like a gym bag after a month.”"
                 },
                 {
                   "label": "Promise",
                   "placeholder": "the specific benefit",
-                  "model": "\u201cThis one's actually leak-proof, I've thrown it in my bag upside down for three months straight.\u201d"
+                  "model": "“This one's actually leak-proof, I've thrown it in my bag upside down for three months straight.”"
                 },
                 {
                   "label": "Proof-Tease",
                   "placeholder": "a hint of evidence to come",
-                  "model": "\u201cWatch what happens when I shake it over my white couch.\u201d"
+                  "model": "“Watch what happens when I shake it over my white couch.”"
                 }
               ]
             }
@@ -288,7 +288,7 @@
                   "text": "Uses one of the 4 levers: curiosity gap, pattern interrupt, stakes, or relatability"
                 },
                 {
-                  "text": "Doesn't open with a greeting (\u201cHey guys\u201d, \u201cSo today\u2026\u201d)"
+                  "text": "Doesn't open with a greeting (“Hey guys”, “So today…”)"
                 },
                 {
                   "text": "You'd personally stop scrolling for it, honestly"
@@ -300,17 +300,17 @@
       },
       {
         "title": "Advanced Direct-Response Scriptwriting",
-        "frame": "A great hook that leads nowhere is just a great trailer for nothing. This module builds the 30\u201345 seconds after the hook: the part that actually turns a watch into a sale.",
+        "frame": "A great hook that leads nowhere is just a great trailer for nothing. This module builds the 30–45 seconds after the hook: the part that actually turns a watch into a sale.",
         "lessons": [
           {
             "num": "3.01",
             "title": "Direct-Response Fundamentals for Short-Form",
-            "overview": "Stop writing movie scripts. A UGC script is a direct-response sales letter that's been shrunk down to 30 seconds, and it has a structure whether you've noticed it or not. This lesson maps Hook \u2192 Agitate \u2192 Bridge \u2192 Offer \u2192 CTA onto real short-form pacing so you can build one on purpose instead of by accident.",
+            "overview": "Stop writing movie scripts. A UGC script is a direct-response sales letter that's been shrunk down to 30 seconds, and it has a structure whether you've noticed it or not. This lesson maps Hook → Agitate → Bridge → Offer → CTA onto real short-form pacing so you can build one on purpose instead of by accident.",
             "interactive": "Label each line of a real script to its role in the Hook, Agitate, Bridge, Offer, CTA structure.",
             "deliverable": "Submit your 5 annotated scripts, plus one line naming the structural mistake you catch most often in your own past work.",
             "activity": {
               "kind": "match",
-              "prompt": "Label each line of this script to its role in the Hook \u2192 Agitate \u2192 Bridge \u2192 Offer \u2192 CTA structure.",
+              "prompt": "Label each line of this script to its role in the Hook → Agitate → Bridge → Offer → CTA structure.",
               "categories": [
                 "Hook",
                 "Agitate",
@@ -320,23 +320,23 @@
               ],
               "items": [
                 {
-                  "label": "\u201cI used to iron my sheets every single week.\u201d",
+                  "label": "“I used to iron my sheets every single week.”",
                   "correct": 0
                 },
                 {
-                  "label": "\u201cWhich, if you've ever done it, you know eats your entire Sunday.\u201d",
+                  "label": "“Which, if you've ever done it, you know eats your entire Sunday.”",
                   "correct": 1
                 },
                 {
-                  "label": "\u201cThen I found a fabric spray that drops the wrinkles out in the dryer.\u201d",
+                  "label": "“Then I found a fabric spray that drops the wrinkles out in the dryer.”",
                   "correct": 2
                 },
                 {
-                  "label": "\u201cIt's \u00a314 / $18, one bottle lasts about 4 months.\u201d",
+                  "label": "“It's £14 / $18, one bottle lasts about 4 months.”",
                   "correct": 3
                 },
                 {
-                  "label": "\u201cLink's in my bio if your Sundays are as ruined as mine were.\u201d",
+                  "label": "“Link's in my bio if your Sundays are as ruined as mine were.”",
                   "correct": 4
                 }
               ]
@@ -345,7 +345,7 @@
           {
             "num": "3.02",
             "title": "Value Propositions & Benefit Stacking",
-            "overview": "\u201c12-hour battery\u201d is a spec. \u201cNever dies mid-shift\u201d is a reason to buy. This lesson lives in that gap, and shows you how to stack three real benefits inside 10 seconds without the script starting to sound like you're reading off the box.",
+            "overview": "“12-hour battery” is a spec. “Never dies mid-shift” is a reason to buy. This lesson lives in that gap, and shows you how to stack three real benefits inside 10 seconds without the script starting to sound like you're reading off the box.",
             "interactive": "Translate raw product features into benefit lines, against the clock.",
             "deliverable": "Upload your 10 translated lines and your strongest 3-benefit stack, submitted as a ready-to-read script excerpt.",
             "activity": {
@@ -353,19 +353,19 @@
               "prompt": "Translate each raw feature into a benefit line.",
               "fields": [
                 {
-                  "label": "\u201c12-hour battery\u201d",
+                  "label": "“12-hour battery”",
                   "placeholder": "your benefit line",
-                  "model": "\u201cCharge it Sunday night, forget about it till Friday.\u201d"
+                  "model": "“Charge it Sunday night, forget about it till Friday.”"
                 },
                 {
-                  "label": "\u201cRecycled aluminium body\u201d",
+                  "label": "“Recycled aluminium body”",
                   "placeholder": "your benefit line",
-                  "model": "\u201cDrop-tested: mine's survived two flights of stairs and a dog.\u201d"
+                  "model": "“Drop-tested: mine's survived two flights of stairs and a dog.”"
                 },
                 {
-                  "label": "\u201cCompatible with any charger\u201d",
+                  "label": "“Compatible with any charger”",
                   "placeholder": "your benefit line",
-                  "model": "\u201cNo new cable to lose, no drawer full of the wrong one.\u201d"
+                  "model": "“No new cable to lose, no drawer full of the wrong one.”"
                 }
               ]
             }
@@ -373,7 +373,7 @@
           {
             "num": "3.03",
             "title": "Writing CTAs That Actually Convert",
-            "overview": "\u201cLink in bio\u201d is the single most wasted line in short-form video: it's your last chance to move someone, spent on nothing. This lesson gives you 5 real CTA types (Urgency, Social-Proof-Close, Risk-Reversal, Curiosity-Loop, Direct-Command) and exactly which funnel stage each one is built to close.",
+            "overview": "“Link in bio” is the single most wasted line in short-form video: it's your last chance to move someone, spent on nothing. This lesson gives you 5 real CTA types (Urgency, Social-Proof-Close, Risk-Reversal, Curiosity-Loop, Direct-Command) and exactly which funnel stage each one is built to close.",
             "interactive": "Match each CTA type to the funnel stage it's actually built to close.",
             "deliverable": "Submit your 5 CTA variants labeled by type, with your own pick marked and one sentence on why it fits.",
             "activity": {
@@ -416,7 +416,7 @@
           {
             "num": "3.04",
             "title": "Full Script Assembly: Hook to CTA",
-            "overview": "Everything from the last two modules comes together here: one complete, production-ready 30\u201345 second script, for a real or assigned product, timed against a stopwatch instead of a word count. This is the script you'll actually shoot.",
+            "overview": "Everything from the last two modules comes together here: one complete, production-ready 30–45 second script, for a real or assigned product, timed against a stopwatch instead of a word count. This is the script you'll actually shoot.",
             "interactive": "Read your script out loud against a stopwatch, so you catch pacing issues text alone hides.",
             "deliverable": "Upload your final written script plus a voice-memo table-read, timed and under the 45-second cap.",
             "activity": {
@@ -493,7 +493,7 @@
                     "Switch to natural light only"
                   ],
                   "correct": 0,
-                  "explain": "Overhead light is the single most common \u201cwhy does this look unpaid\u201d cause. Dropping the angle closer to eye-level fixes it instantly."
+                  "explain": "Overhead light is the single most common “why does this look unpaid” cause. Dropping the angle closer to eye-level fixes it instantly."
                 }
               ]
             }
@@ -517,7 +517,7 @@
               ],
               "items": [
                 {
-                  "label": "\u201cSo here's what happened when I tried it\u2026\u201d (delivering to camera)",
+                  "label": "“So here's what happened when I tried it…” (delivering to camera)",
                   "correct": 0
                 },
                 {
@@ -581,7 +581,7 @@
                   "tag": "close"
                 },
                 {
-                  "text": "Overhead: product laid out with 2\u20133 other items",
+                  "text": "Overhead: product laid out with 2–3 other items",
                   "tag": "overhead"
                 },
                 {
@@ -602,12 +602,12 @@
           {
             "num": "4.04",
             "title": "The Multi-Shot Product Story",
-            "overview": "Individual shots are just footage. Sequenced right (context \u2192 interaction \u2192 payoff) they become a story that carries the script instead of just filling dead air. This is the exact skill that turns \u201cfootage\u201d into \u201ca cut.\u201d",
+            "overview": "Individual shots are just footage. Sequenced right (context → interaction → payoff) they become a story that carries the script instead of just filling dead air. This is the exact skill that turns “footage” into “a cut.”",
             "interactive": "Arrange 8 b-roll shots into the strongest context, interaction, payoff order.",
-            "deliverable": "Upload your own filmed sequence, built from your 4.03 footage, edited into a 15\u201320 second silent story cut.",
+            "deliverable": "Upload your own filmed sequence, built from your 4.03 footage, edited into a 15–20 second silent story cut.",
             "activity": {
               "kind": "sequence",
-              "prompt": "Arrange these 8 b-roll shots into the strongest context \u2192 interaction \u2192 payoff order.",
+              "prompt": "Arrange these 8 b-roll shots into the strongest context → interaction → payoff order.",
               "items": [
                 "Wide: the room/setting, product not yet visible",
                 "Medium: product enters frame, placed on the surface",
@@ -760,7 +760,7 @@
               "topN": 5,
               "prompt": "You have 8 clips. Pick and order your strongest 5-clip reel. Only the first 5 positions are checked, and order matters most for the first 3.",
               "items": [
-                "Your single best result: most views, most obviously \u201cworked\u201d",
+                "Your single best result: most views, most obviously “worked”",
                 "Your most technically polished edit",
                 "A clip for a recognizable or premium brand, if you have one",
                 "A clip that shows range: different niche or format than the rest",
@@ -782,9 +782,9 @@
               "prompt": "Rewrite this weak cold pitch opener.",
               "fields": [
                 {
-                  "label": "Weak: \u201cHi, I love your brand and would love to work with you! Let me know your rates.\u201d",
+                  "label": "Weak: “Hi, I love your brand and would love to work with you! Let me know your rates.”",
                   "placeholder": "your rewrite",
-                  "model": "\u201cHey [Name], noticed [Brand]'s last 3 reels all used voiceover instead of on-camera talent. I make UGC that performs like [specific result]. Happy to send 2 sample clips built around your actual product if useful?\u201d"
+                  "model": "“Hey [Name], noticed [Brand]'s last 3 reels all used voiceover instead of on-camera talent. I make UGC that performs like [specific result]. Happy to send 2 sample clips built around your actual product if useful?”"
                 }
               ]
             }
@@ -792,15 +792,15 @@
           {
             "num": "6.03",
             "title": "Pricing Your Work & Packaging Offers",
-            "overview": "\u201cWhat should I charge?\u201d is the question that keeps creators broke for way longer than it should. This lesson replaces the guesswork with a real rate framework (usage rights, exclusivity, volume) and 3 ready-to-use package tiers: single-video, bundle, retainer, worked in both \u00a3 and $ so it travels with you.",
-            "interactive": "Plug your experience level and a sample brief into the calculator to generate a defensible quote in \u00a3 or $.",
+            "overview": "“What should I charge?” is the question that keeps creators broke for way longer than it should. This lesson replaces the guesswork with a real rate framework (usage rights, exclusivity, volume) and 3 ready-to-use package tiers: single-video, bundle, retainer, worked in both £ and $ so it travels with you.",
+            "interactive": "Plug your experience level and a sample brief into the calculator to generate a defensible quote in £ or $.",
             "deliverable": "Submit your calculated rate card across all 3 package tiers, in your own currency, with your reasoning for each price.",
             "activity": {
               "kind": "allocator",
               "mode": "calculator",
               "formula": "ugcRate",
               "prompt": "Calculate a defensible quote for a sample brief: 1 video, paid social usage.",
-              "unit": "\u00a3 / $",
+              "unit": "£ / $",
               "fields": [
                 {
                   "key": "level",
@@ -808,11 +808,11 @@
                   "type": "select",
                   "options": [
                     {
-                      "label": "New (0\u20133 paid jobs)",
+                      "label": "New (0–3 paid jobs)",
                       "value": "1"
                     },
                     {
-                      "label": "Established (4\u201315 paid jobs)",
+                      "label": "Established (4–15 paid jobs)",
                       "value": "1.6"
                     },
                     {
@@ -847,7 +847,7 @@
                   "isFlag": true
                 },
                 {
-                  "text": "Usage scope says: \u201cpaid and organic, all platforms, worldwide, in perpetuity\u201d",
+                  "text": "Usage scope says: “paid and organic, all platforms, worldwide, in perpetuity”",
                   "isFlag": true
                 },
                 {
@@ -855,7 +855,7 @@
                   "isFlag": false
                 },
                 {
-                  "text": "Payment terms: \u201cNet 60, upon client's discretion\u201d",
+                  "text": "Payment terms: “Net 60, upon client's discretion”",
                   "isFlag": true
                 },
                 {
@@ -921,11 +921,11 @@
               "prompt": "Review this usage-rights request and flag every line that's missing or unfavorable.",
               "items": [
                 {
-                  "text": "Usage scope explicitly says \u201corganic only\u201d, with paid usage listed as a separate, additional fee",
+                  "text": "Usage scope explicitly says “organic only”, with paid usage listed as a separate, additional fee",
                   "isFlag": false
                 },
                 {
-                  "text": "The brief says \u201cusage: everywhere, forever\u201d with no separate paid-usage line",
+                  "text": "The brief says “usage: everywhere, forever” with no separate paid-usage line",
                   "isFlag": true
                 },
                 {
@@ -976,7 +976,7 @@
                   "q": "Which is a real content pillar, not just a random post?",
                   "options": [
                     "A one-off giveaway video",
-                    "A recurring \u201cproducts that actually work\u201d series you post weekly",
+                    "A recurring “products that actually work” series you post weekly",
                     "A trending sound you jumped on once"
                   ],
                   "correct": 1,
@@ -1016,13 +1016,13 @@
             "title": "When a Barter Deal Is Actually Worth It",
             "overview": "Internet advice loves to say working for free product is an insult. On the ground, it's more complicated than that. A local coffee roaster or a small skincare line often genuinely can't afford agency rates, but they do have real stock with a real RRP, and if it's something you'd buy anyway, a fair trade removes a real expense and builds your portfolio before any cash is on the table. The skill isn't refusing every gifting offer on principle. It's telling a good one apart from a bad one fast.",
             "interactive": "Decide whether you'd take 3 real-style gifting offers, then see the reasoning behind each call.",
-            "deliverable": "Pick one gifting offer you could realistically get this month (real or made up), and write 2\u20133 sentences on whether you'd take it and why, using the same reasoning.",
+            "deliverable": "Pick one gifting offer you could realistically get this month (real or made up), and write 2–3 sentences on whether you'd take it and why, using the same reasoning.",
             "activity": {
               "kind": "quiz",
               "prompt": "Take it, or pass? Decide first, then see how ClickClick's team would call it.",
               "questions": [
                 {
-                  "q": "A local matcha caf\u00e9 offers you a monthly product supply worth about \u00a3120 in exchange for 3 short organic videos a month. You already go there twice a week.",
+                  "q": "A local matcha café offers you a monthly product supply worth about £120 in exchange for 3 short organic videos a month. You already go there twice a week.",
                   "options": [
                     "Take it",
                     "Pass"
@@ -1031,16 +1031,16 @@
                   "explain": "Take it. Real value close to what you'd already spend, for a product you genuinely use, from a brand that almost certainly can't afford your cash rate anyway. This is what a good barter deal looks like."
                 },
                 {
-                  "q": "A large fashion retailer with a national ad budget offers you one \u00a315 t-shirt in exchange for 5 videos, full usage rights, and first refusal on your other brand deals for 6 months.",
+                  "q": "A large fashion retailer with a national ad budget offers you one £15 t-shirt in exchange for 5 videos, full usage rights, and first refusal on your other brand deals for 6 months.",
                   "options": [
                     "Take it",
                     "Pass"
                   ],
                   "correct": 1,
-                  "explain": "Pass. Low product value against a high ask, and a brand this size can clearly afford to pay cash. An exclusivity clause like \u201cfirst refusal\u201d belongs in a paid contract, not a free t-shirt."
+                  "explain": "Pass. Low product value against a high ask, and a brand this size can clearly afford to pay cash. An exclusivity clause like “first refusal” belongs in a paid contract, not a free t-shirt."
                 },
                 {
-                  "q": "A new skincare brand with no reviews yet offers a full product bundle (RRP around \u00a390) for one video, with no rights beyond reposting it on their own page.",
+                  "q": "A new skincare brand with no reviews yet offers a full product bundle (RRP around £90) for one video, with no rights beyond reposting it on their own page.",
                   "options": [
                     "Take it",
                     "Pass"
@@ -1056,13 +1056,13 @@
             "title": "Pitching a Barter Deal Like a Pro",
             "overview": "Most gifting pitches get ignored, and it's rarely because the brand hates free content. It's because the message gave them nothing to say yes to: no proof, no specifics, no reason to trust a stranger with their stock. A good barter pitch reads like a real, low-effort trade between two people who already like the same thing, not a cold ask for a handout.",
             "interactive": "Two creators DM the same small brand asking for a barter deal. Only one gets a reply. Read both, then answer.",
-            "deliverable": "Write your own 3\u20134 sentence barter pitch to a real (or imagined) small brand you'd actually want product from. Include proof you're a genuine fan, the exact trade you're offering, and how often.",
+            "deliverable": "Write your own 3–4 sentence barter pitch to a real (or imagined) small brand you'd actually want product from. Include proof you're a genuine fan, the exact trade you're offering, and how often.",
             "activity": {
               "kind": "quiz",
               "prompt": "Read both pitches to the same small brand, then answer.",
               "questions": [
                 {
-                  "q": "Pitch A: \u201cHiii I love your brand, could I get some free stuff to post about? I have a big following lol.\u201d\nPitch B: \u201cHi! I'm in most weeks and already order your oat matcha 2\u20133x a week, here's a video I shot there last month: [link]. I'd love to trade 3 short organic videos a month for a standing product supply, happy to keep it casual, just let me know if that's useful for you.\u201d\nWhich pitch actually gets a reply?",
+                  "q": "Pitch A: “Hiii I love your brand, could I get some free stuff to post about? I have a big following lol.”\nPitch B: “Hi! I'm in most weeks and already order your oat matcha 2–3x a week, here's a video I shot there last month: [link]. I'd love to trade 3 short organic videos a month for a standing product supply, happy to keep it casual, just let me know if that's useful for you.”\nWhich pitch actually gets a reply?",
                   "options": [
                     "Pitch A",
                     "Pitch B"
@@ -1084,11 +1084,11 @@
                   "q": "Which detail in Pitch B makes it easy for the brand to say yes fast?",
                   "options": [
                     "It's short and casual",
-                    "It names an exact number of videos on an exact cadence, not a vague \u201clet's collab\u201d",
+                    "It names an exact number of videos on an exact cadence, not a vague “let's collab”",
                     "It uses more emojis"
                   ],
                   "correct": 1,
-                  "explain": "The specifics. \u201c3 videos a month\u201d is a decision a busy small-brand owner can say yes to in ten seconds. \u201cLet's collab sometime\u201d is a decision they have to think about, so it usually gets ignored."
+                  "explain": "The specifics. “3 videos a month” is a decision a busy small-brand owner can say yes to in ten seconds. “Let's collab sometime” is a decision they have to think about, so it usually gets ignored."
                 }
               ]
             },
@@ -1096,7 +1096,7 @@
               "badName": "Local Brand",
               "bad": "Hiii I love your brand, could I get some free stuff to post about? I have a big following lol.",
               "goodName": "Local Brand",
-              "good": "Hi! I'm in most weeks and already order your oat matcha 2\u20133x a week, here's a video I shot there last month: [link]. I'd love to trade 3 short organic videos a month for a standing product supply, happy to keep it casual, just let me know if that's useful for you."
+              "good": "Hi! I'm in most weeks and already order your oat matcha 2–3x a week, here's a video I shot there last month: [link]. I'd love to trade 3 short organic videos a month for a standing product supply, happy to keep it casual, just let me know if that's useful for you."
             }
           },
           {
@@ -1112,7 +1112,7 @@
                 {
                   "label": "What exactly are you trading?",
                   "placeholder": "the deliverables and the cadence",
-                  "model": "3 x 30\u201345 second videos per month, in exchange for a standing product supply."
+                  "model": "3 x 30–45 second videos per month, in exchange for a standing product supply."
                 },
                 {
                   "label": "How will you disclose it?",
@@ -1149,7 +1149,7 @@
               ],
               "items": [
                 {
-                  "label": "Your barter post for the caf\u00e9 got 40k views and real comments asking where it is.",
+                  "label": "Your barter post for the café got 40k views and real comments asking where it is.",
                   "correct": 0
                 },
                 {
@@ -1206,7 +1206,7 @@
             "label": "Blueprint",
             "questions": [
               {
-                "q": "Which studio tier did the course price at roughly \u00a3600 / $760?",
+                "q": "Which studio tier did the course price at roughly £600 / $760?",
                 "options": [
                   "Starter",
                   "Working Pro",
@@ -1241,7 +1241,7 @@
                 "explain": "Under a second. That's why the first frame matters more than the first sentence."
               },
               {
-                "q": "Which lever does a \u201cPOV: you just found out...\u201d hook use?",
+                "q": "Which lever does a “POV: you just found out...” hook use?",
                 "options": [
                   "Bold Claim",
                   "Relatable POV",
@@ -1256,7 +1256,7 @@
             "label": "Scripts",
             "questions": [
               {
-                "q": "What comes right after \u201cAgitate\u201d in the Hook, Agitate, Bridge, Offer, CTA structure?",
+                "q": "What comes right after “Agitate” in the Hook, Agitate, Bridge, Offer, CTA structure?",
                 "options": [
                   "Offer",
                   "Bridge",
@@ -1391,7 +1391,7 @@
                 "explain": "Paid usage (ad-spend running behind your content) is a separate right from organic reposting, and it's priced separately."
               },
               {
-                "q": "A contract says usage is \u201cworldwide, all platforms, in perpetuity\u201d with no extra pay for it. What is that?",
+                "q": "A contract says usage is “worldwide, all platforms, in perpetuity” with no extra pay for it. What is that?",
                 "options": [
                   "Standard and fine to sign",
                   "A red flag, usage this broad should cost more or have a term limit",
@@ -1473,317 +1473,83 @@
     "level": "1:1",
     "status": "Book call",
     "statusClass": "is-coach",
-    "icon": "\u260e",
+    "icon": "☎",
     "tone": "#f3e8ff",
     "href": "mailto:hello@clickclick.video?subject=ClickClick%20Academy%20coaching"
   },
   {
-    "id": "clocal-creator-playbook",
-    "title": "The CLocal Creator Playbook",
-    "description": "Part Two of the Creator Track, less about the basics and more about how this actually turns into income: getting chosen by shops in the first place, what a 90-second clip is good for that isn't just \"longer\", judging whether a deal is genuinely worth your hours, and reading your own numbers so each shoot teaches you something for the next one. Coaching comes with it too, whenever you want to use it.",
-    "tag": "Creator Track",
+    "id": "clocal-creator-track",
+    "title": "The CLocal Creator Track",
+    "description": "The whole Creator Track in one place, open to every CLocal creator. Part One gets reviews posted that actually land: how the app fits together, your first half hour, a 45-second shape that works, filming in a real shop, claiming your first gift deal. Part Two is how that turns into repeat, paid work: owning a patch, longer clips shops will repost, walking into shops that aren't on CLocal yet, and reading your own numbers. Nothing here is a rule. It's the guide, not the brief, you stay in charge of your own work.",
+    "tag": "CLocal",
+    "brand": "clocal",
     "audience": [
+      "clocal-creator-free",
       "clocal-creator"
     ],
-    "lessons": 8,
-    "level": "Part Two",
+    "lessons": 16,
+    "level": "Parts One & Two",
     "status": "Not started",
-    "icon": "\ud83d\udccd",
+    "icon": "📍",
     "tone": "#e3f5ec",
     "selfPaced": true,
-    "cover": "images/cover-clocal-playbook.jpg",
-    "modules": [
-      {
-        "title": "Getting Chosen",
-        "frame": "Anyone can post a review. What actually gets you picked, again and again, by shops on the same street, is a different set of habits. This module is about being the creator a shop owner thinks of first.",
-        "lessons": [
-          {
-            "num": "1.01",
-            "title": "Picking a Patch, Not Just a Shop",
-            "overview": "One video for one shop is a fine start. Owning a street, an area, or a category is a different game, shop owners talk to each other, and the creator who's already reviewed three places on the same road tends to be the one who gets mentioned next. Worth thinking about which patch is actually yours.",
-            "interactive": "A few questions worth sitting with about your own patch.",
-            "deliverable": "If it's useful: sketch out 3 shops that make sense as your patch, and why.",
-            "activity": {
-              "kind": "checklist",
-              "graded": false,
-              "prompt": "Questions worth sitting with when you're picking a patch.",
-              "items": [
-                {
-                  "text": "Is there a street or area you're already in most weeks anyway?"
-                },
-                {
-                  "text": "Is there a category (coffee, food, fitness) you naturally notice more than others?"
-                },
-                {
-                  "text": "Would 3 shops on the same patch actually see each other's posts?"
-                },
-                {
-                  "text": "Is this somewhere you'd want to be known, not just post once and move on?"
-                }
-              ]
-            }
-          },
-          {
-            "num": "1.02",
-            "title": "The Local Hook: Why \u201cBest on This Street\u201d Wins",
-            "overview": "A generic hook is competing with the whole internet. A local hook is only up against the other three coffee shops on the same road, and the person watching already knows exactly where that road is. Naming the actual street or area is usually what makes a review feel like it's for the person watching it, not just anyone.",
-            "interactive": "Have a go at a local hook for a few different shops, using this as a starting template.",
-            "deliverable": "If you want to try it: write 3 local hooks, one for a different real or imagined shop each.",
-            "activity": {
-              "kind": "builder",
-              "prompt": "A starting template for a local hook, for 3 different shops.",
-              "fields": [
-                {
-                  "label": "Shop 1: [type of shop] on [street name]",
-                  "placeholder": "your local hook",
-                  "model": "\u201cThe only proper flat white on Botanic Avenue.\u201d"
-                },
-                {
-                  "label": "Shop 2: [type of shop] on [street name]",
-                  "placeholder": "your local hook",
-                  "model": "\u201cIf you live near the Cathedral Quarter, this is your new Sunday spot.\u201d"
-                },
-                {
-                  "label": "Shop 3: [type of shop] on [street name]",
-                  "placeholder": "your local hook",
-                  "model": "\u201cThree minutes from the train station and nobody's talking about it yet.\u201d"
-                }
-              ]
-            }
-          },
-          {
-            "num": "1.03",
-            "title": "90 Seconds Is a Different Product, Not a Longer One",
-            "overview": "It's tempting to think of 90 seconds as just more of a 45-second video. What it's actually good for is different: a cut a shop could put on their own page, not just yours. That's a genuinely different use, not a duration difference, and it's worth filming with that in mind from the start rather than padding out a shorter idea.",
-            "interactive": "Match each extra beat a 90-second clip has room for to what it's actually doing.",
-            "deliverable": "If you want to try it: reshoot one of your existing reviews at 90 seconds with the shop's own page in mind.",
-            "activity": {
-              "kind": "match",
-              "prompt": "Match each beat to what it's actually doing for a 90-second clip.",
-              "categories": [
-                "Gives the shop something to repost",
-                "Builds trust before the verdict",
-                "Makes the space feel real"
-              ],
-              "items": [
-                {
-                  "label": "A few extra seconds on the owner or staff, not just the product",
-                  "correct": 1
-                },
-                {
-                  "label": "A wider shot that shows the actual room, not just a close-up",
-                  "correct": 2
-                },
-                {
-                  "label": "A clean closing line that works even with your voice cut out",
-                  "correct": 0
-                }
-              ]
-            }
-          },
-          {
-            "num": "1.04",
-            "title": "Making Something the Shop Will Actually Repost",
-            "overview": "Sending the shop owner a copy of the finished file, not just a link to your own page, is a small habit that changes a lot. A file they can actually repost, hand to staff, or save is a different thing to them than a link they'd have to remember to check.",
-            "interactive": "A few habits worth building into how you hand work over.",
-            "deliverable": "If it's useful: next time you finish a review, send the actual file, not just a link, and see if it changes anything.",
-            "activity": {
-              "kind": "checklist",
-              "graded": false,
-              "prompt": "Habits worth building into how you hand a finished review over.",
-              "items": [
-                {
-                  "text": "Send the actual video file, not just a link to your page"
-                },
-                {
-                  "text": "Mention they're welcome to repost it, so it's clearly not just yours"
-                },
-                {
-                  "text": "Turn it around within a few days, not a few weeks"
-                },
-                {
-                  "text": "Say thanks and name the next thing you'd like to film there, if there is one"
-                }
-              ]
-            }
-          }
+    "cover": "images/cover-clocal-starter.jpg",
+    "intro": {
+      "lead": "This is Parts One and Two of the Creator Track together, and every CLocal creator can see all of it, free or upgraded.",
+      "body": [
+        "Part One is about getting good reviews posted. Part Two is about turning that into work that pays, again and again. Go in order or jump to whatever's useful now, nothing is locked.",
+        "Being a CLocal creator changes how a local business sees you. You're not someone asking for a free coffee in exchange for a post, you're someone who turns up with an app behind you, a format, and a way of working. Owners read that as a standard and treat it differently. Most of this guide is about making that read true in practice, so you come across as someone a business is glad they worked with."
+      ],
+      "points": {
+        "heading": "What it looks like when it's working",
+        "items": [
+          "Owners on your patch know your name and message you first when something new opens.",
+          "You can walk into a shop that isn't on CLocal yet with a clear, professional pitch.",
+          "Your profile is something you point a business to, not a pile of one-off posts.",
+          "Gift deals turn into repeat work, and owners recommend you to other owners.",
+          "Your referral code pays out every month, on repeat, in the background."
         ]
       },
-      {
-        "title": "Turning It Into Income",
-        "frame": "The habits above get you chosen. This module is about what happens once you are: judging which deals are actually worth your time, approaching shops yourself, and reading your own numbers so each shoot teaches you something.",
-        "lessons": [
-          {
-            "num": "2.01",
-            "title": "What Makes a Shop Ask You Back",
-            "overview": "One good video gets you one shop. Getting asked back, tagged in their own posts, and recommended to other shop owners is almost never about the footage, it tends to come down to a few habits around it.",
-            "interactive": "What's actually driving the shop owner's reaction in each of these moments?",
-            "deliverable": "Worth a moment: which of these 3 habits are you weakest at, honestly, and one thing worth changing this week.",
-            "activity": {
-              "kind": "quiz",
-              "prompt": "What's actually driving the shop owner's reaction here?",
-              "questions": [
-                {
-                  "q": "You said you'd film on Tuesday. You show up on Tuesday, on time, and it takes 15 minutes like you said it would. The owner seems almost surprised.",
-                  "options": [
-                    "Your camera gear",
-                    "Basic reliability, doing what you said you'd do"
-                  ],
-                  "correct": 1,
-                  "explain": "Reliability. Most creators are vague about timing, so simply doing what you said is already memorable."
-                },
-                {
-                  "q": "You post the video 3 weeks later, after the owner's already asked about it twice.",
-                  "options": [
-                    "A slow turnaround, even good footage, reads as unreliable",
-                    "It doesn't matter as long as it's good"
-                  ],
-                  "correct": 0,
-                  "explain": "Turnaround matters as much as quality. A brilliant video that arrives 3 weeks late still teaches the owner not to rely on you."
-                },
-                {
-                  "q": "You never actually send the shop owner a copy of the finished file, just a link to your own page.",
-                  "options": [
-                    "Fine, they can just watch it on your page",
-                    "A missed chance, they can't repost or show it to staff without you"
-                  ],
-                  "correct": 1,
-                  "explain": "Send the file. It costs nothing and makes a shop owner feel like this was actually done for them."
-                }
-              ]
-            }
-          },
-          {
-            "num": "2.02",
-            "title": "Walking Into a Shop That Isn't on CLocal Yet",
-            "overview": "Every shop on CLocal started as one that wasn't. Bringing one on yourself is one of the more reliable ways to guarantee you've always got somewhere to film, and it's a real, useful pitch once you've got a way to say it.",
-            "interactive": "Two creators approach the same local shop about being on CLocal. Read both, then see which one you'd bet on.",
-            "deliverable": "If it's useful: approach a few local shops that aren't on CLocal yet, and keep a note of each one for yourself.",
-            "dmMockup": {
-              "badName": "Local Shop",
-              "bad": "hey do you want to be on my tiktok",
-              "goodName": "Local Shop",
-              "good": "Hi! I'm a CLocal creator, I review local spots on the app and I'd love to feature you. It's a quick 90-second video, no cost to you, and it puts you in front of people nearby who're already looking for exactly this. Would this week work?"
-            },
-            "activity": {
-              "kind": "quiz",
-              "prompt": "Read both approaches to the same local shop, then answer.",
-              "questions": [
-                {
-                  "q": "Pitch A: \u201chey do you want to be on my tiktok\u201d\nPitch B: \u201cHi! I'm a CLocal creator, I review local spots on the app and I'd love to feature you. It's a quick 90-second video, no cost to you, and it puts you in front of people nearby who're already looking for exactly this. Would this week work?\u201d\nWhich one would you bet gets a reply?",
-                  "options": [
-                    "Pitch A",
-                    "Pitch B"
-                  ],
-                  "correct": 1,
-                  "explain": "Pitch B tends to do better. It names the actual app, the actual format, the actual cost (none), and asks a specific question the owner can say yes to quickly."
-                },
-                {
-                  "q": "What's the one thing Pitch B does that makes it easy to say yes to fast?",
-                  "options": [
-                    "It mentions TikTok",
-                    "It suggests an exact, low-effort format and asks about a specific timeframe",
-                    "It's longer"
-                  ],
-                  "correct": 1,
-                  "explain": "Specifics. \u201cThis week\u201d and \u201c90-second video, no cost\u201d turn a vague favour into a small, concrete yes."
-                }
-              ]
-            }
-          },
-          {
-            "num": "2.03",
-            "title": "Judging Whether a Deal Is Worth Your Hours",
-            "overview": "Not every gift deal is worth claiming, and that's fine, it's your call either way. Worth weighing up roughly what the product's actually worth against how long it'll realistically take you, and knowing it's fine to ask for a bit more before you commit, or just pass.",
-            "interactive": "Would you take these deals, pass, or ask for more first? Have a think, then see how others tend to call it.",
-            "deliverable": "If it's useful: next time you're offered a deal, actually weigh product value against your hours before deciding.",
-            "activity": {
-              "kind": "quiz",
-              "prompt": "Take it, pass, or ask for more first?",
-              "questions": [
-                {
-                  "q": "A caf\u00e9 offers a \u00a36 pastry bundle for one video that'll take you about 20 minutes, somewhere you already go anyway.",
-                  "options": [
-                    "Take it",
-                    "Pass",
-                    "Ask for more first"
-                  ],
-                  "correct": 0,
-                  "explain": "Reasonable value for the time, and you're there anyway. A solid, low-effort yes."
-                },
-                {
-                  "q": "A homeware shop offers one candle (roughly \u00a38) for 3 videos and exclusive rights for 6 months.",
-                  "options": [
-                    "Take it",
-                    "Pass",
-                    "Ask for more first"
-                  ],
-                  "correct": 2,
-                  "explain": "Worth asking first. The ask (3 videos, 6-month exclusivity) is a lot for one candle, a quick message asking for more product or fewer videos costs you nothing."
-                },
-                {
-                  "q": "A new gym offers a free week's pass for one video, no exclusivity, no extra terms.",
-                  "options": [
-                    "Take it",
-                    "Pass",
-                    "Ask for more first"
-                  ],
-                  "correct": 0,
-                  "explain": "Clear terms, reasonable trade, no catch. Worth taking if it's a place you'd genuinely visit."
-                }
-              ]
-            }
-          },
-          {
-            "num": "2.04",
-            "title": "Reading Your Own Numbers",
-            "overview": "Creator Studio shows your total views and how many videos you've posted, worth checking every so often rather than never. The point isn't to obsess over one number, it's noticing which clips actually got watched and what they had in common, so the next shoot isn't a total guess. Worth getting your payout details saved too, so there's nothing to chase later once money's moving.",
-            "interactive": "A few questions worth asking next time you check your numbers.",
-            "deliverable": "If it's useful: pick your best-performing review so far and write a sentence on what you think made it work.",
-            "activity": {
-              "kind": "checklist",
-              "graded": false,
-              "prompt": "Worth asking yourself next time you check your numbers.",
-              "items": [
-                {
-                  "text": "Which review has the most views so far, and what's different about it?"
-                },
-                {
-                  "text": "Is there a shop type or hook style showing up more than once in your best clips?"
-                },
-                {
-                  "text": "Are your payout details actually saved, so nothing's held up later?"
-                },
-                {
-                  "text": "Is there one thing worth trying differently on your next shoot?"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "clocal-creator-starter",
-    "title": "The CLocal Creator Field Guide",
-    "description": "You're approved and you're posting, that's the part most people never get past. This walks through how CLocal actually works, what you can do in your first half hour, and the things that decide whether a review lands: a 45-second shape worth trying, filming in a real shop, and claiming your first gift deal. Nothing here is the only way to do it, just a place to start. Part One of the Creator Track.",
-    "tag": "Creator Track",
-    "audience": [
-      "clocal-creator-free"
-    ],
-    "lessons": 7,
-    "level": "Part One",
-    "status": "Not started",
-    "icon": "\ud83c\udf31",
-    "tone": "#fdf0dd",
-    "selfPaced": true,
-    "cover": "images/cover-clocal-starter.jpg",
+      "note": "None of this is a rulebook. Your patch, your style, your schedule, the deals you take, all your call. Treat it as the guide a creator who's been doing this a year would talk you through, not instructions you have to follow."
+    },
     "modules": [
       {
         "title": "How CLocal Works",
         "frame": "Before any filming technique, it helps to actually see how the app fits together, and to do a few low-stakes things inside it so it stops feeling brand new. Nothing in this module involves a shop or a camera.",
         "lessons": [
+          {
+            "num": "1.00",
+            "title": "Why This Is Worth Doing",
+            "overview": "Quick one before the how. Two things make CLocal different from posting reviews on your own account: a local business treats you as someone working to a standard, not someone after a freebie, and the work compounds instead of resetting every time, a patch, a profile, a referral code that keeps paying. Flip each card for the version of that which actually shows up day to day.",
+            "interactive": "Flip each card to see what it looks like in real life.",
+            "deliverable": "If it's useful: note which of these five you'd most want to be true for you in six months.",
+            "activity": {
+              "kind": "flip",
+              "prompt": "Tap a card to flip it.",
+              "cards": [
+                {
+                  "front": "You look professional to a business",
+                  "back": "You turn up with an app behind you, a set format, and a time you'll be there. The owner deals with you like a supplier they picked, not a favour they're doing."
+                },
+                {
+                  "front": "The work compounds",
+                  "back": "Review three shops on one street and you become the creator that street's owners mention to each other. One video is a task. A patch is a position."
+                },
+                {
+                  "front": "Your profile turns into leverage",
+                  "back": "After a month or two it's something you point a business to, not a scatter of one-off clips. That's the thing that gets you asked back and paid."
+                },
+                {
+                  "front": "Gift deals become paid work",
+                  "back": "The first one is a coffee. Done reliably, on time, sent as a file they can repost, it turns into the shop asking what you'd charge to do it again."
+                },
+                {
+                  "front": "The referral code keeps paying",
+                  "back": "It's recurring, not a one-off. Every member you bring in pays out monthly for as long as they stay, quietly, while you get on with everything else."
+                }
+              ]
+            }
+          },
           {
             "num": "1.01",
             "title": "What CLocal Actually Is",
@@ -1799,7 +1565,9 @@
                 "Shops on CLocal post gift deals and pay for visibility",
                 "Your referral code brings in new members"
               ]
-            }
+            },
+            "video": "",
+            "videoNote": "30-sec screen recording: the feed, tap into a review, then the map pin, showing the loop connect"
           },
           {
             "num": "1.02",
@@ -1812,7 +1580,7 @@
               "mode": "calculator",
               "formula": "clocalBreakeven",
               "prompt": "See what a few real referral counts could look like over a month.",
-              "unit": "\u00a3",
+              "unit": "£",
               "fields": [
                 {
                   "key": "referrals",
@@ -1821,7 +1589,7 @@
                   "placeholder": "e.g. 5"
                 }
               ],
-              "modelNote": "Commission payouts are being switched on soon, so treat this as the model to understand now, not cash landing immediately. It's recurring though, not a one-off: every referral keeps paying out monthly for as long as they stay a member, and it stacks as you add more. Build up to 200 active referrals over time (roughly 4 a week for a year) and that's about \u00a3599 landing every month, on repeat."
+              "modelNote": "Commission payouts are being switched on soon, so treat this as the model to understand now, not cash landing immediately. It's recurring though, not a one-off: every referral keeps paying out monthly for as long as they stay a member, and it stacks as you add more. Build up to 200 active referrals over time (roughly 4 a week for a year) and that's about £599 landing every month, on repeat."
             }
           },
           {
@@ -1848,9 +1616,15 @@
                   "text": "Save a few shops near you that you'd like to review"
                 }
               ]
+            },
+            "figure": {
+              "src": "",
+              "alt": "",
+              "caption": "Screenshot: a profile screen with a real photo and a one-line bio filled in"
             }
           }
-        ]
+        ],
+        "part": "one"
       },
       {
         "title": "Your First Reviews",
@@ -1870,7 +1644,9 @@
                 "Show the thing: the dish, the product, the space",
                 "Give your honest one-line verdict and close"
               ]
-            }
+            },
+            "video": "",
+            "videoNote": "Example 45-sec review with the hook / the thing / the verdict beats labelled on screen"
           },
           {
             "num": "2.02",
@@ -1899,6 +1675,11 @@
                   "text": "Knew your one shot before starting, rather than figuring it out mid-take"
                 }
               ]
+            },
+            "figure": {
+              "src": "",
+              "alt": "",
+              "caption": "Photo: a creator filming toward the window light in a busy cafe, not with the light behind them"
             }
           },
           {
@@ -1947,7 +1728,7 @@
             "title": "You've Done One Shop, What's Next?",
             "overview": "Once you've posted a review and claimed a deal, a natural question shows up: how do you stop doing this one shop at a time? That's really what Part Two of the Creator Track is about, longer clips, a different way of getting chosen by shops, and turning gift deals into repeat, paid work. No rush either way, it's there whenever it's useful.",
             "interactive": "A short reflection on how your first shop actually went.",
-            "deliverable": "Worth a moment: write 2\u20133 sentences on what surprised you most about your first shop.",
+            "deliverable": "Worth a moment: write 2–3 sentences on what surprised you most about your first shop.",
             "activity": {
               "kind": "checklist",
               "graded": false,
@@ -1968,7 +1749,283 @@
               ]
             }
           }
-        ]
+        ],
+        "part": "one"
+      },
+      {
+        "title": "Getting Chosen",
+        "frame": "Anyone can post a review. What actually gets you picked, again and again, by shops on the same street, is a different set of habits. This module is about being the creator a shop owner thinks of first.",
+        "lessons": [
+          {
+            "num": "3.01",
+            "title": "Picking a Patch, Not Just a Shop",
+            "overview": "One video for one shop is a fine start. Owning a street, an area, or a category is a different game, shop owners talk to each other, and the creator who's already reviewed three places on the same road tends to be the one who gets mentioned next. Worth thinking about which patch is actually yours.",
+            "interactive": "A few questions worth sitting with about your own patch.",
+            "deliverable": "If it's useful: sketch out 3 shops that make sense as your patch, and why.",
+            "activity": {
+              "kind": "checklist",
+              "graded": false,
+              "prompt": "Questions worth sitting with when you're picking a patch.",
+              "items": [
+                {
+                  "text": "Is there a street or area you're already in most weeks anyway?"
+                },
+                {
+                  "text": "Is there a category (coffee, food, fitness) you naturally notice more than others?"
+                },
+                {
+                  "text": "Would 3 shops on the same patch actually see each other's posts?"
+                },
+                {
+                  "text": "Is this somewhere you'd want to be known, not just post once and move on?"
+                }
+              ]
+            }
+          },
+          {
+            "num": "3.02",
+            "title": "The Local Hook: Why “Best on This Street” Wins",
+            "overview": "A generic hook is competing with the whole internet. A local hook is only up against the other three coffee shops on the same road, and the person watching already knows exactly where that road is. Naming the actual street or area is usually what makes a review feel like it's for the person watching it, not just anyone.",
+            "interactive": "Have a go at a local hook for a few different shops, using this as a starting template.",
+            "deliverable": "If you want to try it: write 3 local hooks, one for a different real or imagined shop each.",
+            "activity": {
+              "kind": "builder",
+              "prompt": "A starting template for a local hook, for 3 different shops.",
+              "fields": [
+                {
+                  "label": "Shop 1: [type of shop] on [street name]",
+                  "placeholder": "your local hook",
+                  "model": "“The only proper flat white on Botanic Avenue.”"
+                },
+                {
+                  "label": "Shop 2: [type of shop] on [street name]",
+                  "placeholder": "your local hook",
+                  "model": "“If you live near the Cathedral Quarter, this is your new Sunday spot.”"
+                },
+                {
+                  "label": "Shop 3: [type of shop] on [street name]",
+                  "placeholder": "your local hook",
+                  "model": "“Three minutes from the train station and nobody's talking about it yet.”"
+                }
+              ]
+            }
+          },
+          {
+            "num": "3.03",
+            "title": "90 Seconds Is a Different Product, Not a Longer One",
+            "overview": "It's tempting to think of 90 seconds as just more of a 45-second video. What it's actually good for is different: a cut a shop could put on their own page, not just yours. That's a genuinely different use, not a duration difference, and it's worth filming with that in mind from the start rather than padding out a shorter idea.",
+            "interactive": "Match each extra beat a 90-second clip has room for to what it's actually doing.",
+            "deliverable": "If you want to try it: reshoot one of your existing reviews at 90 seconds with the shop's own page in mind.",
+            "activity": {
+              "kind": "match",
+              "prompt": "Match each beat to what it's actually doing for a 90-second clip.",
+              "categories": [
+                "Gives the shop something to repost",
+                "Builds trust before the verdict",
+                "Makes the space feel real"
+              ],
+              "items": [
+                {
+                  "label": "A few extra seconds on the owner or staff, not just the product",
+                  "correct": 1
+                },
+                {
+                  "label": "A wider shot that shows the actual room, not just a close-up",
+                  "correct": 2
+                },
+                {
+                  "label": "A clean closing line that works even with your voice cut out",
+                  "correct": 0
+                }
+              ]
+            }
+          },
+          {
+            "num": "3.04",
+            "title": "Making Something the Shop Will Actually Repost",
+            "overview": "Sending the shop owner a copy of the finished file, not just a link to your own page, is a small habit that changes a lot. A file they can actually repost, hand to staff, or save is a different thing to them than a link they'd have to remember to check.",
+            "interactive": "A few habits worth building into how you hand work over.",
+            "deliverable": "If it's useful: next time you finish a review, send the actual file, not just a link, and see if it changes anything.",
+            "activity": {
+              "kind": "checklist",
+              "graded": false,
+              "prompt": "Habits worth building into how you hand a finished review over.",
+              "items": [
+                {
+                  "text": "Send the actual video file, not just a link to your page"
+                },
+                {
+                  "text": "Mention they're welcome to repost it, so it's clearly not just yours"
+                },
+                {
+                  "text": "Turn it around within a few days, not a few weeks"
+                },
+                {
+                  "text": "Say thanks and name the next thing you'd like to film there, if there is one"
+                }
+              ]
+            }
+          }
+        ],
+        "part": "two",
+        "upgrade": {
+          "heading": "Open to everyone. More with the paid plan.",
+          "body": "You can read and try all of Part Two right now, free. The paid Creator plan (£14.99/month) adds longer clips up to 90 seconds, the full ClickClick Academy, free 1:1 coaching, and progress, rewards and creator-only events. You upgrade inside the CLocal app: Profile, then Creator plan."
+        }
+      },
+      {
+        "title": "Turning It Into Income",
+        "frame": "The habits above get you chosen. This module is about what happens once you are: judging which deals are actually worth your time, approaching shops yourself, and reading your own numbers so each shoot teaches you something.",
+        "lessons": [
+          {
+            "num": "4.01",
+            "title": "What Makes a Shop Ask You Back",
+            "overview": "One good video gets you one shop. Getting asked back, tagged in their own posts, and recommended to other shop owners is almost never about the footage, it tends to come down to a few habits around it.",
+            "interactive": "What's actually driving the shop owner's reaction in each of these moments?",
+            "deliverable": "Worth a moment: which of these 3 habits are you weakest at, honestly, and one thing worth changing this week.",
+            "activity": {
+              "kind": "quiz",
+              "prompt": "What's actually driving the shop owner's reaction here?",
+              "questions": [
+                {
+                  "q": "You said you'd film on Tuesday. You show up on Tuesday, on time, and it takes 15 minutes like you said it would. The owner seems almost surprised.",
+                  "options": [
+                    "Your camera gear",
+                    "Basic reliability, doing what you said you'd do"
+                  ],
+                  "correct": 1,
+                  "explain": "Reliability. Most creators are vague about timing, so simply doing what you said is already memorable."
+                },
+                {
+                  "q": "You post the video 3 weeks later, after the owner's already asked about it twice.",
+                  "options": [
+                    "A slow turnaround, even good footage, reads as unreliable",
+                    "It doesn't matter as long as it's good"
+                  ],
+                  "correct": 0,
+                  "explain": "Turnaround matters as much as quality. A brilliant video that arrives 3 weeks late still teaches the owner not to rely on you."
+                },
+                {
+                  "q": "You never actually send the shop owner a copy of the finished file, just a link to your own page.",
+                  "options": [
+                    "Fine, they can just watch it on your page",
+                    "A missed chance, they can't repost or show it to staff without you"
+                  ],
+                  "correct": 1,
+                  "explain": "Send the file. It costs nothing and makes a shop owner feel like this was actually done for them."
+                }
+              ]
+            }
+          },
+          {
+            "num": "4.02",
+            "title": "Walking Into a Shop That Isn't on CLocal Yet",
+            "overview": "Every shop on CLocal started as one that wasn't. Bringing one on yourself is one of the more reliable ways to guarantee you've always got somewhere to film, and it's a real, useful pitch once you've got a way to say it.",
+            "interactive": "Two creators approach the same local shop about being on CLocal. Read both, then see which one you'd bet on.",
+            "deliverable": "If it's useful: approach a few local shops that aren't on CLocal yet, and keep a note of each one for yourself.",
+            "dmMockup": {
+              "badName": "Local Shop",
+              "bad": "hey do you want to be on my tiktok",
+              "goodName": "Local Shop",
+              "good": "Hi! I'm a CLocal creator, I review local spots on the app and I'd love to feature you. It's a quick 90-second video, no cost to you, and it puts you in front of people nearby who're already looking for exactly this. Would this week work?"
+            },
+            "activity": {
+              "kind": "quiz",
+              "prompt": "Read both approaches to the same local shop, then answer.",
+              "questions": [
+                {
+                  "q": "Pitch A: “hey do you want to be on my tiktok”\nPitch B: “Hi! I'm a CLocal creator, I review local spots on the app and I'd love to feature you. It's a quick 90-second video, no cost to you, and it puts you in front of people nearby who're already looking for exactly this. Would this week work?”\nWhich one would you bet gets a reply?",
+                  "options": [
+                    "Pitch A",
+                    "Pitch B"
+                  ],
+                  "correct": 1,
+                  "explain": "Pitch B tends to do better. It names the actual app, the actual format, the actual cost (none), and asks a specific question the owner can say yes to quickly."
+                },
+                {
+                  "q": "What's the one thing Pitch B does that makes it easy to say yes to fast?",
+                  "options": [
+                    "It mentions TikTok",
+                    "It suggests an exact, low-effort format and asks about a specific timeframe",
+                    "It's longer"
+                  ],
+                  "correct": 1,
+                  "explain": "Specifics. “This week” and “90-second video, no cost” turn a vague favour into a small, concrete yes."
+                }
+              ]
+            }
+          },
+          {
+            "num": "4.03",
+            "title": "Judging Whether a Deal Is Worth Your Hours",
+            "overview": "Not every gift deal is worth claiming, and that's fine, it's your call either way. Worth weighing up roughly what the product's actually worth against how long it'll realistically take you, and knowing it's fine to ask for a bit more before you commit, or just pass.",
+            "interactive": "Would you take these deals, pass, or ask for more first? Have a think, then see how others tend to call it.",
+            "deliverable": "If it's useful: next time you're offered a deal, actually weigh product value against your hours before deciding.",
+            "activity": {
+              "kind": "quiz",
+              "prompt": "Take it, pass, or ask for more first?",
+              "questions": [
+                {
+                  "q": "A café offers a £6 pastry bundle for one video that'll take you about 20 minutes, somewhere you already go anyway.",
+                  "options": [
+                    "Take it",
+                    "Pass",
+                    "Ask for more first"
+                  ],
+                  "correct": 0,
+                  "explain": "Reasonable value for the time, and you're there anyway. A solid, low-effort yes."
+                },
+                {
+                  "q": "A homeware shop offers one candle (roughly £8) for 3 videos and exclusive rights for 6 months.",
+                  "options": [
+                    "Take it",
+                    "Pass",
+                    "Ask for more first"
+                  ],
+                  "correct": 2,
+                  "explain": "Worth asking first. The ask (3 videos, 6-month exclusivity) is a lot for one candle, a quick message asking for more product or fewer videos costs you nothing."
+                },
+                {
+                  "q": "A new gym offers a free week's pass for one video, no exclusivity, no extra terms.",
+                  "options": [
+                    "Take it",
+                    "Pass",
+                    "Ask for more first"
+                  ],
+                  "correct": 0,
+                  "explain": "Clear terms, reasonable trade, no catch. Worth taking if it's a place you'd genuinely visit."
+                }
+              ]
+            }
+          },
+          {
+            "num": "4.04",
+            "title": "Reading Your Own Numbers",
+            "overview": "Creator Studio shows your total views and how many videos you've posted, worth checking every so often rather than never. The point isn't to obsess over one number, it's noticing which clips actually got watched and what they had in common, so the next shoot isn't a total guess. Worth getting your payout details saved too, so there's nothing to chase later once money's moving.",
+            "interactive": "A few questions worth asking next time you check your numbers.",
+            "deliverable": "If it's useful: pick your best-performing review so far and write a sentence on what you think made it work.",
+            "activity": {
+              "kind": "checklist",
+              "graded": false,
+              "prompt": "Worth asking yourself next time you check your numbers.",
+              "items": [
+                {
+                  "text": "Which review has the most views so far, and what's different about it?"
+                },
+                {
+                  "text": "Is there a shop type or hook style showing up more than once in your best clips?"
+                },
+                {
+                  "text": "Are your payout details actually saved, so nothing's held up later?"
+                },
+                {
+                  "text": "Is there one thing worth trying differently on your next shoot?"
+                }
+              ]
+            }
+          }
+        ],
+        "part": "two"
       }
     ]
   }

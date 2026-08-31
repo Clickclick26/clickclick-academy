@@ -29,18 +29,18 @@
     ]
   },
   "clocal-creator": {
-    "label": "CLocal Creator · Part Two",
+    "label": "CLocal Creator",
     "audience": "clocal-creator",
     "courseIds": [
-      "clocal-creator-playbook",
+      "clocal-creator-track",
       "coach-book"
     ]
   },
   "clocal-free": {
-    "label": "CLocal Creator · Part One",
+    "label": "CLocal Creator",
     "audience": "clocal-creator-free",
     "courseIds": [
-      "clocal-creator-starter"
+      "clocal-creator-track"
     ]
   },
   "staff-onboard": {
@@ -62,8 +62,7 @@
     "audience": "internal",
     "courseIds": [
       "ugc-creator-program",
-      "clocal-creator-playbook",
-      "clocal-creator-starter",
+      "clocal-creator-track",
       "coach-book"
     ]
   },
@@ -72,8 +71,7 @@
     "audience": "internal",
     "courseIds": [
       "ugc-creator-program",
-      "clocal-creator-playbook",
-      "clocal-creator-starter",
+      "clocal-creator-track",
       "coach-book"
     ],
     "note": "Legacy master code, same as internal. Keep until Kathryn rotates codes."

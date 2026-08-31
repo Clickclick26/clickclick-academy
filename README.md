@@ -28,6 +28,8 @@ Hard refresh if the old page sticks: **Cmd+Shift+R**.
 | `corp-premium` | Corporate Premium | Basic + advanced corporate |
 | `agency` | Agency Pack | Agency-relevant courses |
 | `creator-ugc` | Creator UGC | UGC / short-form creator courses |
+| `clocal-free` | CLocal Creator | The CLocal Creator Track (free-tier creators) |
+| `clocal-creator` | CLocal Creator | The CLocal Creator Track + 1:1 coaching (upgraded plan) |
 | `staff-onboard` | Staff onboarding | ClickClick staff day-one courses |
 | `live-host` | Live host training | Contractor hosts for live video selling |
 | `internal` | All courses | Full catalog |
