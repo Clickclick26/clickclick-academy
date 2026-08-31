@@ -71,6 +71,33 @@
   margin-bottom: 1.1rem;
 }
 
+.directory-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.directory-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--mid);
+  padding: 0.5rem 0.7rem;
+  border-bottom: 2px solid var(--surface-soft);
+}
+
+.directory-table td {
+  padding: 0.6rem 0.7rem;
+  border-bottom: 1px solid var(--surface-soft);
+  color: var(--ink);
+}
+
+.directory-table tr:last-child td {
+  border-bottom: none;
+}
+
 .field {
   display: grid;
   gap: 0.35rem;
