@@ -1358,17 +1358,35 @@
   // The card shown when every lesson in a graded course is done: a real
   // certificate, downloadable as an image, plus a one-click LinkedIn "Add
   // to Profile" link, rather than just a banner nobody can do anything with.
-  function certificateCardHtml(course) {
+  // A stable, deterministic credential id (same student + same course
+  // always produces the same id, no Math.random prop that would change on
+  // every re-download), derived from the real Supabase studentId rather
+  // than a made-up sequence number we can't actually back up.
+  function credentialId(course) {
+    var student = loadStudent();
+    var seed = ((student && student.studentId) || 'guest') + '|' + (course.id || '');
+    var hash = 0;
+    for (var i = 0; i < seed.length; i++) {
+      hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+    }
+    var num = (hash % 9000) + 1000;
+    var slug = String(course.id || 'cc').split('-')[0].toUpperCase();
+    return 'CC-' + slug + '-' + new Date().getFullYear() + '-' + num;
+  }
+
+  function certificateCardHtml(course, lessonCount, moduleCount) {
+    var certId = credentialId(course);
     return (
       '<div class="certificate-card">' +
       '<div class="certificate-card-head">' +
       '<span class="certificate-seal" aria-hidden="true">&#127942;</span>' +
       '<div>' +
-      '<p class="certificate-eyebrow">Certificate of completion</p>' +
+      '<p class="certificate-eyebrow">Certificate of Professional Practice</p>' +
       '<h3>You finished ' + esc(course.title || '') + '</h3>' +
       '</div>' +
       '</div>' +
-      '<p class="certificate-sub">Every lesson done. Download it as an image, or add it straight to your LinkedIn profile.</p>' +
+      '<p class="certificate-sub">All ' + lessonCount + ' lessons assessed and passed. Your certificate is issued under ' +
+      'credential ID ' + esc(certId) + ', download it, or add it to the certifications section of your LinkedIn profile.</p>' +
       '<div class="certificate-actions">' +
       '<button type="button" class="btn primary certificate-download-btn">Download certificate</button>' +
       '<button type="button" class="btn secondary certificate-linkedin-btn">Add to LinkedIn</button>' +
@@ -1484,10 +1502,31 @@
     ctx.restore();
   }
 
-  function drawCertificate(courseTitle, studentName, shutterImg) {
+  // The UGC course's assessed-topics line is deliberately specific rather
+  // than generic ("hooks, scripting, filming..."), since specificity, not
+  // adjectives, is what makes a credential read as genuinely assessed
+  // rather than a participation certificate. Falls back to a plain lesson/
+  // module count for any other course, so this doesn't silently mislabel
+  // a future graded course it wasn't written for.
+  function certificateSubstanceLine(courseId, lessonCount, moduleCount) {
+    var base = 'Assessed across ' + lessonCount + ' lessons and ' + moduleCount + ' modules';
+    if (courseId === 'ugc-creator-program') {
+      return base + ': hooks, scripting, filming, editing, analytics, usage rights and client business.';
+    }
+    return base + '.';
+  }
+
+  function drawCertificate(opts) {
+    var courseTitle = opts.courseTitle;
+    var studentName = opts.studentName;
+    var shutterImg = opts.shutterImg;
+    var lessonCount = opts.lessonCount || 0;
+    var moduleCount = opts.moduleCount || 0;
+    var certId = opts.certId || '';
+
     var canvas = document.createElement('canvas');
     canvas.width = 1600;
-    canvas.height = 1131;
+    canvas.height = 1300;
     var ctx = canvas.getContext('2d');
     var midX = canvas.width / 2;
 
@@ -1505,28 +1544,32 @@
 
     // Spread evenly across the full canvas height, top to bottom, rather
     // than clustering everything into the top half with a dead gap after.
-    drawCertificateSeal(ctx, midX, 205, shutterImg);
+    drawCertificateSeal(ctx, midX, 200, shutterImg);
 
     ctx.fillStyle = '#7B5EA7';
     ctx.font = '700 24px Poppins, sans-serif';
-    ctx.fillText('CLICKCLICK ACADEMY', midX, 355);
+    ctx.fillText('CLICKCLICK ACADEMY', midX, 345);
+
+    ctx.font = '700 15px Poppins, sans-serif';
+    ctx.fillStyle = '#6B6B6B';
+    ctx.fillText('PROFESSIONAL CERTIFICATION PROGRAMME', midX, 372);
 
     ctx.fillStyle = '#1A1A1A';
-    ctx.font = '700 34px Poppins, sans-serif';
-    ctx.fillText('Certificate of Completion', midX, 403);
+    ctx.font = '700 32px Poppins, sans-serif';
+    ctx.fillText('Certificate of Professional Practice', midX, 418);
 
     // A short decorative rule, not text, to separate the header from the
     // name rather than relying on whitespace alone to do that job.
     ctx.strokeStyle = 'rgba(20, 20, 20, 0.15)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(midX - 70, 450);
-    ctx.lineTo(midX + 70, 450);
+    ctx.moveTo(midX - 70, 458);
+    ctx.lineTo(midX + 70, 458);
     ctx.stroke();
 
     ctx.font = '400 24px Poppins, sans-serif';
     ctx.fillStyle = '#6B6B6B';
-    ctx.fillText('This certifies that', midX, 530);
+    ctx.fillText('This is to certify that', midX, 528);
 
     // Shrink the name to fit an unusually long one (long legal names,
     // double-barrelled surnames) rather than letting it run into the border.
@@ -1539,41 +1582,67 @@
       ctx.font = '700 ' + nameSize + 'px Poppins, sans-serif';
     }
     ctx.fillStyle = '#00BCD4';
-    ctx.fillText(nameText, midX, 630);
+    ctx.fillText(nameText, midX, 610);
 
-    ctx.font = '400 26px Poppins, sans-serif';
+    ctx.font = '400 25px Poppins, sans-serif';
     ctx.fillStyle = '#6B6B6B';
-    ctx.fillText('has successfully completed', midX, 690);
+    ctx.fillText('has met the required standard in all assessed work', midX, 668);
+    ctx.fillText('and is awarded the', midX, 702);
 
     ctx.font = '700 40px Poppins, sans-serif';
     ctx.fillStyle = '#1A1A1A';
     wrapCanvasText(ctx, courseTitle || '', midX, 770, 1200, 52);
 
+    ctx.font = '400 19px Poppins, sans-serif';
+    ctx.fillStyle = '#6B6B6B';
+    wrapCanvasText(ctx, certificateSubstanceLine(opts.courseId, lessonCount, moduleCount), midX, 862, 1000, 27);
+
     // Signature line + date, side by side near the foot, the way a printed
-    // certificate signs off rather than a lone timestamp floating in space.
-    var footY = canvas.height - 130;
+    // certificate signs off, with a named signatory rather than a logo
+    // pretending to be a person.
+    var footY = canvas.height - 210;
     var colGap = 260;
-    [
-      { x: midX - colGap, label: 'ClickClick Academy' },
-      {
-        x: midX + colGap,
-        label: new Date().toLocaleDateString('en-GB', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        }),
-      },
-    ].forEach(function (col) {
-      ctx.strokeStyle = 'rgba(20, 20, 20, 0.25)';
-      ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(20, 20, 20, 0.25)';
+    ctx.lineWidth = 1.5;
+    [midX - colGap, midX + colGap].forEach(function (x) {
       ctx.beginPath();
-      ctx.moveTo(col.x - 110, footY);
-      ctx.lineTo(col.x + 110, footY);
+      ctx.moveTo(x - 110, footY);
+      ctx.lineTo(x + 110, footY);
       ctx.stroke();
-      ctx.font = '400 20px Poppins, sans-serif';
-      ctx.fillStyle = '#6B6B6B';
-      ctx.fillText(col.label, col.x, footY + 32);
     });
+
+    ctx.font = '700 20px Poppins, sans-serif';
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillText('Kathryn Donnelly', midX - colGap, footY + 30);
+    ctx.font = '400 15px Poppins, sans-serif';
+    ctx.fillStyle = '#6B6B6B';
+    ctx.fillText('Founder & Programme Director, ClickClick Academy', midX - colGap, footY + 52);
+
+    ctx.font = '400 20px Poppins, sans-serif';
+    ctx.fillStyle = '#6B6B6B';
+    var awardedLabel =
+      'Awarded ' +
+      new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    ctx.fillText(awardedLabel, midX + colGap, footY + 30);
+
+    // Credential id + an honest, unprompted line about what ClickClick
+    // Academy actually is, since volunteering that is a stronger
+    // legitimacy signal than staying quiet and hoping nobody asks.
+    ctx.font = '700 16px Poppins, sans-serif';
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillText('Credential ID  ' + certId, midX, canvas.height - 110);
+
+    ctx.font = '400 14px Poppins, sans-serif';
+    ctx.fillStyle = 'rgba(20, 20, 20, 0.55)';
+    wrapCanvasText(
+      ctx,
+      'ClickClick Academy is an independent training provider. This certification is awarded by ' +
+        'ClickClick Academy and is not a regulated or accredited qualification.',
+      midX,
+      canvas.height - 78,
+      1300,
+      20
+    );
 
     return canvas;
   }
@@ -1581,6 +1650,11 @@
   function downloadCertificate(course) {
     var student = loadStudent();
     var name = (student && student.name) || 'Creator';
+    var modules = Array.isArray(course.modules) ? course.modules : [];
+    var lessonCount = modules.reduce(function (n, m) {
+      return n + (Array.isArray(m.lessons) ? m.lessons.length : 0);
+    }, 0);
+    var certId = credentialId(course);
     var fontsReady =
       document.fonts && document.fonts.load
         ? Promise.all([
@@ -1591,9 +1665,17 @@
         : Promise.resolve();
     Promise.all([fontsReady, loadShutterIcon()]).then(function (results) {
       var shutterImg = results[1];
-      var canvas = drawCertificate(course.title, name, shutterImg);
+      var canvas = drawCertificate({
+        courseTitle: course.title,
+        studentName: name,
+        shutterImg: shutterImg,
+        lessonCount: lessonCount,
+        moduleCount: modules.length,
+        courseId: course.id,
+        certId: certId,
+      });
       var link = document.createElement('a');
-      link.download = 'ClickClick-Academy-Certificate.png';
+      link.download = 'ClickClick-Academy-Certification-' + certId + '.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     });
@@ -1648,7 +1730,7 @@
         : '<div class="progress-track" role="progressbar" aria-valuenow="' + doneCount +
           '" aria-valuemin="0" aria-valuemax="' + lessonCount + '"><div class="progress-fill"></div></div>'
       ) +
-      (complete ? certificateCardHtml(course) : '') +
+      (complete ? certificateCardHtml(course, lessonCount, modules.length) : '') +
       '</div>' +
       courseIntroHtml(course) +
       modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum, selfPaced); }).join('') +
