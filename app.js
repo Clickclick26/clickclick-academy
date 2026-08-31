@@ -1355,6 +1355,146 @@
     return submittedByNum[prevNum] ? 'open' : 'locked';
   }
 
+  // The card shown when every lesson in a graded course is done: a real
+  // certificate, downloadable as an image, plus a one-click LinkedIn "Add
+  // to Profile" link, rather than just a banner nobody can do anything with.
+  function certificateCardHtml(course) {
+    return (
+      '<div class="certificate-card">' +
+      '<div class="certificate-card-head">' +
+      '<span class="certificate-seal" aria-hidden="true">&#127942;</span>' +
+      '<div>' +
+      '<p class="certificate-eyebrow">Certificate of completion</p>' +
+      '<h3>You finished ' + esc(course.title || '') + '</h3>' +
+      '</div>' +
+      '</div>' +
+      '<p class="certificate-sub">Every lesson done. Download it as an image, or add it straight to your LinkedIn profile.</p>' +
+      '<div class="certificate-actions">' +
+      '<button type="button" class="btn primary certificate-download-btn">Download certificate</button>' +
+      '<button type="button" class="btn secondary certificate-linkedin-btn">Add to LinkedIn</button>' +
+      '</div>' +
+      '<p class="certificate-linkedin-note">The LinkedIn button opens their own "Add to Profile" form, already filled in with this course. Just hit Save on LinkedIn’s side, nothing to type.</p>' +
+      '</div>'
+    );
+  }
+
+  // Wraps text across multiple centred canvas lines instead of running off
+  // the edge, since a long course title won't fit on one line at this size.
+  function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
+    var words = String(text).split(' ');
+    var line = '';
+    var lines = [];
+    words.forEach(function (w) {
+      var test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = w;
+      } else {
+        line = test;
+      }
+    });
+    if (line) lines.push(line);
+    var startY = y - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach(function (l, i) {
+      ctx.fillText(l, x, startY + i * lineHeight);
+    });
+  }
+
+  function drawCertificate(courseTitle, studentName) {
+    var canvas = document.createElement('canvas');
+    canvas.width = 1600;
+    canvas.height = 1131;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#F3EFE4';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = '#00BCD4';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80);
+    ctx.strokeStyle = '#7B5EA7';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(60, 60, canvas.width - 120, canvas.height - 120);
+
+    ctx.textAlign = 'center';
+
+    ctx.fillStyle = '#7B5EA7';
+    ctx.font = '700 28px Poppins, sans-serif';
+    ctx.fillText('CLICKCLICK ACADEMY', canvas.width / 2, 190);
+
+    ctx.fillStyle = '#1A1A1A';
+    ctx.font = '700 34px Poppins, sans-serif';
+    ctx.fillText('Certificate of Completion', canvas.width / 2, 250);
+
+    // Shrink the name to fit an unusually long one (long legal names,
+    // double-barrelled surnames) rather than letting it run into the border.
+    var nameText = studentName || 'Creator';
+    var nameSize = 64;
+    var nameMaxWidth = canvas.width - 320;
+    ctx.font = '700 ' + nameSize + 'px Poppins, sans-serif';
+    while (ctx.measureText(nameText).width > nameMaxWidth && nameSize > 28) {
+      nameSize -= 2;
+      ctx.font = '700 ' + nameSize + 'px Poppins, sans-serif';
+    }
+    ctx.fillStyle = '#00BCD4';
+    ctx.fillText(nameText, canvas.width / 2, 420);
+
+    ctx.font = '400 26px Poppins, sans-serif';
+    ctx.fillStyle = '#6B6B6B';
+    ctx.fillText('has successfully completed', canvas.width / 2, 470);
+
+    ctx.font = '700 42px Poppins, sans-serif';
+    ctx.fillStyle = '#1A1A1A';
+    wrapCanvasText(ctx, courseTitle || '', canvas.width / 2, 540, 1200, 52);
+
+    var dateStr = new Date().toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    ctx.font = '400 24px Poppins, sans-serif';
+    ctx.fillStyle = '#6B6B6B';
+    ctx.fillText(dateStr, canvas.width / 2, canvas.height - 120);
+
+    return canvas;
+  }
+
+  function downloadCertificate(course) {
+    var student = loadStudent();
+    var name = (student && student.name) || 'Creator';
+    var ready =
+      document.fonts && document.fonts.load
+        ? Promise.all([
+            document.fonts.load('700 64px Poppins'),
+            document.fonts.load('400 26px Poppins'),
+            document.fonts.load('700 42px Poppins'),
+          ]).catch(function () {})
+        : Promise.resolve();
+    ready.then(function () {
+      var canvas = drawCertificate(course.title, name);
+      var link = document.createElement('a');
+      link.download = 'ClickClick-Academy-Certificate.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  }
+
+  // LinkedIn's documented "Add to Profile" deep link for certifications:
+  // prefills their own form on their own site, the member still has to hit
+  // Save there, we never touch their profile directly.
+  function linkedInAddUrl(course) {
+    var now = new Date();
+    var parts = [
+      'startTask=CERTIFICATION_NAME',
+      'name=' + encodeURIComponent(course.title || 'ClickClick Academy Certification'),
+      'organizationName=' + encodeURIComponent('ClickClick'),
+      'issueYear=' + now.getFullYear(),
+      'issueMonth=' + (now.getMonth() + 1),
+      'certUrl=' + encodeURIComponent('https://academy.clickclick.video/'),
+    ];
+    return 'https://www.linkedin.com/profile/add?' + parts.join('&');
+  }
+
   function courseDetailHtml(course, submittedByNum, justUnlockedNum) {
     var modules = Array.isArray(course.modules) ? course.modules : [];
     var lessonCount = modules.reduce(function (n, m) {
@@ -1388,9 +1528,7 @@
         : '<div class="progress-track" role="progressbar" aria-valuenow="' + doneCount +
           '" aria-valuemin="0" aria-valuemax="' + lessonCount + '"><div class="progress-fill"></div></div>'
       ) +
-      (complete
-        ? '<p class="course-complete-banner">&#127881; Every lesson done. That\'s the whole certification. Nice work.</p>'
-        : '') +
+      (complete ? certificateCardHtml(course) : '') +
       '</div>' +
       courseIntroHtml(course) +
       modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum, selfPaced); }).join('') +
@@ -1555,7 +1693,7 @@
         animateProgressBar(doneCount, lessonCount);
         if (opts.justSubmittedNum) {
           if (lessonCount > 0 && doneCount >= lessonCount) {
-            launchConfetti(detailBody.querySelector('.course-complete-banner'), { count: 100, spread: 12 });
+            launchConfetti(detailBody.querySelector('.certificate-card'), { count: 100, spread: 12 });
           } else {
             var submittedCard = detailBody.querySelector('.lesson-card[data-num="' + opts.justSubmittedNum + '"]');
             if (submittedCard) launchConfetti(submittedCard, { count: 40 });
@@ -1880,6 +2018,17 @@
             animateProgressBar(Object.keys(byNum).length, flatLessonNums(currentDetailCourse).length);
           });
       }
+      return;
+    }
+
+    var certDownloadBtn = e.target.closest('.certificate-download-btn');
+    if (certDownloadBtn && currentDetailCourse) {
+      downloadCertificate(currentDetailCourse);
+      return;
+    }
+    var certLinkedInBtn = e.target.closest('.certificate-linkedin-btn');
+    if (certLinkedInBtn && currentDetailCourse) {
+      window.open(linkedInAddUrl(currentDetailCourse), '_blank', 'noopener');
       return;
     }
 

@@ -125,6 +125,12 @@ input {
   color: #fff;
 }
 
+.btn.secondary {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px rgba(20, 20, 20, 0.12);
+}
+
 /* == Gate == */
 .gate {
   min-height: 100vh;
@@ -1641,18 +1647,58 @@ input {
   transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.course-complete-banner {
+.certificate-card {
+  margin-top: 1rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(0, 188, 212, 0.1), rgba(123, 94, 167, 0.1));
+  box-shadow: var(--shadow-soft);
+}
+
+.certificate-card-head {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(28, 157, 95, 0.1);
-  color: #1c9d5f;
+  gap: 0.7rem;
+}
+
+.certificate-seal {
+  font-size: 1.8rem;
+  flex: none;
+}
+
+.certificate-eyebrow {
+  font-size: 0.7rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--turquoise-deep);
+  margin: 0;
+}
+
+.certificate-card-head h3 {
+  margin: 0.1rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.certificate-sub {
+  margin: 0.6rem 0 0;
   font-size: 0.85rem;
-  padding: 0.6rem 0.9rem;
-  border-radius: 14px;
-  margin-top: 0.7rem;
-  width: fit-content;
+  color: var(--mid);
+}
+
+.certificate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
+.certificate-linkedin-note {
+  margin: 0.6rem 0 0;
+  font-size: 0.72rem;
+  color: var(--light);
 }
 
 /* == Motion: unlock entrance, right/wrong feedback, confetti, press feel == */
