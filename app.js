@@ -206,7 +206,8 @@
       '</span>' +
       '</div>' +
       '<div class="course-body">' +
-      '<span class="course-tag' + (course.brand === 'clocal' ? ' course-tag--clocal' : '') + '">' +
+      (course.brand === 'clocal' ? clocalMarkHtml() : '') +
+      '<span class="course-tag">' +
       esc(course.tag || '') +
       '</span>' +
       '<h3>' +
@@ -1721,7 +1722,7 @@
     return (
       '<div class="detail-head' + (course.brand === 'clocal' ? ' detail-head--clocal' : '') + '">' +
       (course.brand === 'clocal' ? clocalMarkHtml() : '') +
-      '<span class="course-tag' + (course.brand === 'clocal' ? ' course-tag--clocal' : '') + '">' +
+      '<span class="course-tag">' +
       esc(course.tag || '') + '</span>' +
       '<h1>' + esc(course.title || '') + '</h1>' +
       (course.description ? '<p class="detail-lead">' + esc(course.description) + '</p>' : '') +
