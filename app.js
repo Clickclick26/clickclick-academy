@@ -1400,9 +1400,6 @@
     });
   }
 
-  // A small drawn medallion (rings + a star + ribbon tails), not an emoji,
-  // so it renders identically everywhere instead of depending on whichever
-  // emoji font happens to be installed.
   // Lazy-loads and caches the real shutter mark cropped from the actual
   // ClickClick logo (brand/shutter-icon.png), so the certificate seal draws
   // the genuine brand icon instead of a hand-drawn approximation of it.
@@ -1421,6 +1418,21 @@
       });
     }
     return shutterIconPromise;
+  }
+
+  // Recolours a solid-shape image (the shutter icon is flat turquoise on
+  // transparent) to a given colour via an offscreen source-in composite,
+  // rather than needing a separate pre-tinted asset per colour.
+  function tintImageToColor(img, color, size) {
+    var off = document.createElement('canvas');
+    off.width = size;
+    off.height = size;
+    var octx = off.getContext('2d');
+    octx.drawImage(img, 0, 0, size, size);
+    octx.globalCompositeOperation = 'source-in';
+    octx.fillStyle = color;
+    octx.fillRect(0, 0, size, size);
+    return off;
   }
 
   function drawCertificateSeal(ctx, cx, cy, shutterImg) {
@@ -1445,7 +1457,11 @@
     // the wordmark), drawn from the actual logo asset, not redrawn by hand.
     if (shutterImg) {
       var iconSize = (r - 20) * 2;
-      ctx.drawImage(shutterImg, cx - iconSize / 2, cy - iconSize / 2, iconSize, iconSize);
+      // The source asset is turquoise; retint it to brand purple for the
+      // seal via an offscreen composite rather than swapping in a new
+      // asset, since it's the same real logo shape either way.
+      var tinted = tintImageToColor(shutterImg, '#7B5EA7', 160);
+      ctx.drawImage(tinted, cx - iconSize / 2, cy - iconSize / 2, iconSize, iconSize);
     }
 
     // Ribbon tails hanging below the medallion.
@@ -1487,30 +1503,30 @@
 
     ctx.textAlign = 'center';
 
-    // Even vertical rhythm from here down, one deliberate gap per line
-    // rather than a cramped cluster followed by a lot of dead space.
-    drawCertificateSeal(ctx, midX, 175, shutterImg);
+    // Spread evenly across the full canvas height, top to bottom, rather
+    // than clustering everything into the top half with a dead gap after.
+    drawCertificateSeal(ctx, midX, 205, shutterImg);
 
     ctx.fillStyle = '#7B5EA7';
     ctx.font = '700 24px Poppins, sans-serif';
-    ctx.fillText('CLICKCLICK ACADEMY', midX, 320);
+    ctx.fillText('CLICKCLICK ACADEMY', midX, 355);
 
     ctx.fillStyle = '#1A1A1A';
     ctx.font = '700 34px Poppins, sans-serif';
-    ctx.fillText('Certificate of Completion', midX, 368);
+    ctx.fillText('Certificate of Completion', midX, 403);
 
     // A short decorative rule, not text, to separate the header from the
     // name rather than relying on whitespace alone to do that job.
     ctx.strokeStyle = 'rgba(20, 20, 20, 0.15)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(midX - 70, 410);
-    ctx.lineTo(midX + 70, 410);
+    ctx.moveTo(midX - 70, 450);
+    ctx.lineTo(midX + 70, 450);
     ctx.stroke();
 
     ctx.font = '400 24px Poppins, sans-serif';
     ctx.fillStyle = '#6B6B6B';
-    ctx.fillText('This certifies that', midX, 470);
+    ctx.fillText('This certifies that', midX, 530);
 
     // Shrink the name to fit an unusually long one (long legal names,
     // double-barrelled surnames) rather than letting it run into the border.
@@ -1523,19 +1539,19 @@
       ctx.font = '700 ' + nameSize + 'px Poppins, sans-serif';
     }
     ctx.fillStyle = '#00BCD4';
-    ctx.fillText(nameText, midX, 550);
+    ctx.fillText(nameText, midX, 630);
 
     ctx.font = '400 26px Poppins, sans-serif';
     ctx.fillStyle = '#6B6B6B';
-    ctx.fillText('has successfully completed', midX, 605);
+    ctx.fillText('has successfully completed', midX, 690);
 
     ctx.font = '700 40px Poppins, sans-serif';
     ctx.fillStyle = '#1A1A1A';
-    wrapCanvasText(ctx, courseTitle || '', midX, 675, 1200, 52);
+    wrapCanvasText(ctx, courseTitle || '', midX, 770, 1200, 52);
 
     // Signature line + date, side by side near the foot, the way a printed
     // certificate signs off rather than a lone timestamp floating in space.
-    var footY = canvas.height - 150;
+    var footY = canvas.height - 130;
     var colGap = 260;
     [
       { x: midX - colGap, label: 'ClickClick Academy' },
