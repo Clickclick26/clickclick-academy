@@ -1458,26 +1458,6 @@
     "cover": "images/cover-ugc.jpg"
   },
   {
-    "id": "coach-book",
-    "title": "Book your 1:1",
-    "description": "Book a 1:1 coaching call with ClickClick.",
-    "tag": "Coaching",
-    "audience": [
-      "creator",
-      "corporate",
-      "agency",
-      "staff",
-      "live-host"
-    ],
-    "lessons": 1,
-    "level": "1:1",
-    "status": "Book call",
-    "statusClass": "is-coach",
-    "icon": "☎",
-    "tone": "#f3e8ff",
-    "href": "mailto:hello@clickclick.video?subject=ClickClick%20Academy%20coaching"
-  },
-  {
     "id": "clocal-creator-track",
     "title": "CLocal Creator Programme",
     "description": "The whole programme in one place, open to every CLocal creator. Part One gets reviews posted that actually land: how the app fits together, your first half hour, a 45-second shape that works, filming in a real shop, claiming your first gift deal. Part Two is how that turns into repeat, paid work: owning a patch, longer clips shops will repost, walking into shops that aren't on CLocal yet, and reading your own numbers. Nothing here is a rule. It's the guide, not the brief, you stay in charge of your own work.",
