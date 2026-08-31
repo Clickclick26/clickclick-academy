@@ -1479,9 +1479,9 @@
   },
   {
     "id": "clocal-creator-track",
-    "title": "CLocal Certified Content Creator",
-    "description": "The whole Creator Track in one place, open to every CLocal creator. Part One gets reviews posted that actually land: how the app fits together, your first half hour, a 45-second shape that works, filming in a real shop, claiming your first gift deal. Part Two is how that turns into repeat, paid work: owning a patch, longer clips shops will repost, walking into shops that aren't on CLocal yet, and reading your own numbers. Nothing here is a rule. It's the guide, not the brief, you stay in charge of your own work.",
-    "tag": "Certification",
+    "title": "CLocal Creator Programme",
+    "description": "The whole programme in one place, open to every CLocal creator. Part One gets reviews posted that actually land: how the app fits together, your first half hour, a 45-second shape that works, filming in a real shop, claiming your first gift deal. Part Two is how that turns into repeat, paid work: owning a patch, longer clips shops will repost, walking into shops that aren't on CLocal yet, and reading your own numbers. Nothing here is a rule. It's the guide, not the brief, you stay in charge of your own work.",
+    "tag": "Creator Training",
     "brand": "clocal",
     "audience": [
       "clocal-creator-free",
