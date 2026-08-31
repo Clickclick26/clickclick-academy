@@ -16,6 +16,12 @@
 //   list       {studentId, courseId} -> {progress: [{lessonNum, note, filePath, submittedAt}]}
 //   uploadUrl  {studentId, courseId, lessonNum, fileName} -> {path, signedUrl, token}
 //   submit     {studentId, courseId, lessonNum, note, filePath?} -> {ok:true}
+//   directory  {} -> {rows: [{studentId, name, email, courseId, lessonsSubmitted, lastSubmittedAt}]}
+//              Internal use only (Kathryn's own creator directory, matching brand
+//              requests to certified creators) — not for public/student use. Returns
+//              raw per-student-per-course submission counts; the caller cross-checks
+//              against each course's actual lesson count (from courses.json) to decide
+//              who's actually complete, since this function doesn't know course shapes.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "jsr:@supabase/supabase-js@2"
 
@@ -159,6 +165,46 @@ Deno.serve(async (req) => {
       )
       if (error) throw error
       return json(200, { ok: true }, origin)
+    }
+
+    if (type === "directory") {
+      const { data: progressRows, error: progErr } = await admin
+        .from("academy_progress")
+        .select("student_id, course_id, lesson_num, submitted_at")
+      if (progErr) throw progErr
+
+      const { data: students, error: studErr } = await admin
+        .from("academy_students")
+        .select("id, name, email")
+      if (studErr) throw studErr
+
+      const studentById = new Map((students ?? []).map((s) => [s.id, s]))
+      const byKey = new Map<string, { count: number; lastSubmittedAt: string }>()
+      for (const row of progressRows ?? []) {
+        const key = `${row.student_id}|${row.course_id}`
+        const cur = byKey.get(key)
+        if (!cur) {
+          byKey.set(key, { count: 1, lastSubmittedAt: row.submitted_at })
+        } else {
+          cur.count += 1
+          if (row.submitted_at > cur.lastSubmittedAt) cur.lastSubmittedAt = row.submitted_at
+        }
+      }
+
+      const rows = Array.from(byKey.entries()).map(([key, v]) => {
+        const [studentId, courseId] = key.split("|")
+        const student = studentById.get(studentId)
+        return {
+          studentId,
+          name: student?.name ?? "Unknown",
+          email: student?.email ?? "",
+          courseId,
+          lessonsSubmitted: v.count,
+          lastSubmittedAt: v.lastSubmittedAt,
+        }
+      })
+
+      return json(200, { rows }, origin)
     }
 
     return json(400, { error: "Unknown request type." }, origin)
