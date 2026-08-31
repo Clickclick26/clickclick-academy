@@ -1447,9 +1447,18 @@
     off.height = size;
     var octx = off.getContext('2d');
     octx.drawImage(img, 0, 0, size, size);
-    octx.globalCompositeOperation = 'source-in';
+    // 'source-in' alone flattens the icon to a silhouette: the blade
+    // separator lines in this asset are opaque lighter pixels, not
+    // transparency, so a flat alpha-mask recolor erases them and leaves a
+    // plain ring. 'color' blend mode keeps the source's light/dark
+    // pattern (so the blade lines stay visible) and only replaces hue and
+    // saturation; re-clipping with 'destination-in' undoes any alpha the
+    // blend step added outside the icon's original silhouette.
+    octx.globalCompositeOperation = 'color';
     octx.fillStyle = color;
     octx.fillRect(0, 0, size, size);
+    octx.globalCompositeOperation = 'destination-in';
+    octx.drawImage(img, 0, 0, size, size);
     return off;
   }
 
@@ -1581,7 +1590,7 @@
       nameSize -= 2;
       ctx.font = '700 ' + nameSize + 'px Poppins, sans-serif';
     }
-    ctx.fillStyle = '#00BCD4';
+    ctx.fillStyle = '#7B5EA7';
     ctx.fillText(nameText, midX, 610);
 
     ctx.font = '400 25px Poppins, sans-serif';
