@@ -142,6 +142,7 @@
     if (audience === 'staff') return 'Hello, staff';
     if (audience === 'live-host') return 'Hello, host';
     if (audience === 'internal') return 'Hello, ClickClick';
+    if (audience === 'clocal-creator' || audience === 'clocal-creator-free') return 'Hello, creator';
     return 'Hello';
   }
 
@@ -205,7 +206,7 @@
       '</span>' +
       '</div>' +
       '<div class="course-body">' +
-      '<span class="course-tag">' +
+      '<span class="course-tag' + (course.brand === 'clocal' ? ' course-tag--clocal' : '') + '">' +
       esc(course.tag || '') +
       '</span>' +
       '<h3>' +
@@ -440,6 +441,9 @@
         break;
       case 'wheel':
         body = activityWheelHtml(lessonNum, activity, state);
+        break;
+      case 'flip':
+        body = activityFlipHtml(lessonNum, activity, state);
         break;
       default:
         return '';
@@ -856,6 +860,33 @@
     );
   }
 
+  // Flip cards: a row of tap-to-flip cards (front = the claim, back = what it
+  // looks like in practice). No right answer, it's a reading widget, so the
+  // "done" button just marks it seen like every other activity.
+  function activityFlipHtml(lessonNum, activity, state) {
+    var cards = Array.isArray(activity.cards) ? activity.cards : [];
+    return (
+      '<div class="activity-flip">' +
+      (activity.prompt ? '<p class="activity-flip-prompt">' + esc(activity.prompt) + '</p>' : '') +
+      '<div class="activity-flip-grid">' +
+      cards
+        .map(function (c) {
+          return (
+            '<button type="button" class="flip-card" aria-pressed="false">' +
+            '<span class="flip-card-inner">' +
+            '<span class="flip-card-face flip-card-front">' + esc(c.front || '') + '</span>' +
+            '<span class="flip-card-face flip-card-back">' + esc(c.back || '') + '</span>' +
+            '</span>' +
+            '</button>'
+          );
+        })
+        .join('') +
+      '</div>' +
+      '<button type="button" class="btn primary activity-check-btn" data-check="flip">Got it</button>' +
+      '</div>'
+    );
+  }
+
   // Word bank: a templated paragraph with {n} blanks, filled by clicking or
   // dragging chips from a shared bank (blanks + distractors, shuffled once
   // and persisted like sequence's order so a reload doesn't reshuffle mid-go).
@@ -1068,19 +1099,41 @@
       );
     },
     // 30% of the £9.99 VIP plan per referral, and how many referrals it
-    // takes to cover the £14.99 Creator plan itself.
+    // takes to cover the £14.99 Creator plan itself. The closing line scales
+    // with the actual figure instead of one generic "covers your plan"
+    // comment, so a big number doesn't get talked down to a small one.
     clocalBreakeven: function (inputs) {
       var referrals = Math.max(0, parseFloat(inputs.referrals) || 0);
       var perReferral = 9.99 * 0.3;
       var monthly = referrals * perReferral;
-      var breakeven = Math.ceil(14.99 / perReferral);
-      var coversPlan = monthly >= 14.99;
+      var plan = 14.99;
+      var breakeven = Math.ceil(plan / perReferral);
+      var yearly = Math.round(monthly * 12);
+      var multiple = monthly / plan;
+      var tail;
+      if (referrals === 0) {
+        tail = 'Plug in a number. Even one referral is recurring, it pays out every month they stay a member.';
+      } else if (monthly < plan) {
+        var left = Math.max(1, breakeven - referrals);
+        tail = 'Another ' + left + ' referral' + (left === 1 ? '' : 's') +
+          ' covers the £14.99 plan, and everything past that is yours.';
+      } else if (multiple < 2) {
+        tail = "That's your plan paid and about £" + (monthly - plan).toFixed(2) +
+          ' clear every month, recurring, on top of any gift deals.';
+      } else if (multiple < 5) {
+        tail = "That's the plan covered " + Math.floor(multiple) +
+          ' times over, about £' + Math.round(monthly) + ' a month, and it stacks with every referral you add.';
+      } else if (multiple < 10) {
+        tail = "That's a real recurring stream now, about £" + Math.round(monthly) +
+          ' a month, roughly £' + yearly + ' over a year if they stay, separate from anything you earn filming.';
+      } else {
+        tail = "That's about £" + Math.round(monthly) + ' a month on repeat, around £' + yearly +
+          ' a year. At this level the referral side stands on its own as an income stream.';
+      }
       return (
         referrals + ' referral' + (referrals === 1 ? '' : 's') + ' at 30% of £9.99 is about £' +
         monthly.toFixed(2) + ' a month.  It takes ' + breakeven + ' referrals to cover your £14.99 ' +
-        'plan.  ' + (coversPlan
-          ? "At this rate you're covering your own plan and then some."
-          : "Not quite there yet, keep sharing your code.")
+        'plan.  ' + tail
       );
     },
   };
@@ -1101,6 +1154,32 @@
     var ig = s.match(/instagram\.com\/(?:reel|reels|p)\/([a-zA-Z0-9_-]+)/);
     if (ig) return { platform: 'instagram', src: 'https://www.instagram.com/reel/' + ig[1] + '/embed' };
     return null;
+  }
+
+  // Media slots that Kathryn fills in later. While a slot is empty but has a
+  // note, it renders a dashed placeholder saying what goes there, so the
+  // authoring gaps are visible in the course itself. Once the src/url is
+  // filled, the real embed or image renders and the placeholder is gone.
+  function lessonMediaPlaceholderHtml(kind, note) {
+    if (!note) return '';
+    var label = kind === 'video' ? 'Video' : 'Image';
+    return (
+      '<div class="lesson-media-placeholder">' +
+      '<span class="lesson-media-placeholder-tag">' + label + ' to add</span>' +
+      '<span class="lesson-media-placeholder-note">' + esc(note) + '</span>' +
+      '</div>'
+    );
+  }
+
+  function lessonFigureHtml(figure) {
+    if (!figure) return '';
+    if (!figure.src) return lessonMediaPlaceholderHtml('image', figure.caption);
+    return (
+      '<figure class="lesson-figure">' +
+      '<img src="' + esc(figure.src) + '" alt="' + esc(figure.alt || '') + '" loading="lazy" />' +
+      (figure.caption ? '<figcaption>' + esc(figure.caption) + '</figcaption>' : '') +
+      '</figure>'
+    );
   }
 
   function lessonVideoHtml(video) {
@@ -1205,7 +1284,9 @@
       statusBadge +
       '</div>' +
       lessonVideoHtml(lesson.video) +
+      (!lesson.video ? lessonMediaPlaceholderHtml('video', lesson.videoNote) : '') +
       (lesson.overview ? '<p class="lesson-overview">' + esc(lesson.overview) + '</p>' : '') +
+      lessonFigureHtml(lesson.figure) +
       dmMockupHtml(lesson.dmMockup) +
       '<div class="lesson-field lesson-field--interactive">' +
       '<span class="lesson-field-label">Interactive</span>' +
@@ -1221,15 +1302,34 @@
     );
   }
 
+  // A soft "this part is open to everyone, an upgraded plan just speeds it
+  // up" panel. Not a lock — every lesson below it still renders in full.
+  function moduleUpgradeHtml(up) {
+    if (!up) return '';
+    var cta =
+      up.cta && up.cta.href
+        ? '<a class="module-upgrade-cta" href="' + esc(up.cta.href) + '" target="_blank" rel="noopener">' +
+          esc(up.cta.label || 'Learn more') + ' &rarr;</a>'
+        : '';
+    return (
+      '<div class="module-upgrade">' +
+      (up.heading ? '<p class="module-upgrade-head">' + esc(up.heading) + '</p>' : '') +
+      (up.body ? '<p class="module-upgrade-body">' + esc(up.body) + '</p>' : '') +
+      cta +
+      '</div>'
+    );
+  }
+
   function moduleHtml(mod, index, submittedByNum, justUnlockedNum, selfPaced) {
     var lessons = Array.isArray(mod.lessons) ? mod.lessons : [];
     return (
-      '<section class="module-block">' +
+      '<section class="module-block' + (mod.part === 'two' ? ' module-block--part-two' : '') + '">' +
       '<div class="module-block-head">' +
       '<span class="module-block-num">Module ' + String(index + 1).padStart(2, '0') + '</span>' +
       '<h3>' + esc(mod.title || '') + '</h3>' +
       '</div>' +
       (mod.frame ? '<p class="module-block-frame">' + esc(mod.frame) + '</p>' : '') +
+      moduleUpgradeHtml(mod.upgrade) +
       lessons
         .map(function (lesson) {
           var state = selfPaced ? 'open' : lessonState(lesson, submittedByNum);
@@ -1268,8 +1368,10 @@
     currentAllNums = flatLessonNums(course);
     var complete = !selfPaced && lessonCount > 0 && doneCount >= lessonCount;
     return (
-      '<div class="detail-head">' +
-      '<span class="course-tag">' + esc(course.tag || '') + '</span>' +
+      '<div class="detail-head' + (course.brand === 'clocal' ? ' detail-head--clocal' : '') + '">' +
+      (course.brand === 'clocal' ? clocalMarkHtml() : '') +
+      '<span class="course-tag' + (course.brand === 'clocal' ? ' course-tag--clocal' : '') + '">' +
+      esc(course.tag || '') + '</span>' +
       '<h1>' + esc(course.title || '') + '</h1>' +
       (course.description ? '<p class="detail-lead">' + esc(course.description) + '</p>' : '') +
       '<div class="detail-meta">' +
@@ -1290,9 +1392,47 @@
         ? '<p class="course-complete-banner">&#127881; Every lesson done. That\'s the whole certification. Nice work.</p>'
         : '') +
       '</div>' +
+      courseIntroHtml(course) +
       modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum, selfPaced); }).join('') +
       bonusActivitiesHtml(course)
     );
+  }
+
+  // Small inline CLocal wordmark for the CLocal Creator Track. The rest of
+  // the Academy stays ClickClick Academy (cream cards) — this is just a
+  // logo + badge on the CLocal course itself, per Kathryn.
+  function clocalMarkHtml() {
+    return (
+      '<span class="clocal-mark" aria-label="CLocal">' +
+      '<span class="clocal-mark-dot" aria-hidden="true"></span>CLocal</span>'
+    );
+  }
+
+  // Optional rich intro block for a course: a lead line, a few paragraphs of
+  // context, an optional "what good looks like" point list, and a closing
+  // note. Everything is optional; no intro object means nothing renders.
+  function courseIntroHtml(course) {
+    var intro = course.intro;
+    if (!intro) return '';
+    var parts = '';
+    if (intro.lead) parts += '<p class="course-intro-lead">' + esc(intro.lead) + '</p>';
+    (intro.body || []).forEach(function (p) {
+      parts += '<p class="course-intro-p">' + esc(p) + '</p>';
+    });
+    if (intro.points && Array.isArray(intro.points.items) && intro.points.items.length) {
+      parts +=
+        '<div class="course-intro-points">' +
+        (intro.points.heading
+          ? '<p class="course-intro-points-head">' + esc(intro.points.heading) + '</p>'
+          : '') +
+        '<ul>' +
+        intro.points.items.map(function (it) { return '<li>' + esc(it) + '</li>'; }).join('') +
+        '</ul>' +
+        '</div>';
+    }
+    if (intro.note) parts += '<p class="course-intro-note">' + esc(intro.note) + '</p>';
+    if (!parts) return '';
+    return '<section class="course-intro">' + parts + '</section>';
   }
 
   // Two recap games pulling from across the whole course, always playable,
@@ -1890,6 +2030,13 @@
         var freshCfg = findActivityConfig(wheelLessonNum);
         if (el && freshCfg) el.outerHTML = activityHtml(wheelLessonNum, freshCfg);
       }, 420);
+      return;
+    }
+
+    var flipCard = e.target.closest('.flip-card');
+    if (flipCard) {
+      var flipped = flipCard.classList.toggle('is-flipped');
+      flipCard.setAttribute('aria-pressed', flipped ? 'true' : 'false');
       return;
     }
 
