@@ -44,6 +44,55 @@
     } catch (e) {}
   }
 
+  // Real credential IDs live in Supabase (academy_certificates, unique
+  // constraint on credential_id), issued by the "certificate" action so two
+  // students can never collide. This cache just avoids re-asking the
+  // backend on every render; the localStorage copy survives a reload while
+  // still deferring to the server as the source of truth.
+  var CERT_CACHE_KEY = 'clickclick_academy_cert_cache_v1';
+  var certInFlight = {};
+
+  function loadCertCache() {
+    try {
+      var raw = localStorage.getItem(CERT_CACHE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveCertCache(cache) {
+    try {
+      localStorage.setItem(CERT_CACHE_KEY, JSON.stringify(cache));
+    } catch (e) {}
+  }
+
+  var certificateCache = loadCertCache();
+
+  // Fire-and-forget: asks the backend to issue (or return the existing)
+  // credential ID, caches it, then re-renders the open course detail so the
+  // certificate card swaps from its temporary local ID to the real one.
+  function ensureRealCredentialId(course, student) {
+    var key = student.studentId + '|' + course.id;
+    if (certificateCache[key] || certInFlight[key]) return;
+    certInFlight[key] = true;
+    academyApi({ type: 'certificate', studentId: student.studentId, courseId: course.id })
+      .then(function (data) {
+        certificateCache[key] = data.credentialId;
+        saveCertCache(certificateCache);
+        if (currentDetailCourse && currentDetailCourse.id === course.id) {
+          renderProgress(currentDetailCourse);
+        }
+      })
+      .catch(function () {
+        // Offline or the table isn't set up yet: the temporary local ID
+        // stays on screen, nothing breaks, we'll just try again next visit.
+      })
+      .then(function () {
+        certInFlight[key] = false;
+      });
+  }
+
   var gate = document.getElementById('gate');
   var app = document.getElementById('app');
   var form = document.getElementById('gate-form');
@@ -1359,12 +1408,24 @@
   // The card shown when every lesson in a graded course is done: a real
   // certificate, downloadable as an image, plus a one-click LinkedIn "Add
   // to Profile" link, rather than just a banner nobody can do anything with.
-  // A stable, deterministic credential id (same student + same course
-  // always produces the same id, no Math.random prop that would change on
-  // every re-download), derived from the real Supabase studentId rather
-  // than a made-up sequence number we can't actually back up.
+  //
+  // The real credential ID lives in Supabase (academy_certificates, unique
+  // constraint on credential_id) so two students can never collide, and it
+  // doesn't drift if someone re-downloads next year. This function returns
+  // that once ensureRealCredentialId has fetched it; until then (first
+  // render, or offline) it falls back to a locally-computed placeholder so
+  // the certificate still displays something immediately.
   function credentialId(course) {
     var student = loadStudent();
+    if (student && student.studentId) {
+      var cached = certificateCache[student.studentId + '|' + (course.id || '')];
+      if (cached) return cached;
+      ensureRealCredentialId(course, student);
+    }
+    return localFallbackCredentialId(course, student);
+  }
+
+  function localFallbackCredentialId(course, student) {
     var seed = ((student && student.studentId) || 'guest') + '|' + (course.id || '');
     var hash = 0;
     for (var i = 0; i < seed.length; i++) {
@@ -1382,11 +1443,11 @@
       '<div class="certificate-card-head">' +
       '<span class="certificate-seal" aria-hidden="true">&#127942;</span>' +
       '<div>' +
-      '<p class="certificate-eyebrow">Certificate of Professional Practice</p>' +
+      '<p class="certificate-eyebrow">Certificate of Completion</p>' +
       '<h3>You finished ' + esc(course.title || '') + '</h3>' +
       '</div>' +
       '</div>' +
-      '<p class="certificate-sub">All ' + lessonCount + ' lessons assessed and passed. Your certificate is issued under ' +
+      '<p class="certificate-sub">All ' + lessonCount + ' lessons completed and every deliverable submitted. Your certificate is issued under ' +
       'credential ID ' + esc(certId) + ', download it, or add it to the certifications section of your LinkedIn profile.</p>' +
       '<div class="certificate-actions">' +
       '<button type="button" class="btn primary certificate-download-btn">Download certificate</button>' +
@@ -1512,14 +1573,16 @@
     ctx.restore();
   }
 
-  // The UGC course's assessed-topics line is deliberately specific rather
+  // The UGC course's completed-topics line is deliberately specific rather
   // than generic ("hooks, scripting, filming..."), since specificity, not
-  // adjectives, is what makes a credential read as genuinely assessed
-  // rather than a participation certificate. Falls back to a plain lesson/
-  // module count for any other course, so this doesn't silently mislabel
-  // a future graded course it wasn't written for.
+  // adjectives, is what makes a credential read as genuinely substantial
+  // rather than a bare participation certificate. It says "completed", not
+  // "assessed": nobody grades these submissions, so the certificate never
+  // claims a bar was passed, only that the work was done. Falls back to a
+  // plain lesson/module count for any other course, so this doesn't
+  // silently mislabel a future course it wasn't written for.
   function certificateSubstanceLine(courseId, lessonCount, moduleCount) {
-    var base = 'Assessed across ' + lessonCount + ' lessons and ' + moduleCount + ' modules';
+    var base = 'Completed across ' + lessonCount + ' lessons and ' + moduleCount + ' modules';
     if (courseId === 'ugc-creator-program') {
       return base + ': hooks, scripting, filming, editing, analytics, usage rights and client business.';
     }
@@ -1562,11 +1625,11 @@
 
     ctx.font = '700 15px Poppins, sans-serif';
     ctx.fillStyle = '#6B6B6B';
-    ctx.fillText('PROFESSIONAL CERTIFICATION PROGRAMME', midX, 372);
+    ctx.fillText('CREATOR TRAINING PROGRAMME', midX, 372);
 
     ctx.fillStyle = '#1A1A1A';
     ctx.font = '700 32px Poppins, sans-serif';
-    ctx.fillText('Certificate of Professional Practice', midX, 418);
+    ctx.fillText('Certificate of Completion', midX, 418);
 
     // A short decorative rule, not text, to separate the header from the
     // name rather than relying on whitespace alone to do that job.
@@ -1596,7 +1659,7 @@
 
     ctx.font = '400 25px Poppins, sans-serif';
     ctx.fillStyle = '#6B6B6B';
-    ctx.fillText('has met the required standard in all assessed work', midX, 668);
+    ctx.fillText('has completed every lesson and submitted all required work', midX, 668);
     ctx.fillText('and is awarded the', midX, 702);
 
     ctx.font = '700 40px Poppins, sans-serif';
