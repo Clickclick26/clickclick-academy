@@ -1,39 +1,16 @@
 {
-  "corp-basic": {
-    "label": "Corporate Basic",
-    "audience": "corporate",
-    "courseIds": [
-      "coach-book"
-    ]
-  },
-  "corp-premium": {
-    "label": "Corporate Premium",
-    "audience": "corporate",
-    "courseIds": [
-      "coach-book"
-    ]
-  },
-  "agency": {
-    "label": "Agency Pack",
-    "audience": "agency",
-    "courseIds": [
-      "coach-book"
-    ]
-  },
   "creator-ugc": {
     "label": "Creator UGC",
     "audience": "creator",
     "courseIds": [
-      "ugc-creator-program",
-      "coach-book"
+      "ugc-creator-program"
     ]
   },
   "clocal-creator": {
     "label": "CLocal Creator",
     "audience": "clocal-creator",
     "courseIds": [
-      "clocal-creator-track",
-      "coach-book"
+      "clocal-creator-track"
     ]
   },
   "clocal-free": {
@@ -43,27 +20,12 @@
       "clocal-creator-track"
     ]
   },
-  "staff-onboard": {
-    "label": "Staff onboarding",
-    "audience": "staff",
-    "courseIds": [
-      "coach-book"
-    ]
-  },
-  "live-host": {
-    "label": "Live host training",
-    "audience": "live-host",
-    "courseIds": [
-      "coach-book"
-    ]
-  },
   "internal": {
     "label": "Internal (all courses)",
     "audience": "internal",
     "courseIds": [
       "ugc-creator-program",
-      "clocal-creator-track",
-      "coach-book"
+      "clocal-creator-track"
     ]
   },
   "Clickclick123": {
@@ -71,8 +33,7 @@
     "audience": "internal",
     "courseIds": [
       "ugc-creator-program",
-      "clocal-creator-track",
-      "coach-book"
+      "clocal-creator-track"
     ],
     "note": "Legacy master code, same as internal. Keep until Kathryn rotates codes."
   }
