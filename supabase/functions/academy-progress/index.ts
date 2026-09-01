@@ -22,6 +22,12 @@
 //              raw per-student-per-course submission counts; the caller cross-checks
 //              against each course's actual lesson count (from courses.json) to decide
 //              who's actually complete, since this function doesn't know course shapes.
+//   certificate {studentId, courseId} -> {credentialId, issuedAt}
+//              Issues (or returns the existing) credential ID for a completed course.
+//              Persisted in academy_certificates with a unique constraint on
+//              credential_id, so two students can never end up with the same one —
+//              the old client-side hash could collide and reset every year, this
+//              can't. Run supabase/certificates-table.sql once before this works.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "jsr:@supabase/supabase-js@2"
 
@@ -205,6 +211,50 @@ Deno.serve(async (req) => {
       })
 
       return json(200, { rows }, origin)
+    }
+
+    if (type === "certificate") {
+      const studentId = String(body.studentId ?? "")
+      const courseId = String(body.courseId ?? "")
+      if (!studentId || !courseId) return json(400, { error: "Missing fields." }, origin)
+
+      const { data: existing, error: findErr } = await admin
+        .from("academy_certificates")
+        .select("credential_id, issued_at")
+        .eq("student_id", studentId)
+        .eq("course_id", courseId)
+        .limit(1)
+      if (findErr) throw findErr
+      if (existing && existing.length > 0) {
+        return json(200, { credentialId: existing[0].credential_id, issuedAt: existing[0].issued_at }, origin)
+      }
+
+      // No 0/O/1/I: a credential ID gets read aloud and typed in by hand
+      // sometimes, so drop the characters people misread most.
+      const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+      function randomCode(len: number): string {
+        let out = ""
+        for (let i = 0; i < len; i++) out += ALPHABET[Math.floor(Math.random() * ALPHABET.length)]
+        return out
+      }
+
+      const year = new Date().getFullYear()
+      // The `unique` constraint on credential_id is what actually guarantees
+      // no duplicates. This loop just picks a fresh code on the rare chance
+      // a random one collides, rather than failing the request outright.
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const credentialId = `CC-${year}-${randomCode(6)}`
+        const { data: created, error: insErr } = await admin
+          .from("academy_certificates")
+          .insert({ student_id: studentId, course_id: courseId, credential_id: credentialId })
+          .select("credential_id, issued_at")
+          .single()
+        if (!insErr) {
+          return json(200, { credentialId: created.credential_id, issuedAt: created.issued_at }, origin)
+        }
+        if (insErr.code !== "23505") throw insErr // 23505 = unique_violation, anything else is real
+      }
+      return json(500, { error: "Could not mint a unique credential ID, try again." }, origin)
     }
 
     return json(400, { error: "Unknown request type." }, origin)
