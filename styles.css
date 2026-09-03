@@ -1069,6 +1069,35 @@ input {
   margin: 0 0 0.4rem;
 }
 
+.lesson-self-check {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  margin: 0 0 0.5rem;
+  box-shadow: inset 0 0 0 1.5px rgba(20, 20, 20, 0.06);
+}
+
+.lesson-self-check-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--mid);
+  margin: 0 0 0.35rem;
+}
+
+.lesson-self-check-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.lesson-self-check-list li + li {
+  margin-top: 0.3rem;
+}
+
 .lesson-resubmit-btn {
   border: 0;
   background: none;

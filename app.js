@@ -1271,6 +1271,58 @@
     );
   }
 
+  // The gap this closes: a submitted deliverable used to just sit there,
+  // nothing ever came back. Nobody has time to read every submission by
+  // hand, so instead of human or peer review, this pulls the same reference
+  // material the lesson's own interactive activity was built from, already
+  // written by the team, never fabricated here, and hands it back the
+  // moment they submit: "here's what to check your own work against."
+  // Each activity kind stores its answer differently, so this just knows
+  // where to find it. Kinds with no real reference concept (quiz explains
+  // itself inline already; a checklist already is the self-check) return
+  // nothing, so the box only appears where it adds something real.
+  function activitySelfCheckPoints(activity) {
+    if (!activity) return [];
+    switch (activity.kind) {
+      case 'rubric':
+        return (activity.criteria || []).map(function (c) {
+          return c.label + ': ' + c.hint;
+        });
+      case 'sequence':
+        return (activity.items || []).map(function (item, i) {
+          return (i + 1) + '. ' + item;
+        });
+      case 'allocator':
+        return (activity.items || []).map(function (item) {
+          return item.label + ' — suggested ' + (activity.unit || '') + item.suggested;
+        });
+      case 'builder':
+        return (activity.fields || []).map(function (f) {
+          return f.label + ': ' + f.model;
+        });
+      case 'match':
+        return (activity.items || []).map(function (item) {
+          var cat = (activity.categories || [])[item.correct];
+          return item.label + (cat ? ' → ' + cat : '');
+        });
+      default:
+        return [];
+    }
+  }
+
+  function selfCheckHtml(lesson) {
+    var points = activitySelfCheckPoints(lesson.activity);
+    if (!points.length) return '';
+    return (
+      '<div class="lesson-self-check">' +
+      '<p class="lesson-self-check-label">Check your own work against this</p>' +
+      '<ul class="lesson-self-check-list">' +
+      points.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') +
+      '</ul>' +
+      '</div>'
+    );
+  }
+
   function lessonHtml(lesson, state, justUnlockedNum, selfPaced) {
     // state: 'locked' | 'open' | 'submitted'. selfPaced courses (no
     // deliverable grading, e.g. the CLocal creator courses) skip the
@@ -1302,6 +1354,7 @@
         (submitted && submitted.filePath
           ? '<p class="lesson-submitted-file">File attached &#10003;</p>'
           : '') +
+        selfCheckHtml(lesson) +
         '<button type="button" class="link-btn lesson-resubmit-btn" data-lesson="' +
         esc(lesson.num) +
         '">Resubmit</button>' +
