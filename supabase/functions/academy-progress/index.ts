@@ -57,6 +57,67 @@ function json(status: number, body: Record<string, unknown>, origin: string | nu
 const BUCKET = "academy-deliverables"
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// deno-lint-ignore no-explicit-any
+type AdminClient = any
+
+// Mirrors an Academy student into the CRM's contacts table (same Supabase
+// project — see the file header). Sales can then see who's actually engaging
+// with course content before pitching them, instead of Academy and the CRM
+// being two disconnected worlds. Matches by email scoped to brand_id
+// 'clickclick', same dedupe pattern as CLocal's waitlist-ingest function.
+// Best-effort: a failure here must never break signing in to Academy itself.
+async function syncToCrmContacts(opts: {
+  admin: AdminClient
+  name: string
+  email: string
+  accessCode: string
+}) {
+  try {
+    const { admin, name, email, accessCode } = opts
+    const tags = Array.from(new Set(["academy", accessCode].filter(Boolean)))
+    const notesLine = `Academy signup\naccess code: ${accessCode || "(none)"}`
+
+    const { data: existingRows, error: findErr } = await admin
+      .from("contacts")
+      .select("id, tags, notes")
+      .ilike("email", email)
+      .eq("brand_id", "clickclick")
+      .limit(1)
+    if (findErr) throw findErr
+
+    const existing = existingRows?.[0] as
+      | { id: string; tags: string[] | null; notes: string }
+      | undefined
+
+    if (existing) {
+      const mergedTags = Array.from(new Set([...(existing.tags ?? []), ...tags]))
+      const mergedNotes = existing.notes?.includes("Academy signup")
+        ? existing.notes
+        : [existing.notes?.trim(), notesLine].filter(Boolean).join("\n\n")
+      const { error: updErr } = await admin
+        .from("contacts")
+        .update({ tags: mergedTags, notes: mergedNotes, updated_at: new Date().toISOString() })
+        .eq("id", existing.id)
+      if (updErr) throw updErr
+    } else {
+      const { error: insErr } = await admin.from("contacts").insert({
+        name,
+        email,
+        phone: "",
+        company: "",
+        stage: "new",
+        source: "academy",
+        tags,
+        notes: notesLine,
+        brand_id: "clickclick",
+      })
+      if (insErr) throw insErr
+    }
+  } catch (err) {
+    console.error("academy->crm contact sync failed:", (err as Error).message)
+  }
+}
+
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin")
 
@@ -93,6 +154,9 @@ Deno.serve(async (req) => {
       if (findErr) throw findErr
 
       if (existing && existing.length > 0) {
+        // Still sync on repeat visits — cheap, and catches anyone who signed
+        // up before this existed, or unlocked a second pack since.
+        await syncToCrmContacts({ admin, name: existing[0].name, email, accessCode })
         return json(200, { studentId: existing[0].id, name: existing[0].name }, origin)
       }
 
@@ -102,6 +166,7 @@ Deno.serve(async (req) => {
         .select("id, name")
         .single()
       if (insErr) throw insErr
+      await syncToCrmContacts({ admin, name, email, accessCode })
       return json(200, { studentId: created.id, name: created.name }, origin)
     }
 
