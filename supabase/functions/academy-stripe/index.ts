@@ -22,6 +22,7 @@
 // Needs these secrets set on the project (Edge Functions -> Secrets):
 //   STRIPE_SECRET_KEY       required, this reads sessions back from Stripe
 //   STRIPE_WEBHOOK_SECRET   required only for refunds and chargebacks
+//   RESEND_API_KEY          optional, emails the code as well as showing it
 // And RUN-THIS-buyer-codes.sql run once.
 //
 // Verify JWT must be OFF for this function. Stripe will not send a Supabase
@@ -119,11 +120,11 @@ function idOf(value: unknown): string {
 async function mintCode(admin: AdminClient, session: SessionLike) {
   const { data: already, error: findErr } = await admin
     .from("academy_access_codes")
-    .select("code, tier, pack, email, name, revoked, issued_at")
+    .select("code, tier, pack, email, name, revoked, issued_at, consent")
     .eq("stripe_session_id", session.id)
     .limit(1)
   if (findErr) throw findErr
-  if (already && already.length > 0) return already[0]
+  if (already && already.length > 0) return { row: already[0], created: false }
 
   const linkId = idOf(session.payment_link)
   const tier = LINK_TIERS[linkId] ?? tierFromAmount(session.amount_total)
@@ -149,24 +150,127 @@ async function mintCode(admin: AdminClient, session: SessionLike) {
         currency: session.currency ?? null,
         consent,
       })
-      .select("code, tier, pack, email, name, revoked, issued_at")
+      .select("code, tier, pack, email, name, revoked, issued_at, consent")
       .single()
-    if (!insErr) return created
+    if (!insErr) return { row: created, created: true }
 
     // 23505 is a unique violation. Either the code collided, or the other
     // path minted this session's code while we were working. Read it back.
     if (insErr.code === "23505") {
       const { data: raced } = await admin
         .from("academy_access_codes")
-        .select("code, tier, pack, email, name, revoked, issued_at")
+        .select("code, tier, pack, email, name, revoked, issued_at, consent")
         .eq("stripe_session_id", session.id)
         .limit(1)
-      if (raced && raced.length > 0) return raced[0]
+      if (raced && raced.length > 0) return { row: raced[0], created: false }
       continue
     }
     throw insErr
   }
   throw new Error("Could not mint a unique access code.")
+}
+
+
+// The 14-day cancellation right. At checkout the buyer picks one of two
+// answers, and the answer decides whether the code goes out now.
+//
+// "I agree..." means they asked for it straight away and gave the right up,
+// which is what the Consumer Contracts Regulations require before digital
+// content can be handed over inside the cooling-off period. Anyone who picks
+// the other answer keeps the right, so the code is held for 14 days rather
+// than sent. In practice almost nobody picks it, and holding it is cheaper
+// than arguing about a refund later.
+const COOLING_OFF_DAYS = 14
+
+function consentGiven(consent: unknown): boolean {
+  return String(consent ?? "").trim().toLowerCase().startsWith("i agree")
+}
+
+function heldUntil(issuedAt: unknown): string {
+  const start = new Date(String(issuedAt ?? "") || Date.now())
+  start.setDate(start.getDate() + COOLING_OFF_DAYS)
+  return start.toISOString()
+}
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;")
+}
+
+// Best effort and deliberately so: a mail failure must never stop a buyer
+// getting their code. The thank-you page has already shown it, and it is in
+// the database either way, so the worst case is Kathryn sending it by hand.
+async function sendCodeEmail(row: {
+  code: string
+  email: string
+  name?: string
+  tier?: string
+}) {
+  const apiKey = Deno.env.get("RESEND_API_KEY")
+  if (!apiKey) {
+    console.error("no RESEND_API_KEY, skipping code email for", row.code)
+    return false
+  }
+  if (!row.email) return false
+
+  const firstName = String(row.name ?? "").trim().split(/\s+/)[0] || "there"
+  const isPriority = row.tier === "priority"
+  const academy = "https://academy.clickclick.video/"
+
+  const lines = [
+    `Hi ${firstName},`,
+    "",
+    `Your access code is ${row.code}`,
+    "",
+    `Open ${academy} and put that code in. Then put your name and this email address in once. That is what saves your progress, so use the same email every time.`,
+    "",
+    isPriority
+      ? "Your portfolio page is in there too, under \"Your portfolio page\". Fill it in whenever you have something worth showing."
+      : "",
+    "Your progress is saved against your email rather than the device you are on, so nothing is lost if you clear your browser or move to a different phone.",
+    "",
+    "When you paid you asked for access straight away and gave up the 14-day cancellation right. That is why you can open it now.",
+    "",
+    "Lost this email? Reply to it and we will find your code.",
+    "",
+    "ClickClick Video Marketing Ltd",
+  ].filter((l) => l !== "")
+
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+<p style="margin:0 0 6px">Your access code is</p>
+<p style="font-size:30px;font-weight:700;letter-spacing:.06em;margin:0 0 20px">${escapeHtml(row.code)}</p>
+<p><a href="${academy}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Open the Academy</a></p>
+<p>Put that code in, then put your name and this email address in once. That is what saves your progress, so use the same email every time.</p>
+${isPriority ? '<p>Your portfolio page is in there too, under "Your portfolio page". Fill it in whenever you have something worth showing.</p>' : ""}
+<p>Your progress is saved against your email rather than the device you are on, so nothing is lost if you clear your browser or move to a different phone.</p>
+<p style="color:#5c5c5c;font-size:14px">When you paid you asked for access straight away and gave up the 14-day cancellation right. That is why you can open it now.</p>
+<p style="color:#5c5c5c;font-size:14px">Lost this email? Reply to it and we will find your code.</p>
+<p style="color:#5c5c5c;font-size:14px">ClickClick Video Marketing Ltd</p>
+</div>`
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "ClickClick Academy <hello@clickclick.video>",
+        to: [row.email],
+        subject: `Your access code: ${row.code}`,
+        text: lines.join("\n"),
+        html,
+      }),
+    })
+    if (!res.ok) {
+      console.error("resend rejected the code email:", res.status, await res.text())
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error("code email failed:", (err as Error).message)
+    return false
+  }
 }
 
 // A refund or a chargeback should take back what was bought. Revoking the
@@ -239,8 +343,11 @@ Deno.serve(async (req) => {
       if (event.type === "checkout.session.completed") {
         const session = event.data.object as unknown as SessionLike
         if (session.payment_status === "paid") {
-          const row = await mintCode(admin, session)
-          console.log("minted", row.code, "for", row.email)
+          const { row, created } = await mintCode(admin, session)
+          console.log("minted", row.code, "for", row.email, created ? "(new)" : "(already had one)")
+          // Only ever email on the insert that actually created the row, so a
+          // webhook retry or the thank-you page racing it cannot send twice.
+          if (created && consentGiven(row.consent)) await sendCodeEmail(row)
         }
         return json(200, { received: true }, origin)
       }
@@ -287,9 +394,27 @@ Deno.serve(async (req) => {
       return json(402, { error: "That payment has not gone through." }, origin)
     }
 
-    const row = await mintCode(admin, session as unknown as SessionLike)
+    const { row, created } = await mintCode(admin, session as unknown as SessionLike)
     const tierInfo = LINK_TIERS[idOf((session as unknown as SessionLike).payment_link)] ??
       tierFromAmount(session.amount_total)
+
+    // Kept their cancellation right, so the course cannot be handed over yet.
+    // The row still exists and the payment is recorded; only the code waits.
+    if (!consentGiven(row.consent)) {
+      return json(
+        200,
+        {
+          code: "",
+          held: true,
+          availableFrom: heldUntil(row.issued_at),
+          email: row.email,
+          name: row.name,
+        },
+        origin,
+      )
+    }
+
+    if (created) await sendCodeEmail(row)
 
     return json(
       200,
