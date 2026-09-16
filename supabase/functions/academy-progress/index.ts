@@ -420,14 +420,73 @@ Deno.serve(async (req) => {
       const courseId = String(body.courseId ?? "")
       if (!studentId || !courseId) return json(400, { error: "Missing fields." }, origin)
 
-      // EU students' certificates are held for a human look rather than issued
-      // automatically. See supabase/eu-review-and-ids.sql for why.
-      const { data: studentRow } = await admin
+      // Completion is checked HERE, on the server, not taken on trust from the
+      // browser. Until 16 Sep 2026 this action minted a credential for anyone
+      // who asked: no payment, no access code, zero lessons done. A stranger
+      // could call identify with any email and then certificate, and land a
+      // real approved credential in the creator directory.
+      //
+      // Two gates now. The student's access code has to actually open this
+      // course, and every lesson in it has to have a progress row.
+      let content
+      try {
+        content = await loadContent(admin)
+      } catch (_e) {
+        return json(503, { error: "Content store not configured." }, origin)
+      }
+
+      const { data: certStudent } = await admin
         .from("academy_students")
-        .select("region")
+        .select("region, access_code")
         .eq("id", studentId)
         .limit(1)
-      const needsReview = EU_REGIONS.has(String(studentRow?.[0]?.region ?? "").toUpperCase())
+      const studentRecord = certStudent?.[0]
+      if (!studentRecord) return json(404, { error: "No such student." }, origin)
+
+      const pack = findPack(content.packs, String(studentRecord.access_code ?? ""))
+      if (!pack || !(pack.pack.courseIds ?? []).includes(courseId)) {
+        return json(403, { error: "That course is not on your access code." }, origin)
+      }
+
+      const course = (content.courses as Array<Record<string, unknown>>).find(
+        (c) => String(c.id) === courseId,
+      )
+      if (!course) return json(404, { error: "No such course." }, origin)
+
+      // Self-paced courses are not graded and issue no certificate at all.
+      if (course.selfPaced) {
+        return json(400, { error: "This course does not issue a certificate." }, origin)
+      }
+
+      const lessonNums: string[] = []
+      for (const m of (course.modules as Array<{ lessons?: Array<{ num?: string }> }>) ?? []) {
+        for (const l of m.lessons ?? []) if (l.num) lessonNums.push(String(l.num))
+      }
+
+      const { data: doneRows, error: doneErr } = await admin
+        .from("academy_progress")
+        .select("lesson_num")
+        .eq("student_id", studentId)
+        .eq("course_id", courseId)
+      if (doneErr) throw doneErr
+      const done = new Set((doneRows ?? []).map((r) => String(r.lesson_num)))
+      const missing = lessonNums.filter((n) => !done.has(n))
+
+      if (missing.length > 0) {
+        return json(
+          403,
+          {
+            error: "Course not finished.",
+            completed: lessonNums.length - missing.length,
+            total: lessonNums.length,
+          },
+          origin,
+        )
+      }
+
+      // EU students' certificates are held for a human look rather than issued
+      // automatically. See supabase/eu-review-and-ids.sql for why.
+      const needsReview = EU_REGIONS.has(String(studentRecord.region ?? "").toUpperCase())
 
       const { data: existing, error: findErr } = await admin
         .from("academy_certificates")
