@@ -337,7 +337,17 @@ Deno.serve(async (req) => {
     }
 
     if (type === "content") {
-      const { courses, packs } = await loadContent(admin)
+      // The storage bucket may not exist yet. Say so specifically rather than
+      // falling through to a generic 500: the front end treats this exact
+      // message as "not migrated yet, use the public files", and a generic
+      // error would just lock everyone out.
+      let loaded
+      try {
+        loaded = await loadContent(admin)
+      } catch (_e) {
+        return json(503, { error: "Content store not configured." }, origin)
+      }
+      const { courses, packs } = loaded
       const match = findPack(packs, String(body.accessCode ?? ""))
       // Same 401 and same shape whether the code is unknown or empty, so the
       // response can't be used to probe which codes exist.
