@@ -21,16 +21,21 @@ create table if not exists academy_certificates (
   unique (student_id, course_id)
 );
 
--- Deliberately NOT enabling row level security here, unlike the original
--- certificates-table.sql said to. These tables are protected by the public
--- role having no GRANT on them at all, which is verifiable: a REST call with
--- the publishable key returns "permission denied for table" for every one of
--- academy_students, academy_progress, academy_certificates and contacts.
+-- A table created from the SQL editor does not automatically get the grants
+-- that Supabase gives tables made through the dashboard, and without them the
+-- edge function gets "permission denied for table academy_certificates" and
+-- every certificate request 500s. This is the line that actually fixes it.
 --
--- Turning RLS on as well breaks writes rather than adding protection: with no
--- policy, the RETURNING clause on an insert gets filtered out and the whole
--- statement errors, which is exactly why issuing a certificate started
--- failing with a 500 while everything else kept working.
+-- service_role ONLY. Deliberately no grant to anon or authenticated: that is
+-- what keeps the table unreadable from the browser, and it is how
+-- academy_students and academy_progress are already protected. Checkable: a
+-- REST call with the publishable key returns permission-denied for all of
+-- them.
+--
+-- Row level security is left OFF, matching the other two tables. Turning it on
+-- with no policy does not add protection here and does break writes: the
+-- RETURNING clause on an insert gets filtered and the statement errors.
+grant all privileges on table academy_certificates to service_role;
 alter table academy_certificates disable row level security;
 
 -- 2. Where a student is based. Drives the EU certificate hold.
