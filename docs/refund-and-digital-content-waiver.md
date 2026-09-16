@@ -116,3 +116,64 @@ legal position:
 
 - Which?, [Consumer Contracts Regulations](https://www.which.co.uk/consumer-rights/regulation/consumer-contracts-regulations-ajWHC8m21cAk)
 - Rocket Lawyer UK, [consumer rights when purchasing digital content](https://www.rocketlawyer.com/gb/en/family-and-personal/buy-and-sell-goods/legal-guide/consumer-rights-when-purchasing-digital-content)
+
+## Payment rail: Stripe, and do not sell to the EU yet
+
+Decided 16 Sep 2026 on Enzo's advice, after both he and Elena landed on Stripe
+independently.
+
+**Not a merchant of record.** Lemon Squeezy or Paddle would handle EU VAT, but
+they are VAT registered everywhere including the UK, so the moment one becomes
+the seller, UK VAT is charged on UK sales. About 80% of sales are UK, so that
+trades away the under-threshold advantage on the bulk of the revenue to solve a
+problem worth a handful of Irish sales. Roughly £336 a year in Stripe fees
+versus £1,300 to £3,700 all in.
+
+**Not Revolut.** It is an acquirer, so it fixes nothing on tax, and its
+checkout cannot cap a discount code by uses, which FOUNDING50 needs. It also
+carries a real risk of a rolling reserve on an intangible digital product.
+
+**Block EU buyers at checkout**, since the EU is the only place with no
+threshold at all: one sale to Dublin means Irish VAT at 23% and non-Union OSS.
+Everywhere else has a floor nowhere near being crossed (US ~$100k, Canada
+CAD 30,000, Australia AUD 75,000, Norway NOK 50,000, Switzerland CHF 100,000).
+
+**Revisit when EU demand passes about £4,000 in a rolling year**: add a second,
+EU-only buy button on a merchant of record. That leaves the UK VAT position
+untouched. Not a rebuild, not an OSS registration.
+
+## Legal jobs before the first payment
+
+In order. The first four cost real money if skipped.
+
+1. **Block EU sales at the front end.** Country question moves BEFORE the pay
+   button. Backstop with a Stripe Radar rule on EU card countries. Refund
+   anyone who slips through on a VPN rather than serving them.
+2. **Open the Stripe account.** ClickClick Ltd, company number, Arthur House
+   Belfast, business bank account, director ID. Start first, verification
+   queues.
+3. **Consent tick box and confirmation email.** Spec is above and unchanged.
+   Miss any part and every buyer keeps a full 14-day refund right after
+   finishing all 32 lessons. The stripped-back refund page makes this MORE
+   important, not less: it is now the only thing standing between ClickClick
+   and a valid refund demand from someone who read the lot.
+4. **Pre-contract information on the sales page.** Trader name, company number,
+   registered address, contact email, total price including tax, what they get,
+   how long access lasts, how to complain. Same regulations. Ten minutes.
+5. **ICO data protection fee.** Holding student names, emails, countries,
+   progress and certificates makes ClickClick Ltd a data controller. The annual
+   fee is a legal obligation with a fine attached, not a subscription. Check
+   whether the company is already registered. Add a privacy notice while there.
+6. **Wire payment to access.** Stripe webhook, access code, email. Decide now
+   that a refund or chargeback revokes the code and the certificate. Store the
+   consent record against the order.
+7. **Launch single payment only.** Add 2 x £79 in week two.
+8. **45 minutes with an accountant**, two questions: does gating the EU keep
+   ClickClick outside non-Union OSS, and when does course income take the
+   company over the £90,000 rolling threshold once added to everything else.
+
+## Bookkeeping note
+
+Record the gross £149 as turnover and the Stripe fee as a cost. Netting it off
+understates turnover and therefore mistracks the VAT threshold, which is the
+one number that cannot be wrong here.

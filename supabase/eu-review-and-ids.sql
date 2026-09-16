@@ -3,14 +3,28 @@
 -- Two additions, both additive and safe on existing rows.
 --
 -- 1. region on academy_students.
---    A student says at sign-up whether they are in the EU. If they are, their
---    certificate is held for a human look rather than issued automatically.
---    The reason is tax, not quality: a course with no human involvement at all
---    is an "electronically supplied service" in EU VAT law, which means VAT is
---    due in the buyer's own country from the very first sale with no threshold
---    to hide behind. A real human step in the supply is the thing that changes
---    that analysis. Get an accountant to confirm it actually does before
---    relying on it, because being wrong here is cumulative and backdated.
+-- NOTE, corrected 16 Sep 2026: the EU certificate hold does NOT keep this
+-- course outside EU VAT, and nobody should rely on it for that.
+--
+-- The test (Art 7(1), Council Implementing Regulation (EU) 282/2011, kept by
+-- the UK after Brexit) is whether the supply is "essentially automated and
+-- involving minimal human intervention" BY ITS NATURE. The human bit has to be
+-- part of delivering what the student bought: a tutor marking their work, a
+-- live session. Approving a certificate after the course is admin at the end,
+-- and HMRC says explicitly that manual process which does not change the
+-- nature of the supply leaves it automated. HMRC's own examples list
+-- "examination services, automated" as a digital service, which is exactly
+-- what the auto-graded gate quizzes are.
+--
+-- Second door, also shut: EU Directive 2022/542 moved the place of supply for
+-- consumer online educational activities to where the customer lives from
+-- 1 Jan 2025 regardless, and the EUR 10,000 threshold only applies to sellers
+-- based inside the EU. ClickClick Ltd is in Belfast, so it gets none of it.
+--
+-- The plan instead is to not sell to EU consumers until the volume justifies
+-- a merchant of record for EU buyers only. The country field below is still
+-- what makes that possible, and holding certificates is still decent quality
+-- control. It is just not a tax structure.
 --
 -- 2. approved on academy_certificates.
 --    Defaults to TRUE so every certificate already issued stays valid and
