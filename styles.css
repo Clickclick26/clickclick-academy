@@ -2396,3 +2396,115 @@ input {
   color: var(--mid);
   text-decoration: underline;
 }
+
+/* ---- Lesson gate: the short check that unlocks a lesson whose main
+   activity has no right answer. Visually quieter than an activity so it
+   reads as a door, not as more work. ---- */
+
+.lesson-gate {
+  border: 1px solid rgba(123, 94, 167, 0.28);
+  border-radius: 14px;
+  padding: 0.8rem 0.9rem;
+  margin: 0 0 0.6rem;
+  background: rgba(123, 94, 167, 0.05);
+}
+
+.lesson-gate.is-passed {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.07);
+}
+
+.gate-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.gate-badge {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--purple);
+  background: rgba(123, 94, 167, 0.14);
+  border-radius: 999px;
+  padding: 0.16rem 0.55rem;
+  white-space: nowrap;
+}
+
+.lesson-gate.is-passed .gate-badge {
+  color: #15803d;
+  background: rgba(34, 197, 94, 0.16);
+}
+
+.gate-prompt {
+  font-size: 0.78rem;
+  color: var(--mid);
+}
+
+.gate-q {
+  padding: 0.55rem 0 0.2rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.gate-q:first-of-type {
+  border-top: none;
+}
+
+.gate-q-text {
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0 0 0.45rem;
+  font-weight: 500;
+}
+
+.gate-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+
+.gate-opt {
+  text-align: left;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+.gate-opt:hover:not(:disabled) {
+  border-color: var(--purple);
+}
+
+.gate-opt:disabled {
+  cursor: default;
+}
+
+.gate-opt.is-correct {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  font-weight: 600;
+}
+
+.gate-opt.is-wrong {
+  border-color: var(--pink);
+  background: rgba(232, 62, 140, 0.09);
+}
+
+.gate-explain {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--mid);
+  margin: 0.45rem 0 0;
+  padding-left: 0.65rem;
+  border-left: 2px solid rgba(123, 94, 167, 0.35);
+}

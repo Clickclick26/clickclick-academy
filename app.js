@@ -98,6 +98,7 @@
   var form = document.getElementById('gate-form');
   var input = document.getElementById('access-code');
   var err = document.getElementById('gate-error');
+  var gateBtn = form ? form.querySelector('button[type="submit"]') : null;
   var logout = document.getElementById('logout');
   var search = document.getElementById('course-search');
   var grid = document.getElementById('courses-grid');
@@ -115,7 +116,6 @@
   var detailBack = document.getElementById('course-detail-back');
 
   var allCourses = [];
-  var packsByCode = {};
   var session = null;
   var allowedCourses = [];
   var lastListView = 'courses';
@@ -154,35 +154,6 @@
     } catch (e) {}
   }
 
-  function findPack(code) {
-    if (!code) return null;
-    var trimmed = String(code).trim();
-    if (!trimmed) return null;
-    if (packsByCode[trimmed]) {
-      return { code: trimmed, pack: packsByCode[trimmed] };
-    }
-    var lower = trimmed.toLowerCase();
-    var keys = Object.keys(packsByCode);
-    for (var i = 0; i < keys.length; i++) {
-      if (keys[i].toLowerCase() === lower) {
-        return { code: keys[i], pack: packsByCode[keys[i]] };
-      }
-    }
-    return null;
-  }
-
-  function coursesForPack(pack) {
-    var ids = pack.courseIds || [];
-    var byId = {};
-    allCourses.forEach(function (c) {
-      byId[c.id] = c;
-    });
-    var list = [];
-    ids.forEach(function (id) {
-      if (byId[id]) list.push(byId[id]);
-    });
-    return list;
-  }
 
   function audienceGreeting(audience) {
     if (audience === 'corporate') return 'Hello, team';
@@ -1329,6 +1300,70 @@
   // each { h?, p?: [..], list?: [..], note? }. Kept as structured data rather
   // than a blob of HTML in courses.json so nothing in the JSON can inject
   // markup: every string still goes through esc().
+  // The check that unlocks a lesson, for the 13 lessons whose activity has no
+  // right answer (builder, allocator, rubric, open checklist). Those activities
+  // are the real work and stay exactly as they are; this is a short retrieval
+  // check sitting underneath them.
+  //
+  // Deliberately NOT rendered through activityHtml: a normal quiz records
+  // done:true the moment you click anything, right or wrong, which is fine for
+  // "try it" and useless for a gate. Here a wrong answer explains itself and
+  // lets you go again, and the lesson only opens when every question is right.
+  function gateStateKey(lessonNum) {
+    return lessonNum + '::gate';
+  }
+
+  function gatePassed(lesson) {
+    if (!lesson || !lesson.gate) return true; // nothing to pass
+    return !!getLessonActivityState(gateStateKey(lesson.num)).passed;
+  }
+
+  function lessonGateHtml(lesson) {
+    var gate = lesson && lesson.gate;
+    if (!gate || !gate.questions || !gate.questions.length) return '';
+    var state = getLessonActivityState(gateStateKey(lesson.num));
+    var right = state.right || {};
+    var passed = !!state.passed;
+
+    var qs = gate.questions
+      .map(function (q, qi) {
+        var isRight = !!right[qi];
+        return (
+          '<div class="gate-q' + (isRight ? ' is-passed' : '') + '" data-q="' + qi +
+          '" data-correct="' + Number(q.correct) + '">' +
+          '<p class="gate-q-text">' + esc(q.q) + '</p>' +
+          '<div class="gate-opts">' +
+          (q.options || [])
+            .map(function (opt, oi) {
+              return (
+                '<button type="button" class="gate-opt' +
+                (isRight && oi === Number(q.correct) ? ' is-correct' : '') +
+                '" data-opt="' + oi + '"' +
+                (isRight ? ' disabled' : '') +
+                '>' + esc(opt) + '</button>'
+              );
+            })
+            .join('') +
+          '</div>' +
+          '<p class="gate-explain"' + (isRight ? '' : ' hidden') + '>' +
+          esc(q.explain || '') + '</p>' +
+          '</div>'
+        );
+      })
+      .join('');
+
+    return (
+      '<div class="lesson-gate' + (passed ? ' is-passed' : '') + '" data-gate="' +
+      esc(lesson.num) + '">' +
+      '<div class="gate-head">' +
+      '<span class="gate-badge">' + (passed ? '&#10003; Passed' : 'Check') + '</span>' +
+      '<span class="gate-prompt">' + esc(gate.prompt || 'Quick check before you mark this done.') + '</span>' +
+      '</div>' +
+      qs +
+      '</div>'
+    );
+  }
+
   function lessonBodyHtml(body) {
     if (!body || !body.length) return '';
     return (
@@ -1468,6 +1503,7 @@
       '<span class="lesson-field-body">' + esc(lesson.interactive || '') + '</span>' +
       '</div>' +
       (lesson.activity ? activityHtml(lesson.num, lesson.activity) : '') +
+      lessonGateHtml(lesson) +
       lessonResourceHtml(lesson.resource) +
       '<div class="lesson-field lesson-field--deliverable">' +
       '<span class="lesson-field-label">' + (selfPaced ? 'Worth trying' : 'Deliverable') + '</span>' +
@@ -2269,52 +2305,41 @@
     });
   }
 
-  function enterWithPack(match) {
-    var pack = match.pack;
+  // Takes the server's reply to a "content" call. The courses in it are already
+  // filtered to this pack: the browser is never sent a course the code doesn't
+  // open, so there is nothing to hide client-side any more.
+  function enterWithContent(data) {
     session = {
-      code: match.code,
-      label: pack.label || match.code,
-      audience: pack.audience || '',
-      courseIds: pack.courseIds || [],
+      code: data.code,
+      label: data.label || data.code,
+      audience: data.audience || '',
+      courseIds: data.courseIds || [],
     };
-    allowedCourses = coursesForPack(pack);
+    allCourses = Array.isArray(data.courses) ? data.courses : [];
+    allowedCourses = allCourses.slice();
     saveSession(session);
     if (err) err.hidden = true;
     showApp(true);
   }
 
-  function restoreOrGate() {
-    var saved = loadSession();
-    if (!saved) {
-      try {
-        if (sessionStorage.getItem(LEGACY_OK_KEY) === '1' && packsByCode.internal) {
-          enterWithPack({ code: 'internal', pack: packsByCode.internal });
-          return;
-        }
-      } catch (e) {}
-      showApp(false);
-      return;
-    }
-    var match = findPack(saved.code);
-    if (match) {
-      enterWithPack(match);
-      return;
-    }
-    session = saved;
-    var byId = {};
-    allCourses.forEach(function (c) {
-      byId[c.id] = c;
-    });
-    allowedCourses = (saved.courseIds || [])
-      .map(function (id) {
-        return byId[id];
-      })
-      .filter(Boolean);
-    showApp(true);
-  }
+  // One in-flight unlock at a time. Without this, a double-tap on the Enter
+  // button (or Return held down) fires two requests and the second can land
+  // after the first has already rendered.
+  var unlockInFlight = false;
 
-  function boot() {
-    Promise.all([
+  // Transitional: the server-side "content" action is the real gate, but until
+  // it is deployed the course text is still sitting in public courses.json /
+  // packs.json next to this file. Rather than ship a front end that only works
+  // after a backend deploy (and a dead site in between), an old backend falls
+  // back to the public files exactly as before.
+  //
+  // The fallback fires only when the function itself says it does not know the
+  // action. A wrong code, or a network failure, is NOT a reason to fall back:
+  // doing that would hand the whole catalogue to anyone the moment the backend
+  // hiccuped, which is the bug this is all meant to fix. It also runs at most
+  // once per attempt, so there is no retry loop.
+  function legacyPublicContent(code) {
+    return Promise.all([
       fetch('courses.json', { cache: 'no-store' }).then(function (r) {
         if (!r.ok) throw new Error('courses');
         return r.json();
@@ -2323,39 +2348,119 @@
         if (!r.ok) throw new Error('packs');
         return r.json();
       }),
-    ])
-      .then(function (pair) {
-        allCourses = Array.isArray(pair[0]) ? pair[0] : [];
-        packsByCode = pair[1] && typeof pair[1] === 'object' ? pair[1] : {};
-        restoreOrGate();
-      })
-      .catch(function () {
-        if (err) {
-          err.textContent = 'Could not load courses. Refresh and try again.';
-          err.hidden = false;
+    ]).then(function (pair) {
+      var courses = Array.isArray(pair[0]) ? pair[0] : [];
+      var packs = pair[1] && typeof pair[1] === 'object' ? pair[1] : {};
+      var trimmed = String(code || '').trim();
+      var key = packs[trimmed]
+        ? trimmed
+        : Object.keys(packs).filter(function (k) {
+            return k.toLowerCase() === trimmed.toLowerCase();
+          })[0];
+      if (!key) throw new Error('That code did not work.');
+      var pack = packs[key];
+      var ids = pack.courseIds || [];
+      return {
+        code: key,
+        label: pack.label || key,
+        audience: pack.audience || '',
+        courseIds: ids,
+        courses: courses.filter(function (c) {
+          return ids.indexOf(c.id) > -1;
+        }),
+      };
+    });
+  }
+
+  function unlockWithCode(code, opts) {
+    if (unlockInFlight) return;
+    unlockInFlight = true;
+    var onFail = (opts && opts.onFail) || function () {};
+    if (gateBtn) {
+      gateBtn.disabled = true;
+      gateBtn.textContent = 'Checking…';
+    }
+    academyApi({ type: 'content', accessCode: code })
+      .catch(function (e) {
+        if (/unknown request type/i.test(e.message || '')) {
+          return legacyPublicContent(code);
         }
-        showApp(false);
+        throw e;
+      })
+      .then(function (data) {
+        enterWithContent(data);
+      })
+      .catch(function (e) {
+        onFail(e);
+      })
+      .then(function () {
+        unlockInFlight = false;
+        if (gateBtn) {
+          gateBtn.disabled = false;
+          gateBtn.textContent = 'Enter Academy';
+        }
       });
+  }
+
+  // A stored session holds the code, never the lessons, so coming back always
+  // re-asks the server. That is the point: a code Kathryn revokes stops working
+  // on the next reload instead of living forever in someone's localStorage.
+  // A failure here drops to the gate and stops. It never retries, so a dead
+  // backend shows the gate rather than spinning.
+  function restoreOrGate() {
+    var saved = loadSession();
+    var code = saved && saved.code;
+
+    if (!code) {
+      try {
+        if (sessionStorage.getItem(LEGACY_OK_KEY) === '1') code = 'internal';
+      } catch (e) {}
+    }
+
+    if (!code) {
+      showApp(false);
+      return;
+    }
+
+    unlockWithCode(code, {
+      onFail: function () {
+        clearSession();
+        session = null;
+        allCourses = [];
+        allowedCourses = [];
+        showApp(false);
+      },
+    });
+  }
+
+  function boot() {
+    restoreOrGate();
   }
 
   if (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var value = (input && input.value) || '';
-      var match = findPack(value);
-      if (match) {
-        enterWithPack(match);
-        if (input) input.value = '';
-      } else {
-        if (err) {
-          err.textContent = 'That code did not work. Try again or ask ClickClick.';
-          err.hidden = false;
-        }
-        if (input) {
-          input.value = '';
-          input.focus();
-        }
-      }
+      var value = ((input && input.value) || '').trim();
+      if (!value) return;
+      if (err) err.hidden = true;
+      unlockWithCode(value, {
+        onFail: function (e) {
+          if (err) {
+            // Tell a wrong code and a dead backend apart, so nobody retypes a
+            // perfectly good code five times during an outage.
+            var offline = !(e && /did not work/i.test(e.message || ''));
+            err.textContent = offline
+              ? 'Could not reach the Academy. Check your connection and try again.'
+              : 'That code did not work. Try again or ask ClickClick.';
+            err.hidden = false;
+          }
+          if (input) {
+            input.value = '';
+            input.focus();
+          }
+        },
+      });
+      if (input) input.value = '';
     });
   }
 
@@ -2484,6 +2589,59 @@
     // the click here when it's an actual quiz question, so a wheel answer
     // falls through to its own handler further down instead of being
     // silently swallowed by this early return.
+    // Gate answers. A wrong one explains itself and stays open so the student
+    // can go again: the point is that they end up knowing it, not that they
+    // guessed it first time. Locking a question after one wrong answer would
+    // just dead-end the lesson.
+    var gateOpt = e.target.closest('.gate-opt');
+    if (gateOpt && !gateOpt.disabled) {
+      var gWrap = gateOpt.closest('.gate-q');
+      var gBox = gateOpt.closest('.lesson-gate');
+      if (gWrap && gBox) {
+        var gCorrect = Number(gWrap.getAttribute('data-correct'));
+        var gPicked = Number(gateOpt.getAttribute('data-opt'));
+        var gLesson = gBox.getAttribute('data-gate');
+        var gIdx = Number(gWrap.getAttribute('data-q'));
+        var explainEl = gWrap.querySelector('.gate-explain');
+
+        if (gPicked === gCorrect) {
+          gWrap.classList.add('is-passed');
+          gWrap.querySelectorAll('.gate-opt').forEach(function (b, i) {
+            b.disabled = true;
+            if (i === gCorrect) b.classList.add('is-correct');
+          });
+          if (explainEl) explainEl.hidden = false;
+          playFeedback(gateOpt, 'anim-pop');
+
+          var gState = getLessonActivityState(gateStateKey(gLesson));
+          var rightMap = gState.right || {};
+          rightMap[gIdx] = true;
+          var total = gBox.querySelectorAll('.gate-q').length;
+          var nowPassed = Object.keys(rightMap).length >= total;
+          saveLessonActivityState(gateStateKey(gLesson), {
+            right: rightMap,
+            passed: nowPassed,
+          });
+
+          if (nowPassed) {
+            gBox.classList.add('is-passed');
+            var gBadge = gBox.querySelector('.gate-badge');
+            if (gBadge) gBadge.innerHTML = '&#10003; Passed';
+            launchConfetti(gBox, { count: 22, spread: 8 });
+          }
+        } else {
+          gateOpt.classList.add('is-wrong');
+          if (explainEl) explainEl.hidden = false;
+          playFeedback(gateOpt, 'anim-shake');
+          // Clear the wrong mark so the question is answerable again.
+          setTimeout(function () {
+            gateOpt.classList.remove('is-wrong');
+          }, 1400);
+        }
+      }
+      return;
+    }
+
     var quizOpt = e.target.closest('.activity-quiz-opt');
     if (quizOpt && quizOpt.closest('.activity-quiz-q')) {
       var qWrap = quizOpt.closest('.activity-quiz-q');

@@ -28,6 +28,16 @@
 //              site — so "only Kathryn knows the URL" protected nothing. The key is a
 //              Supabase secret, never in this repo: admin-directory.html is served by
 //              GitHub Pages and anything written into it is public too.
+//   content    {accessCode} -> {label, audience, courseIds, courses:[...]}
+//              The paid course text itself. It used to sit in courses.json next to
+//              index.html, which meant GitHub Pages served all 20,000 words to
+//              anyone who asked, code or no code, and the public repo served them
+//              again from raw.githubusercontent.com. The access-code gate was
+//              decoration: it hid courses from the screen, not from the network.
+//              Now the lessons live in a private Storage bucket that only the
+//              service role can read, the code is checked here, and a caller gets
+//              back ONLY the courses their pack allows. A wrong code gets 401 and
+//              no course data at all, not even titles.
 //   certificate {studentId, courseId} -> {credentialId, issuedAt}
 //              Issues (or returns the existing) credential ID for a completed course.
 //              Persisted in academy_certificates with a unique constraint on
@@ -70,6 +80,47 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 const BUCKET = "academy-deliverables"
+const CONTENT_BUCKET = "academy-content"
+
+// Course text changes rarely and a warm isolate can serve many gate submits,
+// so hold it briefly rather than downloading both files on every keystroke's
+// worth of traffic. Short enough that an edit shows up without a redeploy.
+const CONTENT_TTL_MS = 60_000
+let contentCache: { at: number; courses: unknown[]; packs: Record<string, PackRow> } | null = null
+
+type PackRow = { label?: string; audience?: string; courseIds?: string[] }
+
+async function loadContent(admin: AdminClient) {
+  if (contentCache && Date.now() - contentCache.at < CONTENT_TTL_MS) return contentCache
+
+  async function readJson(name: string) {
+    const { data, error } = await admin.storage.from(CONTENT_BUCKET).download(name)
+    if (error) throw error
+    return JSON.parse(await data.text())
+  }
+
+  const [courses, packs] = await Promise.all([readJson("courses.json"), readJson("packs.json")])
+  contentCache = {
+    at: Date.now(),
+    courses: Array.isArray(courses) ? courses : [],
+    packs: packs && typeof packs === "object" ? packs : {},
+  }
+  return contentCache
+}
+
+// Codes are matched exactly first, then case-insensitively, so "CLICKCLICK123"
+// still works for someone typing on a phone with autocapitalise on. Matches the
+// behaviour the old client-side gate had, so no existing code stops working.
+function findPack(packs: Record<string, PackRow>, code: string) {
+  const trimmed = String(code ?? "").trim()
+  if (!trimmed) return null
+  if (packs[trimmed]) return { code: trimmed, pack: packs[trimmed] }
+  const lower = trimmed.toLowerCase()
+  for (const key of Object.keys(packs)) {
+    if (key.toLowerCase() === lower) return { code: key, pack: packs[key] }
+  }
+  return null
+}
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // deno-lint-ignore no-explicit-any
@@ -251,6 +302,29 @@ Deno.serve(async (req) => {
       )
       if (error) throw error
       return json(200, { ok: true }, origin)
+    }
+
+    if (type === "content") {
+      const { courses, packs } = await loadContent(admin)
+      const match = findPack(packs, String(body.accessCode ?? ""))
+      // Same 401 and same shape whether the code is unknown or empty, so the
+      // response can't be used to probe which codes exist.
+      if (!match) return json(401, { error: "That code did not work." }, origin)
+
+      const allowedIds = new Set(match.pack.courseIds ?? [])
+      const allowed = (courses as Array<{ id?: string }>).filter((c) => allowedIds.has(String(c.id)))
+
+      return json(
+        200,
+        {
+          code: match.code,
+          label: match.pack.label ?? match.code,
+          audience: match.pack.audience ?? "",
+          courseIds: match.pack.courseIds ?? [],
+          courses: allowed,
+        },
+        origin,
+      )
     }
 
     if (type === "directory") {
