@@ -1001,29 +1001,62 @@
   // segment reveals that segment's quiz question, answered the same way a
   // normal quiz question is (instant reveal + pop/shake + confetti).
   //
-  // The spin isn't pure chance: pickWheelIndex() only draws from topics not
-  // yet answered correctly, so every spin makes real progress toward
-  // clearing all of them, and a wrong answer keeps that topic in the pool
-  // instead of moving on. Once all are cleared it becomes a free replay.
+  // The spin isn't pure chance: pickWheelIndex() only draws from topics that
+  // still have a question outstanding, so every spin makes real progress, and
+  // a wrong answer keeps that question in the pool instead of moving on.
+  //
+  // Clearing it means every question answered correctly, not one per topic.
+  // Ten topics with two questions each is twenty correct answers, and a topic
+  // is only finished once both of its own questions are right. Once all are
+  // cleared it becomes a free replay.
   var WHEEL_COLORS = [
     '#00bcd4', '#7b5ea7', '#e83e8c', '#f5a623', '#22c55e',
     '#c2185b', '#0891b2', '#f97316', '#6366f1', '#65a30d',
   ];
 
-  // A topic is "mastered" once its currently-recorded answer is correct
-  // against the specific question it was recorded against (each landing
-  // can draw a different question from that topic's pool).
-  function wheelTopicMastered(topic, entry) {
-    if (!entry || entry.qIdx === undefined) return false;
-    var q = topic.questions && topic.questions[entry.qIdx];
-    return !!q && entry.picked === q.correct;
+  // One entry per topic, holding every question of that topic they have
+  // answered: { qIdx: pickedOptionIdx }. The older shape was a single
+  // { qIdx, picked } for the whole topic, so anyone mid-way through when
+  // this changed is read forward rather than having their progress wiped.
+  function wheelEntry(entry) {
+    if (!entry) return {};
+    if (entry.qIdx !== undefined && entry.picked !== undefined) {
+      var carried = {};
+      carried[entry.qIdx] = entry.picked;
+      return carried;
+    }
+    return entry;
   }
 
-  function wheelMasteredCount(segments, answered) {
+  function wheelQuestionRight(topic, entry, qIdx) {
+    var picked = wheelEntry(entry)[qIdx];
+    if (picked === undefined) return false;
+    var q = topic.questions && topic.questions[qIdx];
+    return !!q && picked === q.correct;
+  }
+
+  // Every question in the topic answered correctly, not just one of them.
+  function wheelTopicCleared(topic, entry) {
+    var qs = topic.questions || [];
+    if (!qs.length) return false;
+    return qs.every(function (q, qIdx) {
+      return wheelQuestionRight(topic, entry, qIdx);
+    });
+  }
+
+  function wheelTotalQuestions(segments) {
+    return segments.reduce(function (total, s) {
+      return total + ((s.questions && s.questions.length) || 0);
+    }, 0);
+  }
+
+  function wheelRightCount(segments, answered) {
     answered = answered || {};
     var n = 0;
     segments.forEach(function (s, i) {
-      if (wheelTopicMastered(s, answered[i])) n++;
+      (s.questions || []).forEach(function (q, qIdx) {
+        if (wheelQuestionRight(s, answered[i], qIdx)) n++;
+      });
     });
     return n;
   }
@@ -1032,9 +1065,22 @@
     answered = answered || {};
     var pool = [];
     segments.forEach(function (s, i) {
-      if (!wheelTopicMastered(s, answered[i])) pool.push(i);
+      if (!wheelTopicCleared(s, answered[i])) pool.push(i);
     });
     if (!pool.length) pool = segments.map(function (s, i) { return i; });
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  // Draw a question they have not already got right, so landing on a topic
+  // with one left always serves that one rather than re-asking the one they
+  // have already cleared.
+  function pickWheelQuestionIdx(topic, entry) {
+    var qs = topic.questions || [];
+    var pool = [];
+    qs.forEach(function (q, qIdx) {
+      if (!wheelQuestionRight(topic, entry, qIdx)) pool.push(qIdx);
+    });
+    if (!pool.length) pool = qs.map(function (q, qIdx) { return qIdx; });
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
@@ -1044,7 +1090,8 @@
     var seg = 360 / n;
     var rotation = state.rotation || 0;
     var answeredMap = state.answered || {};
-    var mastered = wheelMasteredCount(segments, answeredMap);
+    var totalQuestions = wheelTotalQuestions(segments);
+    var rightSoFar = wheelRightCount(segments, answeredMap);
     var gradientStops = segments
       .map(function (s, i) {
         var color = WHEEL_COLORS[i % WHEEL_COLORS.length];
@@ -1072,9 +1119,9 @@
     var topic = hasLanded ? segments[landedIndex] : null;
     var qIdx = state.landedQuestionIdx || 0;
     var question = topic ? topic.questions[qIdx] : null;
-    var answeredEntry = hasLanded ? answeredMap[landedIndex] : null;
-    var answered = !!(answeredEntry && answeredEntry.qIdx === qIdx);
-    var pickedIdx = answered ? answeredEntry.picked : null;
+    var answeredEntry = hasLanded ? wheelEntry(answeredMap[landedIndex]) : {};
+    var pickedIdx = answeredEntry[qIdx];
+    var answered = pickedIdx !== undefined;
 
     var resultHtml = '';
     if (hasLanded && topic && question) {
@@ -1104,8 +1151,8 @@
 
     return (
       '<div class="activity-wheel">' +
-      '<p class="wheel-progress">' + mastered + ' of ' + n + ' topics nailed' +
-      (mastered >= n ? ' &#127881; all cleared, spin away for fun' : '') + '</p>' +
+      '<p class="wheel-progress">' + rightSoFar + ' of ' + totalQuestions + ' answered correctly' +
+      (rightSoFar >= totalQuestions ? ' &#127881; all cleared, spin away for fun' : '') + '</p>' +
       '<div class="wheel-stage">' +
       '<div class="wheel-pointer"></div>' +
       '<div class="wheel-dial" data-rotation="' + rotation + '" style="transform: rotate(' + rotation +
@@ -2843,15 +2890,18 @@
       var questionCfg = segCfg.questions[wheelQIdx];
       var wheelState = getLessonActivityState(wheelLessonNum);
       var answeredMap = wheelState.answered || {};
-      if (answeredMap[segIdx] !== undefined) return;
+      var wheelEntryNow = wheelEntry(answeredMap[segIdx]);
+      if (wheelEntryNow[wheelQIdx] !== undefined) return;
       var wheelPickedIdx = Number(wheelOpt.getAttribute('data-wheel-opt'));
-      var wasAllMastered = wheelMasteredCount(wheelCfg.segments, answeredMap) >= wheelCfg.segments.length;
-      answeredMap[segIdx] = { qIdx: wheelQIdx, picked: wheelPickedIdx };
+      var wheelTotal = wheelTotalQuestions(wheelCfg.segments);
+      var wasAllRight = wheelRightCount(wheelCfg.segments, answeredMap) >= wheelTotal;
+      wheelEntryNow[wheelQIdx] = wheelPickedIdx;
+      answeredMap[segIdx] = wheelEntryNow;
       saveLessonActivityState(wheelLessonNum, { answered: answeredMap, done: true });
       if (wheelPickedIdx === questionCfg.correct) {
-        var nowAllMastered = wheelMasteredCount(wheelCfg.segments, answeredMap) >= wheelCfg.segments.length;
+        var nowAllRight = wheelRightCount(wheelCfg.segments, answeredMap) >= wheelTotal;
         playFeedback(wheelOpt, 'anim-pop');
-        if (nowAllMastered && !wasAllMastered) {
+        if (nowAllRight && !wasAllRight) {
           launchConfetti(wheelActivityEl, { count: 90, spread: 12 });
         } else {
           launchConfetti(wheelOpt, { count: 30 });
@@ -3365,16 +3415,19 @@
     }
 
     setTimeout(function () {
-      // A topic that was answered wrong before gets a genuinely fresh shot
-      // on this new landing (a newly-drawn question from its pool) rather
-      // than staying locked on the old miss; one already answered correctly
-      // stays locked in as mastered.
+      // A question answered wrong before gets a genuinely fresh shot on this
+      // landing; every question already answered correctly stays locked in.
+      // Only the wrong one is cleared, so a topic half-finished keeps its
+      // good half.
       var priorState = getLessonActivityState(lessonNum);
       var priorAnswered = priorState.answered || {};
       var topic = cfg.segments[idx];
-      var wasMastered = wheelTopicMastered(topic, priorAnswered[idx]);
-      if (!wasMastered && priorAnswered[idx] !== undefined) delete priorAnswered[idx];
-      var newQIdx = Math.floor(Math.random() * topic.questions.length);
+      var entry = wheelEntry(priorAnswered[idx]);
+      var newQIdx = pickWheelQuestionIdx(topic, entry);
+      if (entry[newQIdx] !== undefined && !wheelQuestionRight(topic, entry, newQIdx)) {
+        delete entry[newQIdx];
+      }
+      priorAnswered[idx] = entry;
       saveLessonActivityState(lessonNum, {
         rotation: target,
         landedIndex: idx,
