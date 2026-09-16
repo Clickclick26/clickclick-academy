@@ -39,11 +39,15 @@ omission under the Consumer Protection from Unfair Trading Regulations 2008.
 
 So the split is:
 
-| Thing | Must be visible? | Why |
+| Thing | Status | Why |
 |---|---|---|
-| The checkout tick box | **Yes, plainly** | Void otherwise. This is the whole point. |
-| The refund policy page | Reachable | A quiet footer link is normal and fine. |
-| The 7-day goodwill refund | No | Not a legal requirement at all. Shrink it or bin it. |
+| The checkout tick box | **Must be plainly visible** | Void otherwise. This is the whole point. |
+| Telling them the 14-day right exists and how it is lost | **Required** | CCRs 2013 pre-contract information. |
+| Trader contact details | **Required** | CCRs 2013 pre-contract information. |
+| "Does not affect your statutory rights" line | **Keep** | Not strictly mandatory, but a refund policy silent on the Consumer Rights Act reads as an attempt to exclude it, which is an unfair term under the CRA 2015. Cheap insurance. |
+| The refund policy page itself | Reachable | A quiet footer link is normal and fine. |
+| ~~7-day goodwill refund~~ | **Removed 16 Sep 2026** | Never a legal requirement, and the only thing on the page that actively generated refunds. |
+| ~~"Wait 14 days for access instead" option~~ | **Removed 16 Sep 2026** | Not required. The law needs express consent, not an alternative offer. |
 
 ## The checkout tick box (required)
 
@@ -79,11 +83,28 @@ Store the consent against the order: timestamp, the exact wording shown, and
 the fact it was ticked. If a chargeback ever comes in, that record is the
 evidence.
 
-## What is deliberately NOT prominent
+## Policy position: legal minimum, nothing extra
 
-The 7-day goodwill refund. It is on the policy page, it is honoured, and it
-is not advertised on the sales page. That is entirely Kathryn's call and
-entirely legal, because nothing obliges her to offer it.
+Kathryn's instruction (16 Sep 2026) is to keep only what the law requires, to
+hold refunds down. The page is now exactly that.
+
+There is no advertised refund window and no promise of a goodwill refund.
+That is legal: outside the statutory rights above, a trader is not obliged to
+refund a digital course the buyer simply changed their mind about, once the
+waiver is validly taken.
+
+She can still refund anyone she wants, case by case. The difference is that
+she is no longer promising it in writing, so nobody can hold her to it.
+
+Two things worth knowing about the trade-off, neither of which changes the
+legal position:
+
+- Some buyers check the refund policy before purchasing. A page with no
+  goodwill window converts slightly worse than one with a visible guarantee.
+  That is a pricing and marketing decision, not a legal one.
+- A flat refusal to an unhappy buyer is the most common trigger for a Stripe
+  chargeback, which costs the fee plus admin whether or not she wins. Quietly
+  refunding a determined complainer is usually cheaper than fighting one.
 
 ## Out of scope
 
