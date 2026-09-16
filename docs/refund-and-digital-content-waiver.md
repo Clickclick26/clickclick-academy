@@ -129,6 +129,33 @@ trades away the under-threshold advantage on the bulk of the revenue to solve a
 problem worth a handful of Irish sales. Roughly £336 a year in Stripe fees
 versus £1,300 to £3,700 all in.
 
+**Revised the same day: Lemon Squeezy for Irish and EU consumers only.** The
+objection above holds for using a merchant of record for *everything*, and it
+still does. It does not hold for a second button used only by EU buyers. UK and
+rest-of-world sales stay on Stripe and stay under the UK threshold; Ireland and
+the EU go through Lemon Squeezy, which becomes the legal seller and carries the
+Irish VAT. No Irish VAT registration, no non-Union OSS, no quarterly returns.
+Costs roughly 5 to 7% on those sales only, about £6 on a £99 course.
+
+Why it is needed at all: Kathryn is not VAT registered, and the EU has no
+threshold, so a single sale to an Irish consumer creates an Irish VAT liability
+immediately. Northern Ireland's post-Brexit status does not help, because the
+Windsor Framework covers goods and a course is a service, so Belfast is treated
+as plain UK for this.
+
+Sales to *businesses* in the Republic holding a VAT number are fine on Stripe
+today under reverse charge. It is only Irish consumers that need the other rail.
+
+Invest NI: checked against the Ambition to Grow FAQs. The external-sales
+exclusion names *Northern Ireland based* distributors, and Lemon Squeezy is a
+payment merchant rather than a distributor, so these still count as cross-border
+sales. Worth one line to the adviser in writing before claiming against targets.
+
+**Status 16 Sep 2026: decided, not built.** No Lemon Squeezy account exists and
+nothing is wired on the site. Until it is, there is no euro route, and creating
+a euro Stripe link instead would create exactly the Irish VAT liability this
+avoids.
+
 **Not Revolut.** It is an acquirer, so it fixes nothing on tax, and its
 checkout cannot cap a discount code by uses, which FOUNDING50 needs. It also
 carries a real risk of a rolling reserve on an intangible digital product.
