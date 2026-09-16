@@ -1148,13 +1148,15 @@
         '.  Monthly retainer (4 videos): £' + retainerGBP + ' / $' + retainerUSD + '.'
       );
     },
-    // 30% of the £9.99 VIP plan per referral, and how many referrals it
+    // 30% of the £11.99 VIP plan per referral, and how many referrals it
     // takes to cover the £14.99 Creator plan itself. The closing line scales
     // with the actual figure instead of one generic "covers your plan"
     // comment, so a big number doesn't get talked down to a small one.
     clocalBreakeven: function (inputs) {
       var referrals = Math.max(0, parseFloat(inputs.referrals) || 0);
-      var perReferral = 9.99 * 0.3;
+      // £11.99 is the buyer-facing VIP price (Play adds UK VAT on top of the
+      // £9.99 net base plan). Source of truth: CLocal lib/planPricing.ts.
+      var perReferral = 11.99 * 0.3;
       var monthly = referrals * perReferral;
       var plan = 14.99;
       var breakeven = Math.ceil(plan / perReferral);
@@ -1181,7 +1183,7 @@
           ' a year. At this level the referral side stands on its own as an income stream.';
       }
       return (
-        referrals + ' referral' + (referrals === 1 ? '' : 's') + ' at 30% of £9.99 is about £' +
+        referrals + ' referral' + (referrals === 1 ? '' : 's') + ' at 30% of £11.99 is about £' +
         monthly.toFixed(2) + ' a month.  It takes ' + breakeven + ' referrals to cover your £14.99 ' +
         'plan.  ' + tail
       );

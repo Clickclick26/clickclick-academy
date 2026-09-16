@@ -61,16 +61,18 @@ No build step. No React. Edit JSON + static files, push `main`.
 
 | Code | Pack |
 |------|------|
-| `corp-basic` | Corporate Basic |
-| `corp-premium` | Corporate Premium |
-| `agency` | Agency |
 | `creator-ugc` | Creator UGC |
-| `staff-onboard` | Staff |
-| `live-host` | Live host |
+| `clocal-free` | CLocal Creator (free tier) |
+| `clocal-creator` | CLocal Creator (upgraded) |
 | `internal` | All courses |
 | `Clickclick123` | All courses (Kathryn legacy) |
 
-Audience vibes on packs: `corporate`, `agency`, `creator`, `staff`, `live-host`, `internal`.
+`packs.json` is the source of truth. The old `corp-basic`, `corp-premium`,
+`agency`, `staff-onboard` and `live-host` codes were removed when the courses
+they pointed at were deleted. Do not re-document a code that is not in
+`packs.json`.
+
+Audience vibes on packs: `creator`, `clocal-creator`, `clocal-creator-free`, `internal`.
 
 ---
 

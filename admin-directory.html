@@ -26,9 +26,10 @@
 
     <div class="admin-banner">
       <strong>Internal use only — don't link this from anywhere public.</strong>
-      Same no-password model as the Course Manager: the URL itself is the only thing keeping it
-      private, so treat it like a backstage door. This is for finding creators when a brand asks,
-      not a directory for anyone to browse or scrape.
+      This page asks for the Academy admin key, because the URL on its own protected nothing:
+      GitHub Pages serves every file in the repo, and the Supabase key the page uses is visible
+      in the site's own JavaScript. The key is stored in this browser only. Clear it with the
+      Forget key button when you're on a machine that isn't yours.
     </div>
 
     <div class="admin-card">
@@ -38,6 +39,7 @@
         <input id="search-input" type="text" placeholder="e.g. Kathryn, or UGC" />
       </div>
       <p class="sub" id="status-line">Loading…</p>
+      <p class="sub"><button type="button" id="forget-key" class="linkish">Forget the admin key on this device</button></p>
     </div>
 
     <div class="admin-card">
@@ -78,6 +80,27 @@
       var slug = String(courseId || 'cc').split('-')[0].toUpperCase();
       var year = new Date().getFullYear();
       return 'CC-' + slug + '-' + year + '-' + num;
+    }
+
+    // The admin key never lives in this file: GitHub Pages publishes every file
+    // in the repo, so anything hard-coded here would be public. It is typed once
+    // and kept in this browser's localStorage.
+    var ADMIN_KEY_STORE = 'clickclick_academy_admin_key_v1';
+
+    function getAdminKey(forcePrompt) {
+      var key = null;
+      try { key = localStorage.getItem(ADMIN_KEY_STORE); } catch (e) { key = null; }
+      if (!key || forcePrompt) {
+        key = window.prompt('Academy admin key');
+        if (!key) return null;
+        key = key.trim();
+        try { localStorage.setItem(ADMIN_KEY_STORE, key); } catch (e) { /* private window */ }
+      }
+      return key;
+    }
+
+    function forgetAdminKey() {
+      try { localStorage.removeItem(ADMIN_KEY_STORE); } catch (e) { /* ignore */ }
     }
 
     function academyApi(payload) {
@@ -130,11 +153,30 @@
         ' shown.';
     }
 
+    function loadDirectory(forcePrompt) {
+      var key = getAdminKey(forcePrompt);
+      if (!key) {
+        document.getElementById('status-line').textContent =
+          'Admin key needed to show the directory. Reload to try again.';
+        return Promise.resolve(null);
+      }
+      return academyApi({ type: 'directory', adminKey: key }).catch(function (err) {
+        // Wrong key: drop the stored one so the next attempt asks again instead
+        // of looping on a bad value forever.
+        if (String(err.message).indexOf('authorised') !== -1) {
+          forgetAdminKey();
+          throw new Error('That admin key was not accepted. Reload and try again.');
+        }
+        throw err;
+      });
+    }
+
     Promise.all([
       fetch('courses.json', { cache: 'no-store' }).then(function (r) { return r.json(); }),
-      academyApi({ type: 'directory' }),
+      loadDirectory(false),
     ])
       .then(function (results) {
+        if (!results[1]) return;
         var courses = results[0];
         var directoryData = results[1];
         var courseById = {};
@@ -178,6 +220,12 @@
 
     document.getElementById('search-input').addEventListener('input', function (e) {
       render(e.target.value);
+    });
+
+    document.getElementById('forget-key').addEventListener('click', function () {
+      forgetAdminKey();
+      document.getElementById('status-line').textContent =
+        'Admin key cleared from this device. Reload to enter it again.';
     });
   </script>
 </body>

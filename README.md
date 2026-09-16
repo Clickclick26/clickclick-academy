@@ -24,20 +24,18 @@ Hard refresh if the old page sticks: **Cmd+Shift+R**.
 
 | Code | Pack | What you see |
 |------|------|----------------|
-| `corp-basic` | Corporate Basic | Serious corp onboarding courses |
-| `corp-premium` | Corporate Premium | Basic + advanced corporate |
-| `agency` | Agency Pack | Agency-relevant courses |
-| `creator-ugc` | Creator UGC | UGC / short-form creator courses |
+| `creator-ugc` | Creator UGC | The UGC Content Creator Certification |
 | `clocal-free` | CLocal Creator | The CLocal Creator Track (free-tier creators) |
-| `clocal-creator` | CLocal Creator | The CLocal Creator Track + 1:1 coaching (upgraded plan) |
-| `staff-onboard` | Staff onboarding | ClickClick staff day-one courses |
-| `live-host` | Live host training | Contractor hosts for live video selling |
+| `clocal-creator` | CLocal Creator | The CLocal Creator Track (upgraded plan) |
 | `internal` | All courses | Full catalog |
 | `Clickclick123` | All courses | Same as `internal` (legacy for Kathryn) |
 
+These are the only live codes. `packs.json` is the source of truth: if a code
+is not a key in there, it does not work.
+
 ## How packs work
 
-1. **Audience vibe** — `audience` on each pack (`corporate`, `agency`, `creator`, `staff`, `live-host`, `internal`) sets greeting tone.
+1. **Audience vibe** — `audience` on each pack (`creator`, `clocal-creator`, `clocal-creator-free`, `internal`) sets greeting tone.
 2. **Course IDs** — `courseIds` is the real access list. Only those courses render. No lock icons for hidden ones.
 
 ## Add a course

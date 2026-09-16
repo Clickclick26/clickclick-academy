@@ -16,12 +16,18 @@
 //   list       {studentId, courseId} -> {progress: [{lessonNum, note, filePath, submittedAt}]}
 //   uploadUrl  {studentId, courseId, lessonNum, fileName} -> {path, signedUrl, token}
 //   submit     {studentId, courseId, lessonNum, note, filePath?} -> {ok:true}
-//   directory  {} -> {rows: [{studentId, name, email, courseId, lessonsSubmitted, lastSubmittedAt}]}
+//   directory  {adminKey} -> {rows: [{studentId, name, email, courseId, lessonsSubmitted, lastSubmittedAt}]}
 //              Internal use only (Kathryn's own creator directory, matching brand
 //              requests to certified creators) — not for public/student use. Returns
 //              raw per-student-per-course submission counts; the caller cross-checks
 //              against each course's actual lesson count (from courses.json) to decide
 //              who's actually complete, since this function doesn't know course shapes.
+//              REQUIRES adminKey === ACADEMY_ADMIN_KEY. This is the one action that
+//              dumps every student's name and email in a single response, and the
+//              anon key that reaches this function is published in app.js on a public
+//              site — so "only Kathryn knows the URL" protected nothing. The key is a
+//              Supabase secret, never in this repo: admin-directory.html is served by
+//              GitHub Pages and anything written into it is public too.
 //   certificate {studentId, courseId} -> {credentialId, issuedAt}
 //              Issues (or returns the existing) credential ID for a completed course.
 //              Persisted in academy_certificates with a unique constraint on
@@ -52,6 +58,15 @@ function corsHeaders(origin: string | null): Record<string, string> {
 
 function json(status: number, body: Record<string, unknown>, origin: string | null) {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders(origin) })
+}
+
+// Constant-time string compare, so a wrong admin key can't be narrowed down
+// character by character from how long the response takes.
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
 }
 
 const BUCKET = "academy-deliverables"
@@ -239,6 +254,12 @@ Deno.serve(async (req) => {
     }
 
     if (type === "directory") {
+      const adminKey = Deno.env.get("ACADEMY_ADMIN_KEY")
+      if (!adminKey) return json(500, { error: "Directory not configured." }, origin)
+      if (!timingSafeEqual(String(body.adminKey ?? ""), adminKey)) {
+        return json(401, { error: "Not authorised." }, origin)
+      }
+
       const { data: progressRows, error: progErr } = await admin
         .from("academy_progress")
         .select("student_id, course_id, lesson_num, submitted_at")
