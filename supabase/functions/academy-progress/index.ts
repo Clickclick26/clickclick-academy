@@ -141,7 +141,7 @@ const EU_REGIONS = new Set([
 const CONTENT_TTL_MS = 60_000
 let contentCache: { at: number; courses: unknown[]; packs: Record<string, PackRow> } | null = null
 
-type PackRow = { label?: string; audience?: string; courseIds?: string[]; portfolio?: boolean; lifetime?: boolean }
+type PackRow = { label?: string; audience?: string; courseIds?: string[]; portfolio?: boolean; lifetime?: boolean; accessMonths?: number }
 
 async function loadContent(admin: AdminClient) {
   if (contentCache && Date.now() - contentCache.at < CONTENT_TTL_MS) return contentCache
@@ -187,7 +187,11 @@ async function resolvePack(
   admin: AdminClient,
   packs: Record<string, PackRow>,
   rawCode: unknown,
-): Promise<{ code: string; pack: PackRow; buyer?: { email: string; tier: string } } | null> {
+): Promise<
+  | { code: string; pack: PackRow; buyer?: { email: string; tier: string }; expired?: false }
+  | { expired: true; expiredOn: string; code: string }
+  | null
+> {
   const direct = findPack(packs, String(rawCode ?? ""))
   if (direct) return direct
 
@@ -196,7 +200,7 @@ async function resolvePack(
 
   const { data, error } = await admin
     .from("academy_access_codes")
-    .select("code, pack, email, tier, revoked, redeemed_at")
+    .select("code, pack, email, tier, revoked, redeemed_at, issued_at")
     .eq("code", code)
     .limit(1)
   // The table may not exist yet on a project where the SQL has not been run.
@@ -211,6 +215,23 @@ async function resolvePack(
   if (!row || row.revoked === true) return null
   const pack = packs[row.pack]
   if (!pack) return null
+
+  // Access runs out where the pack says it does, counted from the day they
+  // paid. Only codes bought through Stripe can expire: the shared internal
+  // and CLocal codes in packs.json never reach this branch, so nobody who
+  // was already using one loses anything. A pack with lifetime: true is the
+  // £249 tier and never expires, which is the only thing that made that
+  // tier different on paper.
+  if (pack.lifetime !== true && typeof pack.accessMonths === "number") {
+    const started = new Date(String(row.issued_at ?? ""))
+    if (!isNaN(started.getTime())) {
+      const ends = new Date(started)
+      ends.setMonth(ends.getMonth() + pack.accessMonths)
+      if (Date.now() > ends.getTime()) {
+        return { expired: true, expiredOn: ends.toISOString(), code: row.code }
+      }
+    }
+  }
 
   // First use stamps the row, so "has this buyer ever actually opened it"
   // is answerable without trawling progress.
@@ -343,7 +364,7 @@ async function portfolioEntitlement(admin: AdminClient, studentId: string) {
 
   const content = await loadContent(admin)
   const pack = await resolvePack(admin, content.packs, student.access_code)
-  if (!pack || pack.pack.portfolio !== true) {
+  if (!pack || pack.expired || pack.pack.portfolio !== true) {
     return { ok: false as const, reason: "A portfolio page is part of Certification + Priority." }
   }
   return { ok: true as const, student, pack }
@@ -546,6 +567,20 @@ Deno.serve(async (req) => {
       // Same 401 and same shape whether the code is unknown or empty, so the
       // response can't be used to probe which codes exist.
       if (!match) return json(401, { error: "That code did not work." }, origin)
+      // An expired code is a real customer whose year is up, not a wrong code.
+      // Telling them so is the difference between renewing and writing in
+      // angry about a code that "stopped working".
+      if (match.expired) {
+        return json(
+          403,
+          {
+            error: "Your access to the course has run out.",
+            expired: true,
+            expiredOn: match.expiredOn,
+          },
+          origin,
+        )
+      }
 
       const allowedIds = new Set(match.pack.courseIds ?? [])
       const allowed = (courses as Array<{ id?: string }>).filter((c) => allowedIds.has(String(c.id)))
@@ -642,8 +677,10 @@ Deno.serve(async (req) => {
       const studentRecord = certStudent?.[0]
       if (!studentRecord) return json(404, { error: "No such student." }, origin)
 
+      // An expired student keeps a certificate already issued, because it is a
+      // credential a brand may have checked. They just cannot claim a new one.
       const pack = await resolvePack(admin, content.packs, studentRecord.access_code)
-      if (!pack || !(pack.pack.courseIds ?? []).includes(courseId)) {
+      if (!pack || pack.expired || !(pack.pack.courseIds ?? []).includes(courseId)) {
         return json(403, { error: "That course is not on your access code." }, origin)
       }
 

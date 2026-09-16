@@ -23,7 +23,11 @@
       body: JSON.stringify(payload),
     }).then(function (r) {
       return r.json().then(function (data) {
-        if (!r.ok) throw new Error(data && data.error ? data.error : 'Request failed');
+        if (!r.ok) {
+          var apiErr = new Error(data && data.error ? data.error : 'Request failed');
+          apiErr.data = data;
+          throw apiErr;
+        }
         return data;
       });
     });
@@ -2498,6 +2502,23 @@
         enterWithContent(data);
       })
       .catch(function (e) {
+        // An expired code is a paying customer whose year is up. Saying "that
+        // code did not work" sends them to support thinking something is
+        // broken, when the honest answer is that their access ended.
+        if (e && e.data && e.data.expired && err) {
+          var when = new Date(e.data.expiredOn);
+          err.textContent = isNaN(when)
+            ? 'Your access to the course has run out. Email hello@clickclick.video to get it back.'
+            : 'Your access to the course ran out on ' +
+              when.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) +
+              '. Email hello@clickclick.video to get it back.';
+          err.hidden = false;
+          onFail(e);
+          return;
+        }
+        if (err) {
+          err.textContent = 'That code did not work. Try again or ask ClickClick.';
+        }
         onFail(e);
       })
       .then(function () {
