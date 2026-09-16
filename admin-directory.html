@@ -32,11 +32,22 @@
       Forget key button when you're on a machine that isn't yours.
     </div>
 
+    <div class="admin-card" id="pending-card" hidden>
+      <h2>Certificates waiting on you</h2>
+      <p class="sub">Students in the EU. Their certificate is held until you approve it, which is what keeps the course from counting as a fully automated service for EU VAT. Tick and approve, or approve the lot.</p>
+      <div id="pending-body"></div>
+      <div class="pending-actions">
+        <button type="button" id="pending-all" class="linkish">Select all</button>
+        <button type="button" id="pending-approve" class="btn primary" disabled>Approve selected</button>
+      </div>
+      <p class="sub" id="pending-status"></p>
+    </div>
+
     <div class="admin-card">
       <h2>Search</h2>
       <div class="field">
-        <label for="search-input">Filter by name, email, or course</label>
-        <input id="search-input" type="text" placeholder="e.g. Kathryn, or UGC" />
+        <label for="search-input">Filter by name, email, course, or Academy ID</label>
+        <input id="search-input" type="text" placeholder="e.g. Kathryn, UGC, or CC-ABC-DEF" />
       </div>
       <p class="sub" id="status-line">Loading…</p>
       <p class="sub"><button type="button" id="forget-key" class="linkish">Forget the admin key on this device</button></p>
@@ -48,6 +59,7 @@
           <tr>
             <th>Name</th>
             <th>Email</th>
+            <th>Academy ID</th>
             <th>Course</th>
             <th>Credential ID</th>
             <th>Completed</th>
@@ -103,6 +115,19 @@
       try { localStorage.removeItem(ADMIN_KEY_STORE); } catch (e) { /* ignore */ }
     }
 
+    // Same rule as the backend and the student-facing app, so the three can
+    // never disagree about what a given student's short ID is.
+    function academyIdFor(studentId) {
+      var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      var hex = String(studentId || '').replace(/-/g, '');
+      var out = '';
+      for (var i = 0; i < 6; i++) {
+        var chunk = parseInt(hex.slice(i * 5, i * 5 + 5) || '0', 16);
+        out += alphabet[chunk % alphabet.length];
+      }
+      return 'CC-' + out.slice(0, 3) + '-' + out.slice(3);
+    }
+
     function academyApi(payload) {
       return fetch(ACADEMY_API, {
         method: 'POST',
@@ -130,7 +155,8 @@
         return (
           r.name.toLowerCase().indexOf(q) !== -1 ||
           r.email.toLowerCase().indexOf(q) !== -1 ||
-          r.courseTitle.toLowerCase().indexOf(q) !== -1
+          r.courseTitle.toLowerCase().indexOf(q) !== -1 ||
+          (r.academyId || '').toLowerCase().indexOf(q) !== -1
         );
       });
       body.innerHTML = filtered
@@ -139,6 +165,7 @@
             '<tr>' +
             '<td>' + esc(r.name) + '</td>' +
             '<td>' + esc(r.email) + '</td>' +
+            '<td class="mono">' + esc(r.academyId || '') + '</td>' +
             '<td>' + esc(r.courseTitle) + '</td>' +
             '<td>' + esc(r.certId) + '</td>' +
             '<td>' + esc(r.completedDate) + '</td>' +
@@ -196,6 +223,7 @@
             return {
               name: row.name,
               email: row.email,
+              academyId: academyIdFor(row.studentId),
               courseTitle: course.title,
               certId: credentialId(row.studentId, row.courseId),
               completedDate: row.lastSubmittedAt
@@ -217,6 +245,97 @@
       .catch(function (err) {
         document.getElementById('status-line').textContent = 'Could not load: ' + err.message;
       });
+
+    // ---- Certificates waiting on a human ----
+    var pendingRows = [];
+
+    function renderPending() {
+      var card = document.getElementById('pending-card');
+      var body = document.getElementById('pending-body');
+      if (!pendingRows.length) {
+        card.hidden = true;
+        return;
+      }
+      card.hidden = false;
+      body.innerHTML = pendingRows
+        .map(function (r, i) {
+          return (
+            '<label class="pending-row">' +
+            '<input type="checkbox" class="pending-check" data-i="' + i + '" />' +
+            '<span class="pending-name">' + esc(r.name) + '</span>' +
+            '<span class="pending-email">' + esc(r.email) + '</span>' +
+            '<span class="mono">' + esc(r.academyId) + '</span>' +
+            '<span class="mono">' + esc(r.credentialId) + '</span>' +
+            '<span class="pending-region">' + esc(r.region || '') + '</span>' +
+            '</label>'
+          );
+        })
+        .join('');
+      updateApproveButton();
+    }
+
+    function selectedCredentialIds() {
+      return Array.prototype.slice
+        .call(document.querySelectorAll('.pending-check:checked'))
+        .map(function (c) {
+          return pendingRows[Number(c.getAttribute('data-i'))].credentialId;
+        });
+    }
+
+    function updateApproveButton() {
+      var n = selectedCredentialIds().length;
+      var btn = document.getElementById('pending-approve');
+      btn.disabled = n === 0;
+      btn.textContent = n ? 'Approve ' + n + (n === 1 ? ' certificate' : ' certificates') : 'Approve selected';
+    }
+
+    document.addEventListener('change', function (e) {
+      if (e.target.classList && e.target.classList.contains('pending-check')) updateApproveButton();
+    });
+
+    document.getElementById('pending-all').addEventListener('click', function () {
+      var boxes = document.querySelectorAll('.pending-check');
+      var allOn = Array.prototype.every.call(boxes, function (b) { return b.checked; });
+      boxes.forEach(function (b) { b.checked = !allOn; });
+      updateApproveButton();
+    });
+
+    document.getElementById('pending-approve').addEventListener('click', function () {
+      var ids = selectedCredentialIds();
+      if (!ids.length) return;
+      var btn = this;
+      var status = document.getElementById('pending-status');
+      btn.disabled = true;
+      btn.textContent = 'Approving…';
+      academyApi({ type: 'approveCertificates', adminKey: getAdminKey(false), credentialIds: ids })
+        .then(function (res) {
+          status.textContent = res.approved + ' approved. They can download their certificate now.';
+          pendingRows = pendingRows.filter(function (r) { return ids.indexOf(r.credentialId) === -1; });
+          renderPending();
+        })
+        .catch(function (err) {
+          status.textContent = 'Could not approve: ' + err.message;
+          btn.disabled = false;
+          updateApproveButton();
+        });
+    });
+
+    function loadPending() {
+      var key = getAdminKey(false);
+      if (!key) return;
+      academyApi({ type: 'pendingCertificates', adminKey: key })
+        .then(function (data) {
+          pendingRows = data.rows || [];
+          renderPending();
+        })
+        .catch(function () {
+          // An older backend does not know this action yet. The directory
+          // below still works, so say nothing rather than showing an error
+          // for a feature that is not deployed.
+        });
+    }
+
+    loadPending();
 
     document.getElementById('search-input').addEventListener('input', function (e) {
       render(e.target.value);

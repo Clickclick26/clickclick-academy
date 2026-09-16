@@ -2552,3 +2552,51 @@ input {
   color: #15803d;
   margin: 0 0 0.5rem;
 }
+
+/* Sign-up step: where the student is based, and the short Academy ID. */
+.identify-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-top: 0.2rem;
+}
+
+.identify-form select {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.identify-note {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--mid);
+  margin: 0;
+}
+
+.academy-id-line {
+  font-size: 0.78rem;
+  color: var(--mid);
+  margin: 0.4rem 0 0;
+}
+
+.academy-id-line strong {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+
+.cert-pending {
+  border: 1px solid rgba(245, 166, 35, 0.5);
+  background: rgba(245, 166, 35, 0.1);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0.6rem 0 0;
+}

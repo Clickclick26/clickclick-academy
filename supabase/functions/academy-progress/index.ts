@@ -86,6 +86,32 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 const CONTENT_BUCKET = "academy-content"
 
+// A student's UUID is unusable over the phone or in an email subject line, so
+// every student also gets a short Academy ID. Derived from the UUID rather
+// than stored, so there is no second thing to keep in sync and no chance of a
+// collision: same student, same ID, forever. Prefix-searchable, which is what
+// makes it traceable when someone writes in saying their course has vanished.
+// Same alphabet as credential IDs: no 0/O/1/I, because people read these aloud.
+function academyId(studentId: string): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  const hex = String(studentId).replace(/-/g, "")
+  let out = ""
+  for (let i = 0; i < 6; i++) {
+    const chunk = parseInt(hex.slice(i * 5, i * 5 + 5) || "0", 16)
+    out += alphabet[chunk % alphabet.length]
+  }
+  return "CC-" + out.slice(0, 3) + "-" + out.slice(3)
+}
+
+// Countries where a consumer purchase makes EU VAT the buyer's-country
+// problem. Kept here rather than client-side so it cannot be edited by the
+// person it applies to.
+const EU_REGIONS = new Set([
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR",
+  "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK",
+  "SI", "ES", "SE",
+])
+
 // Course text changes rarely and a warm isolate can serve many gate submits,
 // so hold it briefly rather than downloading both files on every keystroke's
 // worth of traffic. Short enough that an edit shows up without a redeploy.
@@ -213,6 +239,7 @@ Deno.serve(async (req) => {
       const name = String(body.name ?? "").trim()
       const email = String(body.email ?? "").trim().toLowerCase()
       const accessCode = String(body.accessCode ?? "").trim()
+      const region = String(body.region ?? "").trim().toUpperCase().slice(0, 2)
       if (!name) return json(400, { error: "Name required." }, origin)
       if (!EMAIL_RE.test(email)) return json(400, { error: "Real email required." }, origin)
 
@@ -224,20 +251,35 @@ Deno.serve(async (req) => {
       if (findErr) throw findErr
 
       if (existing && existing.length > 0) {
+        if (region) {
+          await admin.from("academy_students").update({ region }).eq("id", existing[0].id)
+        }
         // Still sync on repeat visits — cheap, and catches anyone who signed
         // up before this existed, or unlocked a second pack since.
         await syncToCrmContacts({ admin, name: existing[0].name, email, accessCode })
-        return json(200, { studentId: existing[0].id, name: existing[0].name }, origin)
+        return json(
+          200,
+          {
+            studentId: existing[0].id,
+            name: existing[0].name,
+            academyId: academyId(existing[0].id),
+          },
+          origin,
+        )
       }
 
       const { data: created, error: insErr } = await admin
         .from("academy_students")
-        .insert({ name, email, access_code: accessCode })
+        .insert({ name, email, access_code: accessCode, region: region || null })
         .select("id, name")
         .single()
       if (insErr) throw insErr
       await syncToCrmContacts({ admin, name, email, accessCode })
-      return json(200, { studentId: created.id, name: created.name }, origin)
+      return json(
+        200,
+        { studentId: created.id, name: created.name, academyId: academyId(created.id) },
+        origin,
+      )
     }
 
     if (type === "list") {
@@ -368,15 +410,32 @@ Deno.serve(async (req) => {
       const courseId = String(body.courseId ?? "")
       if (!studentId || !courseId) return json(400, { error: "Missing fields." }, origin)
 
+      // EU students' certificates are held for a human look rather than issued
+      // automatically. See supabase/eu-review-and-ids.sql for why.
+      const { data: studentRow } = await admin
+        .from("academy_students")
+        .select("region")
+        .eq("id", studentId)
+        .limit(1)
+      const needsReview = EU_REGIONS.has(String(studentRow?.[0]?.region ?? "").toUpperCase())
+
       const { data: existing, error: findErr } = await admin
         .from("academy_certificates")
-        .select("credential_id, issued_at")
+        .select("credential_id, issued_at, approved")
         .eq("student_id", studentId)
         .eq("course_id", courseId)
         .limit(1)
       if (findErr) throw findErr
       if (existing && existing.length > 0) {
-        return json(200, { credentialId: existing[0].credential_id, issuedAt: existing[0].issued_at }, origin)
+        return json(
+          200,
+          {
+            credentialId: existing[0].credential_id,
+            issuedAt: existing[0].issued_at,
+            approved: existing[0].approved !== false,
+          },
+          origin,
+        )
       }
 
       // No 0/O/1/I: a credential ID gets read aloud and typed in by hand
@@ -396,15 +455,90 @@ Deno.serve(async (req) => {
         const credentialId = `CC-${year}-${randomCode(6)}`
         const { data: created, error: insErr } = await admin
           .from("academy_certificates")
-          .insert({ student_id: studentId, course_id: courseId, credential_id: credentialId })
-          .select("credential_id, issued_at")
+          .insert({
+            student_id: studentId,
+            course_id: courseId,
+            credential_id: credentialId,
+            approved: !needsReview,
+          })
+          .select("credential_id, issued_at, approved")
           .single()
         if (!insErr) {
-          return json(200, { credentialId: created.credential_id, issuedAt: created.issued_at }, origin)
+          return json(
+            200,
+            {
+              credentialId: created.credential_id,
+              issuedAt: created.issued_at,
+              approved: created.approved !== false,
+            },
+            origin,
+          )
         }
         if (insErr.code !== "23505") throw insErr // 23505 = unique_violation, anything else is real
       }
       return json(500, { error: "Could not mint a unique credential ID, try again." }, origin)
+    }
+
+    // Certificates waiting on a human, and the bulk approve that clears them.
+    // Both sit behind the same admin key as the directory: between them they
+    // read every pending student's name and email and decide who gets a
+    // credential, so neither can be open to whoever finds the URL.
+    if (type === "pendingCertificates" || type === "approveCertificates") {
+      const adminKey = Deno.env.get("ACADEMY_ADMIN_KEY")
+      if (!adminKey) return json(500, { error: "Not configured." }, origin)
+      if (!timingSafeEqual(String(body.adminKey ?? ""), adminKey)) {
+        return json(401, { error: "Not authorised." }, origin)
+      }
+
+      if (type === "pendingCertificates") {
+        const { data: certs, error: cErr } = await admin
+          .from("academy_certificates")
+          .select("credential_id, student_id, course_id, issued_at")
+          .eq("approved", false)
+        if (cErr) throw cErr
+
+        const ids = Array.from(new Set((certs ?? []).map((c) => c.student_id)))
+        const { data: studs, error: sErr } = ids.length
+          ? await admin.from("academy_students").select("id, name, email, region").in("id", ids)
+          : { data: [], error: null }
+        if (sErr) throw sErr
+        const byId = new Map((studs ?? []).map((st) => [st.id, st]))
+
+        return json(
+          200,
+          {
+            rows: (certs ?? []).map((c) => {
+              const st = byId.get(c.student_id)
+              return {
+                credentialId: c.credential_id,
+                studentId: c.student_id,
+                academyId: academyId(c.student_id),
+                name: st?.name ?? "Unknown",
+                email: st?.email ?? "",
+                region: st?.region ?? "",
+                courseId: c.course_id,
+                issuedAt: c.issued_at,
+              }
+            }),
+          },
+          origin,
+        )
+      }
+
+      // Bulk approve. One statement for the whole selection rather than a
+      // request per student, so clearing a morning's queue is one click.
+      const credentialIds = Array.isArray(body.credentialIds)
+        ? body.credentialIds.map((c: unknown) => String(c)).slice(0, 500)
+        : []
+      if (!credentialIds.length) return json(400, { error: "Nothing selected." }, origin)
+
+      const { data: updated, error: uErr } = await admin
+        .from("academy_certificates")
+        .update({ approved: true })
+        .in("credential_id", credentialIds)
+        .select("credential_id")
+      if (uErr) throw uErr
+      return json(200, { approved: (updated ?? []).length }, origin)
     }
 
     return json(400, { error: "Unknown request type." }, origin)

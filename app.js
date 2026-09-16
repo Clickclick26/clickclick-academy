@@ -72,6 +72,17 @@
   // Fire-and-forget: asks the backend to issue (or return the existing)
   // credential ID, caches it, then re-renders the open course detail so the
   // certificate card swaps from its temporary local ID to the real one.
+  // Approval state is deliberately NOT persisted alongside the cached
+  // credential id: a student who goes offline should see "pending" again
+  // rather than a stale "approved" from last week.
+  var certApproval = {};
+
+  function certificateIsPending(course, student) {
+    if (!student) return false;
+    var key = student.studentId + '|' + course.id;
+    return certApproval[key] === false;
+  }
+
   function ensureRealCredentialId(course, student) {
     var key = student.studentId + '|' + course.id;
     if (certificateCache[key] || certInFlight[key]) return;
@@ -79,6 +90,10 @@
     academyApi({ type: 'certificate', studentId: student.studentId, courseId: course.id })
       .then(function (data) {
         certificateCache[key] = data.credentialId;
+        // A certificate held for human review still has a real credential ID,
+        // it just isn't valid yet, so the student sees it as pending rather
+        // than as a finished thing they can put on LinkedIn.
+        certApproval[key] = data.approved !== false;
         saveCertCache(certificateCache);
         if (currentDetailCourse && currentDetailCourse.id === course.id) {
           renderProgress(currentDetailCourse);
@@ -1633,6 +1648,8 @@
 
   function certificateCardHtml(course, lessonCount, moduleCount) {
     var certId = credentialId(course);
+    var student = loadStudent();
+    var pending = certificateIsPending(course, student);
     return (
       '<div class="certificate-card">' +
       '<div class="certificate-card-head">' +
@@ -1642,13 +1659,26 @@
       '<h3>You finished ' + esc(course.title || '') + '</h3>' +
       '</div>' +
       '</div>' +
-      '<p class="certificate-sub">All ' + lessonCount + ' lessons completed and every deliverable submitted. Your certificate is issued under ' +
+      '<p class="certificate-sub">All ' + lessonCount + ' lessons completed. Your certificate is issued under ' +
       'credential ID ' + esc(certId) + ', download it, or add it to the certifications section of your LinkedIn profile.</p>' +
-      '<div class="certificate-actions">' +
-      '<button type="button" class="btn primary certificate-download-btn">Download certificate</button>' +
-      '<button type="button" class="btn secondary certificate-linkedin-btn">Add to LinkedIn</button>' +
-      '</div>' +
-      '<p class="certificate-linkedin-note">The LinkedIn button opens their own "Add to Profile" form, already filled in with this course. Just hit Save on LinkedIn’s side, nothing to type.</p>' +
+      (student && student.academyId
+        ? '<p class="academy-id-line">Your Academy ID is <strong>' + esc(student.academyId) +
+          '</strong>. Quote it if you ever need to ask us about your course.</p>'
+        : '') +
+      (pending
+        ? '<p class="cert-pending">You are based in the EU, so a person checks your certificate before it is issued. ' +
+          'That usually takes a couple of working days and we will email you at the address you signed up with. ' +
+          'Everything in the course stays open in the meantime.</p>'
+        : '') +
+      (pending
+        ? ''
+        : '<div class="certificate-actions">' +
+          '<button type="button" class="btn primary certificate-download-btn">Download certificate</button>' +
+          '<button type="button" class="btn secondary certificate-linkedin-btn">Add to LinkedIn</button>' +
+          '</div>') +
+      (pending
+        ? ''
+        : '<p class="certificate-linkedin-note">The LinkedIn button opens their own "Add to Profile" form, already filled in with this course. Just hit Save on LinkedIn\u2019s side, nothing to type.</p>') +
       '</div>'
     );
   }
@@ -2091,16 +2121,65 @@
     });
   }
 
+  // Country list for the sign-up step. Only the EU members matter functionally
+  // (their certificates get a human check before issue), but showing an EU-only
+  // dropdown would make the question look like a trap and invite people to pick
+  // the answer that gets them a faster certificate. A full list asked plainly
+  // gets an honest answer.
+  var COUNTRIES = [
+    ['GB', 'United Kingdom'], ['IE', 'Ireland'], ['US', 'United States'],
+    ['CA', 'Canada'], ['AU', 'Australia'], ['NZ', 'New Zealand'],
+    ['AT', 'Austria'], ['BE', 'Belgium'], ['BG', 'Bulgaria'], ['HR', 'Croatia'],
+    ['CY', 'Cyprus'], ['CZ', 'Czechia'], ['DK', 'Denmark'], ['EE', 'Estonia'],
+    ['FI', 'Finland'], ['FR', 'France'], ['DE', 'Germany'], ['GR', 'Greece'],
+    ['HU', 'Hungary'], ['IT', 'Italy'], ['LV', 'Latvia'], ['LT', 'Lithuania'],
+    ['LU', 'Luxembourg'], ['MT', 'Malta'], ['NL', 'Netherlands'], ['PL', 'Poland'],
+    ['PT', 'Portugal'], ['RO', 'Romania'], ['SK', 'Slovakia'], ['SI', 'Slovenia'],
+    ['ES', 'Spain'], ['SE', 'Sweden'],
+    ['CH', 'Switzerland'], ['NO', 'Norway'], ['ZA', 'South Africa'],
+    ['IN', 'India'], ['SG', 'Singapore'], ['AE', 'United Arab Emirates'],
+    ['XX', 'Somewhere else'],
+  ];
+
+  function countryOptionsHtml() {
+    return (
+      '<option value="">Choose a country</option>' +
+      COUNTRIES.map(function (c) {
+        return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>';
+      }).join('')
+    );
+  }
+
+  // A student's real id is a UUID, which is useless read aloud or typed into
+  // an email. This is the short version they can quote when something has gone
+  // wrong. Derived from the UUID by the same rule the backend uses, so the two
+  // can never disagree and there is nothing extra to store.
+  function academyIdFor(studentId) {
+    var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var hex = String(studentId || '').replace(/-/g, '');
+    var out = '';
+    for (var i = 0; i < 6; i++) {
+      var chunk = parseInt(hex.slice(i * 5, i * 5 + 5) || '0', 16);
+      out += alphabet[chunk % alphabet.length];
+    }
+    return 'CC-' + out.slice(0, 3) + '-' + out.slice(3);
+  }
+
   function identifyGateHtml(course) {
     return (
       '<div class="detail-head detail-identify">' +
       '<span class="course-tag">' + esc(course.tag || '') + '</span>' +
       '<h1>' + esc(course.title || '') + '</h1>' +
       (course.description ? '<p class="detail-lead">' + esc(course.description) + '</p>' : '') +
-      '<p class="detail-lead">Tell us who you are so your progress is saved: each lesson unlocks the next once you submit its deliverable.</p>' +
+      '<p class="detail-lead">Tell us who you are so your progress is saved. Each lesson opens the next one once you have passed its check.</p>' +
       '<form id="identify-form" class="identify-form">' +
       '<input type="text" id="identify-name" placeholder="Your name" required />' +
       '<input type="email" id="identify-email" placeholder="Your email" required />' +
+      '<label class="identify-label" for="identify-region">Where are you based?</label>' +
+      '<select id="identify-region" required>' +
+      countryOptionsHtml() +
+      '</select>' +
+      '<p class="identify-note">We ask because certificates for students in the EU are checked by a person before they are issued, so they take a little longer.</p>' +
       '<button type="submit" class="btn primary">Start the course</button>' +
       '<p class="lesson-submit-err" id="identify-err" hidden></p>' +
       '</form>' +
@@ -2128,15 +2207,29 @@
           e.preventDefault();
           var name = document.getElementById('identify-name').value.trim();
           var email = document.getElementById('identify-email').value.trim();
+          var regionEl = document.getElementById('identify-region');
+          var region = regionEl ? regionEl.value : '';
           var errEl = document.getElementById('identify-err');
+          if (!region) {
+            if (errEl) {
+              errEl.textContent = 'Pick where you are based first.';
+              errEl.hidden = false;
+            }
+            return;
+          }
           academyApi({
             type: 'identify',
             name: name,
             email: email,
+            region: region,
             accessCode: (session && session.code) || '',
           })
             .then(function (data) {
-              saveStudent({ studentId: data.studentId, name: data.name });
+              saveStudent({
+                studentId: data.studentId,
+                name: data.name,
+                academyId: data.academyId || academyIdFor(data.studentId),
+              });
               renderProgress(course);
             })
             .catch(function (err) {
