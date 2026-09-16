@@ -21,7 +21,17 @@ create table if not exists academy_certificates (
   unique (student_id, course_id)
 );
 
-alter table academy_certificates enable row level security;
+-- Deliberately NOT enabling row level security here, unlike the original
+-- certificates-table.sql said to. These tables are protected by the public
+-- role having no GRANT on them at all, which is verifiable: a REST call with
+-- the publishable key returns "permission denied for table" for every one of
+-- academy_students, academy_progress, academy_certificates and contacts.
+--
+-- Turning RLS on as well breaks writes rather than adding protection: with no
+-- policy, the RETURNING clause on an insert gets filtered out and the whole
+-- statement errors, which is exactly why issuing a certificate started
+-- failing with a 500 while everything else kept working.
+alter table academy_certificates disable row level security;
 
 -- 2. Where a student is based. Drives the EU certificate hold.
 alter table academy_students
