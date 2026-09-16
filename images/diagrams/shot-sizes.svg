@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 348" role="img" aria-labelledby="t d">
+<title id="t">The five shot sizes in a vertical frame</title>
+<desc id="d">Five nine-by-sixteen frames showing how much of a person and a product each shot size contains, from wide through to a detail macro shot.</desc>
+<style>
+  .lbl{font:600 12px Poppins,system-ui,sans-serif;fill:#1a1a1a}
+  .sub{font:400 10.5px Poppins,system-ui,sans-serif;fill:#6b6b6b}
+  .hd{font:700 11px Poppins,system-ui,sans-serif;fill:#0097a7;letter-spacing:.06em}
+  .frame{fill:#fbf9f4;stroke:#ddd6c4;stroke-width:1.5}
+  .body{fill:#7b5ea7}
+  .prod{fill:#00bcd4}
+  .crop{fill:none;stroke:#e83e8c;stroke-width:2;stroke-dasharray:5 4}
+</style>
+<text class="hd" x="10" y="16">THE FIVE SHOTS, SAME SCENE</text>
+
+<g transform="translate(10,28)">
+  <clipPath id="c1"><rect x="0" y="0" width="120" height="213" rx="6"/></clipPath>
+  <rect class="frame" x="0" y="0" width="120" height="213" rx="6"/>
+  <g clip-path="url(#c1)">
+    <circle class="body" cx="60" cy="96" r="12"/>
+    <path class="body" d="M42 176 Q42 116 60 116 Q78 116 78 176 Z"/>
+    <rect class="prod" x="54" y="132" width="12" height="20" rx="3"/>
+  </g>
+  <text class="lbl" x="0" y="234">Wide</text>
+  <text class="sub" x="0" y="250">Shows the room. Use briefly.</text>
+</g>
+
+<g transform="translate(175,28)">
+  <clipPath id="c2"><rect x="0" y="0" width="120" height="213" rx="6"/></clipPath>
+  <rect class="frame" x="0" y="0" width="120" height="213" rx="6"/>
+  <g clip-path="url(#c2)">
+    <circle class="body" cx="60" cy="72" r="30"/>
+    <path class="body" d="M14 240 Q14 112 60 112 Q106 112 106 240 Z"/>
+    <rect class="prod" x="48" y="146" width="24" height="40" rx="5"/>
+  </g>
+  <text class="lbl" x="0" y="234">Medium</text>
+  <text class="sub" x="0" y="250">Chest up. Your workhorse.</text>
+</g>
+
+<g transform="translate(340,28)">
+  <clipPath id="c3"><rect x="0" y="0" width="120" height="213" rx="6"/></clipPath>
+  <rect class="frame" x="0" y="0" width="120" height="213" rx="6"/>
+  <g clip-path="url(#c3)">
+    <circle class="body" cx="60" cy="96" r="66"/>
+  </g>
+  <text class="lbl" x="0" y="234">Close</text>
+  <text class="sub" x="0" y="250">Face fills it. For emphasis.</text>
+</g>
+
+<g transform="translate(505,28)">
+  <clipPath id="c4"><rect x="0" y="0" width="120" height="213" rx="6"/></clipPath>
+  <rect class="frame" x="0" y="0" width="120" height="213" rx="6"/>
+  <g clip-path="url(#c4)">
+    <rect class="prod" x="18" y="34" width="84" height="146" rx="10"/>
+    <rect x="34" y="70" width="52" height="8" rx="4" fill="#fbf9f4" opacity=".75"/>
+    <rect x="34" y="88" width="34" height="8" rx="4" fill="#fbf9f4" opacity=".75"/>
+  </g>
+  <text class="lbl" x="0" y="234">Detail</text>
+  <text class="sub" x="0" y="250">Texture, label, seal. Proof.</text>
+</g>
+
+<g transform="translate(670,28)">
+  <clipPath id="c5"><rect x="0" y="0" width="120" height="213" rx="6"/></clipPath>
+  <rect class="frame" x="0" y="0" width="120" height="213" rx="6"/>
+  <g clip-path="url(#c5)">
+    <path class="body" d="M-10 213 Q10 130 52 128 L72 150 Q40 168 30 213 Z"/>
+    <rect class="prod" x="52" y="92" width="26" height="44" rx="6"/>
+  </g>
+  <text class="lbl" x="0" y="234">Point of view</text>
+  <text class="sub" x="0" y="250">Your hands. Puts them in it.</text>
+</g>
+
+<text class="sub" x="10" y="322">Never cut from one shot size to the same size. Wide to close, close to detail. The change is what tells the eye it was deliberate.</text>
+</svg>

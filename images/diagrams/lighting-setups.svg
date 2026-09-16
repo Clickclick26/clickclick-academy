@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 300" role="img" aria-labelledby="t d">
+<title id="t">Four lighting setups seen from above</title>
+<desc id="d">One correct setup and three common mistakes, drawn as a plan view of a room with the window, the person and the bounce card marked.</desc>
+<style>
+  .lbl{font:600 13px Poppins,system-ui,sans-serif;fill:#1a1a1a}
+  .sub{font:400 11px Poppins,system-ui,sans-serif;fill:#6b6b6b}
+  .tag{font:700 10px Poppins,system-ui,sans-serif;letter-spacing:.06em}
+  .ok{fill:#0097a7}.bad{fill:#e83e8c}
+  .room{fill:#fbf9f4;stroke:#ddd6c4;stroke-width:1.5;rx:10}
+  .person{fill:#7b5ea7}
+  .nose{fill:#7b5ea7}
+  .face{fill:#fbf9f4;stroke:#7b5ea7;stroke-width:2}
+  .win{fill:#00bcd4}
+  .warm{fill:#f5a623}
+  .bounce{fill:none;stroke:#6b6b6b;stroke-width:3;stroke-linecap:round}
+  .ray{stroke:#00bcd4;stroke-width:1.6;stroke-dasharray:4 3}
+  .rayw{stroke:#f5a623;stroke-width:1.6;stroke-dasharray:4 3}
+  .cam{fill:none;stroke:#1a1a1a;stroke-width:1.6}
+</style>
+
+<!-- 1. correct -->
+<g transform="translate(10,10)">
+  <rect class="room" x="0" y="26" width="190" height="180" rx="10"/>
+  <text class="tag ok" x="0" y="14">DO THIS</text>
+  <rect class="win" x="4" y="70" width="7" height="70" rx="3"/>
+  <text class="sub" x="16" y="66">window</text>
+  <line class="ray" x1="13" y1="90" x2="86" y2="112"/>
+  <line class="ray" x1="13" y1="122" x2="86" y2="124"/>
+  <circle class="person" cx="99" cy="118" r="14"/>
+  <path class="nose" d="M99 118 L74 106 L74 130 Z"/>
+  <text class="sub" x="62" y="150">facing 45°</text>
+  <line class="bounce" x1="150" y1="98" x2="150" y2="140"/>
+  <text class="sub" x="128" y="158">bounce</text>
+  <rect class="cam" x="88" y="168" width="20" height="14" rx="3"/>
+  <text class="sub" x="112" y="180">phone</text>
+  <text class="lbl" x="0" y="228">Window to one side</text>
+  <text class="sub" x="0" y="246">You turned about 45° into it,</text>
+  <text class="sub" x="0" y="262">white card on the shadow side.</text>
+</g>
+
+<!-- 2. backlit -->
+<g transform="translate(220,10)">
+  <rect class="room" x="0" y="26" width="190" height="180" rx="10"/>
+  <text class="tag bad" x="0" y="14">NOT THIS</text>
+  <rect class="win" x="90" y="34" width="70" height="7" rx="3"/>
+  <text class="sub" x="90" y="60">window behind you</text>
+  <line class="ray" x1="120" y1="43" x2="112" y2="100"/>
+  <circle class="person" cx="108" cy="114" r="14"/>
+  <path class="nose" d="M108 114 L96 139 L120 139 Z"/>
+  <rect class="cam" x="98" y="168" width="20" height="14" rx="3"/>
+  <text class="lbl" x="0" y="228">Light behind you</text>
+  <text class="sub" x="0" y="246">The camera exposes for the window.</text>
+  <text class="sub" x="0" y="262">You become a silhouette.</text>
+</g>
+
+<!-- 3. overhead -->
+<g transform="translate(430,10)">
+  <rect class="room" x="0" y="26" width="190" height="180" rx="10"/>
+  <text class="tag bad" x="0" y="14">NOT THIS</text>
+  <circle cx="95" cy="70" r="12" fill="#f5a623" opacity=".35"/>
+  <circle cx="95" cy="70" r="6" fill="#f5a623"/>
+  <text class="sub" x="112" y="74">ceiling light</text>
+  <line class="rayw" x1="95" y1="80" x2="95" y2="102"/>
+  <circle class="person" cx="95" cy="114" r="14"/>
+  <path class="nose" d="M95 114 L83 139 L107 139 Z"/>
+  <rect class="cam" x="85" y="168" width="20" height="14" rx="3"/>
+  <text class="lbl" x="0" y="228">Overhead only</text>
+  <text class="sub" x="0" y="246">Shadows drop into your eye</text>
+  <text class="sub" x="0" y="262">sockets and under your nose.</text>
+</g>
+
+<!-- 4. mixed -->
+<g transform="translate(640,10)">
+  <rect class="room" x="0" y="26" width="190" height="180" rx="10"/>
+  <text class="tag bad" x="0" y="14">NOT THIS</text>
+  <rect class="win" x="4" y="84" width="7" height="60" rx="3"/>
+  <text class="sub" x="16" y="80">cool daylight</text>
+  <circle cx="176" cy="114" r="7" fill="#f5a623"/>
+  <text class="sub" x="186" y="96" text-anchor="end">warm lamp</text>
+  <line class="ray" x1="13" y1="114" x2="82" y2="116"/>
+  <line class="rayw" x1="169" y1="114" x2="112" y2="116"/>
+  <circle class="person" cx="97" cy="114" r="14"/>
+  <path class="nose" d="M97 114 L85 139 L109 139 Z"/>
+  <rect class="cam" x="87" y="168" width="20" height="14" rx="3"/>
+  <text class="lbl" x="0" y="228">Two colours of light</text>
+  <text class="sub" x="0" y="246">Half your face goes orange, half</text>
+  <text class="sub" x="0" y="262">blue. You cannot fix it in the edit.</text>
+</g>
+</svg>

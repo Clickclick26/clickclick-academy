@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 330" role="img" aria-labelledby="t d">
+<title id="t">Where the platform covers a vertical video</title>
+<desc id="d">A nine-by-sixteen frame marked with the areas the app's own buttons, username and description sit over, and the middle band where captions stay readable.</desc>
+<style>
+  .lbl{font:600 12px Poppins,system-ui,sans-serif;fill:#1a1a1a}
+  .sub{font:400 11px Poppins,system-ui,sans-serif;fill:#6b6b6b}
+  .hd{font:700 11px Poppins,system-ui,sans-serif;fill:#0097a7;letter-spacing:.06em}
+  .warnt{font:700 10px Poppins,system-ui,sans-serif;fill:#a3103f}
+  .oky{font:700 10px Poppins,system-ui,sans-serif;fill:#0a6a3c}
+  .frame{fill:#fbf9f4;stroke:#ddd6c4;stroke-width:1.5}
+  .blocked{fill:#e83e8c;opacity:.10}
+  .safe{fill:#00bcd4;opacity:.20}
+  .safeline{fill:none;stroke:#0097a7;stroke-width:2;stroke-dasharray:5 4}
+  .cap{font:700 13px Poppins,system-ui,sans-serif;fill:#1a1a1a}
+  .ui{fill:#9a9a9a;opacity:.55}
+</style>
+<text class="hd" x="14" y="18">CAPTIONS GO IN THE MIDDLE, NOT THE BOTTOM</text>
+
+<g transform="translate(14,30)">
+  <rect class="frame" x="0" y="0" width="169" height="284" rx="8"/>
+  <rect class="blocked" x="0" y="0" width="169" height="34" rx="8"/>
+  <rect class="blocked" x="0" y="196" width="169" height="88"/>
+  <rect class="blocked" x="139" y="34" width="30" height="162"/>
+  <rect class="safe" x="0" y="72" width="139" height="104"/>
+  <rect class="safeline" x="4" y="74" width="131" height="100" rx="4"/>
+  <text class="cap" x="16" y="122">never dies</text>
+  <text class="cap" x="16" y="142">mid-shift</text>
+  <circle class="ui" cx="154" cy="70" r="9"/>
+  <circle class="ui" cx="154" cy="100" r="9"/>
+  <circle class="ui" cx="154" cy="130" r="9"/>
+  <rect class="ui" x="12" y="212" width="86" height="8" rx="4"/>
+  <rect class="ui" x="12" y="228" width="118" height="7" rx="3.5"/>
+  <rect class="ui" x="12" y="242" width="98" height="7" rx="3.5"/>
+</g>
+
+<g transform="translate(212,44)">
+  <rect class="blocked" x="0" y="0" width="16" height="16" rx="4"/>
+  <text class="warnt" x="26" y="12">COVERED BY THE APP</text>
+  <text class="sub" x="26" y="30">Username, description, sound name,</text>
+  <text class="sub" x="26" y="46">like and share buttons all sit here.</text>
+  <text class="sub" x="26" y="62">Put a caption here and nobody reads it.</text>
+
+  <rect class="safe" x="0" y="88" width="16" height="16" rx="4"/>
+  <text class="oky" x="26" y="100">SAFE</text>
+  <text class="sub" x="26" y="118">The middle band. Captions stay clear</text>
+  <text class="sub" x="26" y="134">of the interface on every phone.</text>
+
+  <text class="lbl" x="0" y="176">One to three words at a time</text>
+  <text class="sub" x="0" y="194">Enough to glance at, not enough to</text>
+  <text class="sub" x="0" y="210">have to read. Never a full sentence.</text>
+
+  <text class="lbl" x="0" y="242">Emphasise five or six words</text>
+  <text class="sub" x="0" y="260">In the whole video. Highlight everything</text>
+  <text class="sub" x="0" y="276">and the eye learns to ignore all of it.</text>
+</g>
+</svg>
