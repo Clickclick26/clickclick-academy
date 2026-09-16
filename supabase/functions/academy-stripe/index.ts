@@ -196,8 +196,15 @@ async function mintCode(admin: AdminClient, session: SessionLike) {
 // than arguing about a refund later.
 const COOLING_OFF_DAYS = 14
 
+// Stripe hands back the dropdown's VALUE, not the label the buyer read. It
+// derives that value by lowercasing the label and stripping everything that
+// is not a letter or a digit, so "I agree. Give me access now..." arrives as
+// "iagreegivemeaccessnow...". Matching on the readable label silently failed
+// and told everyone who agreed that they had chosen to wait 14 days. Compare
+// like for like: flatten both sides the same way.
 function consentGiven(consent: unknown): boolean {
-  return String(consent ?? "").trim().toLowerCase().startsWith("i agree")
+  const flat = String(consent ?? "").toLowerCase().replace(/[^a-z0-9]/g, "")
+  return flat.startsWith("iagree")
 }
 
 function heldUntil(issuedAt: unknown): string {
