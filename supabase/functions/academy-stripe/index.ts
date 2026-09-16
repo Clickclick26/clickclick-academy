@@ -71,6 +71,20 @@ const LINK_TIERS: Record<string, { tier: string; pack: string; label: string }> 
     pack: "creator-ugc-priority",
     label: "UGC Content Creator Certification + Priority",
   },
+  // The Ireland and EU pair. Same products and same price to the buyer, but
+  // sold through Stripe's Managed Payments, so Stripe is the merchant of
+  // record and owns the VAT. What the buyer gets is identical, which is why
+  // they map to the same packs.
+  plink_1UGQvK2YYPNSFgcIjXEnBcKY: {
+    tier: "certification",
+    pack: "creator-ugc",
+    label: "UGC Content Creator Certification",
+  },
+  plink_1UGQyv2YYPNSFgcIQ7k8IBlq: {
+    tier: "priority",
+    pack: "creator-ugc-priority",
+    label: "UGC Content Creator Certification + Priority",
+  },
 }
 
 // Falls back to what was actually paid if the payment link is ever replaced
