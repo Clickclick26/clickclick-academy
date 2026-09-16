@@ -14,7 +14,7 @@
        site has no build step to fingerprint filenames, and browsers were
        caching stale CSS/JS across deploys (confirmed live: a visitor's
        browser mixed new HTML with cached old CSS and rendered broken). -->
-  <link rel="stylesheet" href="styles.css?v=40" />
+  <link rel="stylesheet" href="styles.css?v=41" />
 </head>
 <body>
   <!-- Gate -->
@@ -67,6 +67,11 @@
           <p class="eyebrow">ClickClick Academy</p>
           <h1 class="greeting">Hello</h1>
           <p class="pack-line">Pack: <span id="pack-label">&middot;</span></p>
+          <!-- Only on packs that include a portfolio page. app.js unhides it;
+               portfolio.html asks the server whether this student really has it. -->
+          <p class="pack-line" id="portfolio-link" hidden>
+            <a href="portfolio.html">Your portfolio page &rarr;</a>
+          </p>
         </div>
         <label class="search">
           <span class="sr-only">Search courses</span>
@@ -128,6 +133,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=40"></script>
+  <script src="app.js?v=41"></script>
 </body>
 </html>

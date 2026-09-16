@@ -197,6 +197,12 @@
     }
     if (dashCountStrong) dashCountStrong.textContent = String(n);
     if (countEl) countEl.textContent = n + (n === 1 ? ' course' : ' courses');
+
+    // The portfolio page is only on the Priority pack, so the link only exists
+    // for packs that carry it. Showing it is cosmetic: portfolio.html asks the
+    // server whether this student is entitled and the server decides.
+    var portfolioLink = document.getElementById('portfolio-link');
+    if (portfolioLink) portfolioLink.hidden = !(session && session.portfolio);
   }
 
   function cardHtml(course) {
@@ -2418,6 +2424,7 @@
       label: data.label || data.code,
       audience: data.audience || '',
       courseIds: data.courseIds || [],
+      portfolio: data.portfolio === true,
     };
     allCourses = Array.isArray(data.courses) ? data.courses : [];
     allowedCourses = allCourses.slice();

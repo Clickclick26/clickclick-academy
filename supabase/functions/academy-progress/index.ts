@@ -43,6 +43,17 @@
 //              service role can read, the code is checked here, and a caller gets
 //              back ONLY the courses their pack allows. A wrong code gets 401 and
 //              no course data at all, not even titles.
+//   portfolioGet    {studentId} -> the creator's own portfolio page, for editing
+//   portfolioSave   {studentId, slug?, portfolio, published} -> {ok, slug}
+//   portfolioUpload {studentId, contentType} -> a signed URL to upload one file
+//   portfolioPublic {slug} -> a published page, for clickclick.video to render
+//              The £249 "Certification + Priority" tier includes a portfolio page
+//              hosted on the marketing site. Entitlement is the access code's pack
+//              carrying "portfolio": true, not merely having a code. The first
+//              three actions are scoped to the student's own UUID; portfolioPublic
+//              is open on purpose, because it is what draws a page a brand was
+//              sent a link to. Run supabase/RUN-THIS-portfolio-setup.sql and create
+//              the creator-portfolios bucket before any of it works.
 //   certificate {studentId, courseId} -> {credentialId, issuedAt}
 //              Issues (or returns the existing) credential ID for a completed course.
 //              Persisted in academy_certificates with a unique constraint on
@@ -55,6 +66,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2"
 const ALLOWED_ORIGINS = new Set([
   "https://clickclick26.github.io",
   "https://academy.clickclick.video",
+  "https://www.clickclick.video",
+  "https://clickclick.video",
   "http://localhost:5199",
   "http://127.0.0.1:5199",
 ])
@@ -85,6 +98,10 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 const CONTENT_BUCKET = "academy-content"
+// Public on purpose: a portfolio page is meant to be opened by a brand who
+// was sent the link, and signed URLs would expire and break it. Only this
+// function can issue an upload URL into it. See RUN-THIS-portfolio-setup.sql.
+const PORTFOLIO_BUCKET = "creator-portfolios"
 
 // A student's UUID is unusable over the phone or in an email subject line, so
 // every student also gets a short Academy ID. Derived from the UUID rather
@@ -118,7 +135,7 @@ const EU_REGIONS = new Set([
 const CONTENT_TTL_MS = 60_000
 let contentCache: { at: number; courses: unknown[]; packs: Record<string, PackRow> } | null = null
 
-type PackRow = { label?: string; audience?: string; courseIds?: string[] }
+type PackRow = { label?: string; audience?: string; courseIds?: string[]; portfolio?: boolean; lifetime?: boolean }
 
 async function loadContent(admin: AdminClient) {
   if (contentCache && Date.now() - contentCache.at < CONTENT_TTL_MS) return contentCache
@@ -155,6 +172,127 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // deno-lint-ignore no-explicit-any
 type AdminClient = any
+
+// ---------------------------------------------------------------------------
+// Portfolio pages (the £249 "Certification + Priority" tier).
+//
+// Everything a creator types here ends up on a public page that brands open,
+// so none of it is trusted: strings are stripped of angle brackets and capped,
+// links must be http(s), the theme and accent are whitelists rather than free
+// text, and an uploaded file is only accepted if its path is inside the
+// student's own folder. The renderer on clickclick.video still escapes on the
+// way out; this is the second lock, not the only one.
+// ---------------------------------------------------------------------------
+
+const PORTFOLIO_THEMES = new Set(["ink", "sand", "mono", "signal"])
+const PORTFOLIO_ACCENTS = new Set(["#d9f125", "#ff6b4a", "#4a7dff", "#12b886", "#ffffff", "#111111"])
+const MAX_WORKS = 8
+
+function cleanText(value: unknown, max: number): string {
+  return String(value ?? "")
+    .replace(/[<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max)
+}
+
+function cleanLink(value: unknown): string {
+  const raw = String(value ?? "").trim().slice(0, 500)
+  if (!raw) return ""
+  if (!/^https?:\/\//i.test(raw)) return ""
+  try {
+    return new URL(raw).toString()
+  } catch {
+    return ""
+  }
+}
+
+// An uploaded file is only ever referenced by its storage path. Anything that
+// is not inside this student's own folder is dropped rather than rejected, so
+// one bad row cannot stop somebody saving the rest of their page.
+function cleanUpload(value: unknown, studentId: string): string {
+  const raw = String(value ?? "").trim().slice(0, 300)
+  if (!raw) return ""
+  if (!raw.startsWith(studentId + "/")) return ""
+  if (raw.includes("..")) return ""
+  return raw
+}
+
+function slugify(value: string): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+}
+
+// Reserved so a creator cannot take a slug that would collide with a real page
+// on the marketing site, or with a word that reads as official.
+const RESERVED_SLUGS = new Set([
+  "", "p", "new", "admin", "clickclick", "clocal", "creators", "academy",
+  "about", "terms", "privacy", "refund", "login", "signup", "index", "api",
+])
+
+function sanitisePortfolio(input: Record<string, unknown>, studentId: string) {
+  const worksIn = Array.isArray(input.works) ? input.works.slice(0, MAX_WORKS) : []
+  const theme = String(input.theme ?? "ink")
+  const accent = String(input.accent ?? "#d9f125")
+  return {
+    name: cleanText(input.name, 60),
+    headline: cleanText(input.headline, 90),
+    bio: cleanText(input.bio, 400),
+    location: cleanText(input.location, 60),
+    email: cleanText(input.email, 120),
+    instagram: cleanText(input.instagram, 40).replace(/^@/, ""),
+    tiktok: cleanText(input.tiktok, 40).replace(/^@/, ""),
+    website: cleanLink(input.website),
+    rates: cleanText(input.rates, 120),
+    theme: PORTFOLIO_THEMES.has(theme) ? theme : "ink",
+    accent: PORTFOLIO_ACCENTS.has(accent) ? accent : "#d9f125",
+    avatar: cleanUpload(input.avatar, studentId),
+    works: worksIn
+      .map((w) => {
+        const item = (w ?? {}) as Record<string, unknown>
+        return {
+          title: cleanText(item.title, 70),
+          label: cleanText(item.label, 120),
+          link: cleanLink(item.link),
+          image: cleanUpload(item.image, studentId),
+          video: cleanUpload(item.video, studentId),
+        }
+      })
+      .filter((w) => w.title || w.link || w.image || w.video),
+  }
+}
+
+// Turns stored paths into the public URLs the rendered page actually loads.
+function publicUrl(supabaseUrl: string, path: string): string {
+  if (!path) return ""
+  return `${supabaseUrl}/storage/v1/object/public/${PORTFOLIO_BUCKET}/${path}`
+}
+
+// The portfolio page is a paid extra, not part of the course, so entitlement
+// is the pack's own flag rather than "has an access code".
+async function portfolioEntitlement(admin: AdminClient, studentId: string) {
+  const { data, error } = await admin
+    .from("academy_students")
+    .select("id, name, access_code")
+    .eq("id", studentId)
+    .limit(1)
+  if (error) throw error
+  const student = data?.[0]
+  if (!student) return { ok: false as const, reason: "No such student." }
+
+  const content = await loadContent(admin)
+  const pack = findPack(content.packs, String(student.access_code ?? ""))
+  if (!pack || pack.pack.portfolio !== true) {
+    return { ok: false as const, reason: "A portfolio page is part of Certification + Priority." }
+  }
+  return { ok: true as const, student, pack }
+}
+
 
 // Mirrors an Academy student into the CRM's contacts table (same Supabase
 // project — see the file header). Sales can then see who's actually engaging
@@ -363,6 +501,11 @@ Deno.serve(async (req) => {
           label: match.pack.label ?? match.code,
           audience: match.pack.audience ?? "",
           courseIds: match.pack.courseIds ?? [],
+          // Lets the front end show the portfolio link to the tier that paid
+          // for it. Not a permission: portfolioGet/Save re-check the pack
+          // server-side, so a hand-edited response buys nothing.
+          portfolio: match.pack.portfolio === true,
+          lifetime: match.pack.lifetime === true,
           courses: allowed,
         },
         origin,
@@ -608,6 +751,216 @@ Deno.serve(async (req) => {
         .select("credential_id")
       if (uErr) throw uErr
       return json(200, { approved: (updated ?? []).length }, origin)
+    }
+
+    // --- Portfolio pages -------------------------------------------------
+    // portfolioGet     {studentId} -> the creator's own page, for the editor
+    // portfolioSave    {studentId, slug?, portfolio, published} -> {ok, slug}
+    // portfolioUpload  {studentId, filename, contentType} -> signed upload URL
+    // portfolioPublic  {slug} -> the rendered page's data, no auth at all
+    //
+    // The first three are scoped by the student's own UUID, same trust model
+    // as the rest of this function. The last one is deliberately open: it is
+    // what clickclick.video calls to draw a page a brand was sent.
+
+    if (type === "portfolioGet") {
+      const studentId = String(body.studentId ?? "")
+      if (!studentId) return json(400, { error: "Missing fields." }, origin)
+
+      const ent = await portfolioEntitlement(admin, studentId)
+      if (!ent.ok) return json(403, { error: ent.reason, entitled: false }, origin)
+
+      const { data, error } = await admin
+        .from("academy_portfolios")
+        .select("slug, data, published, updated_at")
+        .eq("student_id", studentId)
+        .limit(1)
+      if (error) throw error
+
+      const row = data?.[0]
+      return json(
+        200,
+        {
+          entitled: true,
+          slug: row?.slug ?? "",
+          suggestedSlug: slugify(ent.student.name || "creator") || "creator",
+          published: row?.published === true,
+          portfolio: row?.data ?? null,
+          updatedAt: row?.updated_at ?? null,
+          storageBase: `${supabaseUrl}/storage/v1/object/public/${PORTFOLIO_BUCKET}/`,
+        },
+        origin,
+      )
+    }
+
+    if (type === "portfolioSave") {
+      const studentId = String(body.studentId ?? "")
+      if (!studentId) return json(400, { error: "Missing fields." }, origin)
+
+      const ent = await portfolioEntitlement(admin, studentId)
+      if (!ent.ok) return json(403, { error: ent.reason, entitled: false }, origin)
+
+      const clean = sanitisePortfolio(
+        (body.portfolio ?? {}) as Record<string, unknown>,
+        studentId,
+      )
+      const published = body.published === true
+
+      // A page with nothing on it is worse than no page, so publishing needs
+      // at least a name and one piece of work. Saving a draft needs neither.
+      if (published && (!clean.name || clean.works.length === 0)) {
+        return json(
+          400,
+          { error: "Add your name and at least one piece of work before you publish." },
+          origin,
+        )
+      }
+
+      const { data: existingRows, error: exErr } = await admin
+        .from("academy_portfolios")
+        .select("slug")
+        .eq("student_id", studentId)
+        .limit(1)
+      if (exErr) throw exErr
+      let slug = existingRows?.[0]?.slug ?? ""
+
+      // The slug is the creator's URL. It is chosen once and then frozen, so
+      // a link already sent to a brand never stops working.
+      if (!slug) {
+        const wanted = slugify(String(body.slug ?? "")) ||
+          slugify(clean.name || ent.student.name || "creator")
+        let candidate = RESERVED_SLUGS.has(wanted) ? "" : wanted
+        if (!candidate) candidate = "creator"
+        for (let attempt = 0; attempt < 25; attempt++) {
+          const trial = attempt === 0 ? candidate : `${candidate}-${attempt + 1}`
+          const { data: taken, error: takenErr } = await admin
+            .from("academy_portfolios")
+            .select("student_id")
+            .eq("slug", trial)
+            .limit(1)
+          if (takenErr) throw takenErr
+          if (!taken || taken.length === 0) {
+            slug = trial
+            break
+          }
+        }
+        if (!slug) return json(409, { error: "Could not find a free page address." }, origin)
+      }
+
+      const { error: upErr } = await admin.from("academy_portfolios").upsert(
+        {
+          student_id: studentId,
+          slug,
+          data: clean,
+          published,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "student_id" },
+      )
+      if (upErr) throw upErr
+
+      return json(200, { ok: true, slug, published }, origin)
+    }
+
+    if (type === "portfolioUpload") {
+      const studentId = String(body.studentId ?? "")
+      if (!studentId) return json(400, { error: "Missing fields." }, origin)
+
+      const ent = await portfolioEntitlement(admin, studentId)
+      if (!ent.ok) return json(403, { error: ent.reason, entitled: false }, origin)
+
+      const contentType = String(body.contentType ?? "").toLowerCase()
+      const EXT: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "video/mp4": "mp4",
+        "video/quicktime": "mov",
+      }
+      const ext = EXT[contentType]
+      if (!ext) {
+        return json(400, { error: "Pictures (JPG, PNG, WebP) or video (MP4, MOV) only." }, origin)
+      }
+
+      // Random filename rather than the one off their phone: the originals
+      // carry names like IMG_4821 or worse, and a guessable path in a public
+      // bucket is a path somebody else can guess too.
+      const rand = crypto.randomUUID().replace(/-/g, "").slice(0, 16)
+      const path = `${studentId}/${rand}.${ext}`
+
+      const { data, error } = await admin.storage
+        .from(PORTFOLIO_BUCKET)
+        .createSignedUploadUrl(path)
+      if (error) {
+        console.error("portfolio upload url failed:", error.message)
+        return json(503, { error: "File store not ready. Create the creator-portfolios bucket." }, origin)
+      }
+
+      return json(
+        200,
+        {
+          path,
+          token: data.token,
+          signedUrl: data.signedUrl,
+          bucket: PORTFOLIO_BUCKET,
+          publicUrl: publicUrl(supabaseUrl, path),
+        },
+        origin,
+      )
+    }
+
+    if (type === "portfolioPublic") {
+      const slug = slugify(String(body.slug ?? ""))
+      if (!slug) return json(400, { error: "No page asked for." }, origin)
+
+      const { data, error } = await admin
+        .from("academy_portfolios")
+        .select("student_id, data, published, updated_at")
+        .eq("slug", slug)
+        .eq("published", true)
+        .limit(1)
+      if (error) throw error
+
+      const row = data?.[0]
+      if (!row) return json(404, { error: "No page here." }, origin)
+
+      const portfolio = (row.data ?? {}) as Record<string, unknown>
+      const works = Array.isArray(portfolio.works) ? portfolio.works : []
+
+      // The credential is the point of hosting this here rather than on a
+      // free site builder, so it is read from the certificates table rather
+      // than anything the creator can type. An unapproved one is not shown.
+      const { data: certs } = await admin
+        .from("academy_certificates")
+        .select("credential_id, issued_at, approved")
+        .eq("student_id", row.student_id)
+        .eq("approved", true)
+        .order("issued_at", { ascending: true })
+        .limit(1)
+      const cert = certs?.[0]
+
+      return json(
+        200,
+        {
+          slug,
+          updatedAt: row.updated_at,
+          credentialId: cert?.credential_id ?? "",
+          certifiedAt: cert?.issued_at ?? "",
+          portfolio: {
+            ...portfolio,
+            avatar: publicUrl(supabaseUrl, String(portfolio.avatar ?? "")),
+            works: works.map((w) => {
+              const item = (w ?? {}) as Record<string, string>
+              return {
+                ...item,
+                image: publicUrl(supabaseUrl, String(item.image ?? "")),
+                video: publicUrl(supabaseUrl, String(item.video ?? "")),
+              }
+            }),
+          },
+        },
+        origin,
+      )
     }
 
     return json(400, { error: "Unknown request type." }, origin)

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your portfolio page | ClickClick Academy</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#efe9da" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="portfolio.css?v=1" />
+</head>
+<body>
+  <header class="pf-top">
+    <a class="pf-back" href="./">&larr; Academy</a>
+    <span class="pf-top-title">Your portfolio page</span>
+    <span id="pf-saved" class="pf-saved" hidden>Saved</span>
+  </header>
+
+  <main class="pf-wrap">
+    <!-- Shown while we ask the server whether this person has the tier -->
+    <div id="pf-loading" class="pf-state">
+      <p>Loading your page&hellip;</p>
+    </div>
+
+    <!-- Not signed in on this device -->
+    <div id="pf-nosession" class="pf-state" hidden>
+      <h1>Open the Academy first</h1>
+      <p>
+        Your portfolio page is tied to your Academy account. Open a course, put your
+        name and email in once, then come back here.
+      </p>
+      <p><a class="pf-btn" href="./">Go to the Academy</a></p>
+    </div>
+
+    <!-- Signed in, but on the £149 tier -->
+    <div id="pf-locked" class="pf-state" hidden>
+      <h1>This is part of Certification + Priority</h1>
+      <p id="pf-locked-why">A portfolio page is included with the £249 version of the certification.</p>
+      <p>
+        Already paid for Priority and seeing this? Email
+        <a href="mailto:hello@clickclick.video?subject=Portfolio%20page%20access">hello@clickclick.video</a>
+        with your Academy ID and it will be switched on.
+      </p>
+    </div>
+
+    <!-- The editor -->
+    <form id="pf-editor" class="pf-editor" hidden autocomplete="off">
+      <p class="pf-intro">
+        This is the page brands open when we send them your link. Fill it in, upload
+        your work, and press publish. You can change it whenever you like.
+      </p>
+
+      <section class="pf-card">
+        <h2>Your link</h2>
+        <p class="pf-note" id="pf-slug-note">Pick the address this page lives at. It is set once and never changes after that, so a link you already sent keeps working.</p>
+        <div class="pf-slug-row">
+          <span class="pf-slug-base">clickclick.video/creators/p/?c=</span>
+          <input id="pf-slug" name="slug" type="text" maxlength="40" placeholder="your-name" />
+        </div>
+        <p class="pf-live" id="pf-live" hidden>
+          Live at <a id="pf-live-link" href="#" target="_blank" rel="noopener">your page</a>
+        </p>
+      </section>
+
+      <section class="pf-card">
+        <h2>Who you are</h2>
+        <div class="pf-grid">
+          <label>Name
+            <input id="pf-name" type="text" maxlength="60" placeholder="Kathryn Donnelly" required />
+          </label>
+          <label>One line on what you make
+            <input id="pf-headline" type="text" maxlength="90" placeholder="Short-form product video for beauty and home brands" />
+          </label>
+          <label>Where you are
+            <input id="pf-location" type="text" maxlength="60" placeholder="Belfast, ships anywhere" />
+          </label>
+          <label>Rates line (optional)
+            <input id="pf-rates" type="text" maxlength="120" placeholder="Packages from £250, rate card on request" />
+          </label>
+        </div>
+        <label class="pf-block">A short paragraph about your work
+          <textarea id="pf-bio" maxlength="400" rows="4" placeholder="What you film, who you film it for, and anything a brand would want to know before they ask."></textarea>
+        </label>
+        <div class="pf-grid">
+          <label>Email brands should use
+            <input id="pf-email" type="email" maxlength="120" placeholder="you@example.com" />
+          </label>
+          <label>Instagram handle
+            <input id="pf-instagram" type="text" maxlength="40" placeholder="yourhandle" />
+          </label>
+          <label>TikTok handle
+            <input id="pf-tiktok" type="text" maxlength="40" placeholder="yourhandle" />
+          </label>
+          <label>Website (optional)
+            <input id="pf-website" type="url" maxlength="500" placeholder="https://" />
+          </label>
+        </div>
+        <div class="pf-upload-row">
+          <div class="pf-avatar-preview" id="pf-avatar-preview" aria-hidden="true"></div>
+          <div>
+            <label class="pf-file">
+              <input id="pf-avatar" type="file" accept="image/jpeg,image/png,image/webp" />
+              <span>Upload a photo of you</span>
+            </label>
+            <p class="pf-note">A square-ish picture works best. JPG, PNG or WebP, up to 25MB.</p>
+            <button type="button" class="pf-link-btn" id="pf-avatar-clear" hidden>Remove photo</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="pf-card">
+        <h2>How it looks</h2>
+        <p class="pf-note">Pick a background and a highlight colour. You can see the result by opening your page.</p>
+        <fieldset class="pf-choices">
+          <legend>Background</legend>
+          <div class="pf-theme-row" id="pf-themes"></div>
+        </fieldset>
+        <fieldset class="pf-choices">
+          <legend>Highlight colour</legend>
+          <div class="pf-accent-row" id="pf-accents"></div>
+        </fieldset>
+      </section>
+
+      <section class="pf-card">
+        <h2>Your work</h2>
+        <p class="pf-note">Up to eight pieces, strongest first. Each one needs a title. Add a link, a picture, or a video file, whichever you have.</p>
+        <div id="pf-works" class="pf-works"></div>
+        <button type="button" class="pf-btn pf-btn-quiet" id="pf-add-work">Add another piece</button>
+      </section>
+
+      <p id="pf-error" class="pf-error" hidden></p>
+
+      <div class="pf-actions">
+        <button type="button" class="pf-btn pf-btn-quiet" id="pf-save-draft">Save as a draft</button>
+        <button type="submit" class="pf-btn" id="pf-publish">Publish my page</button>
+        <button type="button" class="pf-btn pf-btn-quiet" id="pf-unpublish" hidden>Take it offline</button>
+      </div>
+      <p class="pf-note pf-foot">
+        A draft is only visible to you. Publishing puts it at the link above, where anyone
+        with the address can read it. Nothing here is graded and nobody at ClickClick marks it.
+      </p>
+    </form>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="portfolio.js?v=1"></script>
+</body>
+</html>
