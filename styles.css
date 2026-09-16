@@ -2259,3 +2259,120 @@ input {
   transform: rotateY(180deg);
   font-weight: 500;
 }
+
+/* ---- Lesson teaching body + take-away resources ---- */
+
+.lesson-body {
+  margin: 0 0 0.9rem;
+}
+
+.lesson-body-h {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 1rem 0 0.35rem;
+  letter-spacing: 0.01em;
+}
+
+.lesson-body .lesson-body-h:first-child {
+  margin-top: 0;
+}
+
+.lesson-body-p {
+  font-size: 0.85rem;
+  line-height: 1.62;
+  color: var(--ink);
+  margin: 0 0 0.6rem;
+}
+
+.lesson-body-list {
+  margin: 0 0 0.7rem;
+  padding-left: 1.05rem;
+}
+
+.lesson-body-list li {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--ink);
+  margin-bottom: 0.32rem;
+}
+
+.lesson-body-note {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--mid);
+  border-left: 2px solid var(--pink);
+  padding: 0.1rem 0 0.1rem 0.65rem;
+  margin: 0 0 0.7rem;
+}
+
+.lesson-resource {
+  border: 1px solid rgba(0, 0, 0, 0.09);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  margin: 0 0 0.5rem;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.resource-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.resource-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--turquoise-deep);
+}
+
+.resource-copy-btn {
+  font-size: 0.74rem;
+}
+
+.resource-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 0.25rem;
+}
+
+.resource-note {
+  font-size: 0.79rem;
+  line-height: 1.5;
+  color: var(--mid);
+  margin: 0 0 0.6rem;
+}
+
+.resource-group {
+  margin-bottom: 0.65rem;
+}
+
+.resource-group:last-child {
+  margin-bottom: 0;
+}
+
+.resource-group-name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--mid);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.25rem;
+}
+
+.resource-items {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.resource-items li {
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--ink);
+  margin-bottom: 0.28rem;
+}

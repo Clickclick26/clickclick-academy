@@ -1325,6 +1325,75 @@
     );
   }
 
+  // The actual teaching content of a lesson. `body` is an array of sections,
+  // each { h?, p?: [..], list?: [..], note? }. Kept as structured data rather
+  // than a blob of HTML in courses.json so nothing in the JSON can inject
+  // markup: every string still goes through esc().
+  function lessonBodyHtml(body) {
+    if (!body || !body.length) return '';
+    return (
+      '<div class="lesson-body">' +
+      body
+        .map(function (sec) {
+          var out = '';
+          if (sec.h) out += '<h5 class="lesson-body-h">' + esc(sec.h) + '</h5>';
+          (sec.p || []).forEach(function (para) {
+            out += '<p class="lesson-body-p">' + esc(para) + '</p>';
+          });
+          if (sec.list && sec.list.length) {
+            out +=
+              '<ul class="lesson-body-list">' +
+              sec.list
+                .map(function (li) {
+                  return '<li>' + esc(li) + '</li>';
+                })
+                .join('') +
+              '</ul>';
+          }
+          if (sec.note) out += '<p class="lesson-body-note">' + esc(sec.note) + '</p>';
+          return out;
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  // A take-away asset attached to a lesson: an invoice template, a contract
+  // skeleton, a bank of openers. Rendered as grouped lines with a copy button,
+  // because a template you have to retype by hand off a screen is a template
+  // nobody uses. Copy falls back to a select-all prompt where the clipboard
+  // API is blocked (older Safari, non-secure contexts).
+  function lessonResourceHtml(res) {
+    if (!res || !res.groups || !res.groups.length) return '';
+    var groupsHtml = res.groups
+      .map(function (g) {
+        return (
+          '<div class="resource-group">' +
+          (g.name ? '<p class="resource-group-name">' + esc(g.name) + '</p>' : '') +
+          '<ul class="resource-items">' +
+          (g.items || [])
+            .map(function (it) {
+              return '<li>' + esc(it) + '</li>';
+            })
+            .join('') +
+          '</ul>' +
+          '</div>'
+        );
+      })
+      .join('');
+    return (
+      '<div class="lesson-resource" data-resource="1">' +
+      '<div class="resource-head">' +
+      '<span class="resource-label">Take this with you</span>' +
+      '<button type="button" class="link-btn resource-copy-btn">Copy as text</button>' +
+      '</div>' +
+      (res.title ? '<p class="resource-title">' + esc(res.title) + '</p>' : '') +
+      (res.note ? '<p class="resource-note">' + esc(res.note) + '</p>' : '') +
+      groupsHtml +
+      '</div>'
+    );
+  }
+
   function lessonHtml(lesson, state, justUnlockedNum, selfPaced) {
     // state: 'locked' | 'open' | 'submitted'. selfPaced courses (no
     // deliverable grading, e.g. the CLocal creator courses) skip the
@@ -1391,6 +1460,7 @@
       lessonVideoHtml(lesson.video) +
       (!lesson.video ? lessonMediaPlaceholderHtml('video', lesson.videoNote) : '') +
       (lesson.overview ? '<p class="lesson-overview">' + esc(lesson.overview) + '</p>' : '') +
+      lessonBodyHtml(lesson.body) +
       lessonFigureHtml(lesson.figure) +
       dmMockupHtml(lesson.dmMockup) +
       '<div class="lesson-field lesson-field--interactive">' +
@@ -1398,6 +1468,7 @@
       '<span class="lesson-field-body">' + esc(lesson.interactive || '') + '</span>' +
       '</div>' +
       (lesson.activity ? activityHtml(lesson.num, lesson.activity) : '') +
+      lessonResourceHtml(lesson.resource) +
       '<div class="lesson-field lesson-field--deliverable">' +
       '<span class="lesson-field-label">' + (selfPaced ? 'Worth trying' : 'Deliverable') + '</span>' +
       '<span class="lesson-field-body">' + esc(lesson.deliverable || '') + '</span>' +
@@ -2329,6 +2400,39 @@
       if (lessonNum && card) submitLesson(lessonNum, card);
       return;
     }
+    var copyBtn = e.target.closest('.resource-copy-btn');
+    if (copyBtn) {
+      var resBox = copyBtn.closest('.lesson-resource');
+      if (resBox) {
+        var parts = [];
+        var t = resBox.querySelector('.resource-title');
+        if (t) parts.push(t.textContent, '');
+        resBox.querySelectorAll('.resource-group').forEach(function (g) {
+          var nm = g.querySelector('.resource-group-name');
+          if (nm) parts.push(nm.textContent);
+          g.querySelectorAll('.resource-items li').forEach(function (li) {
+            parts.push('- ' + li.textContent);
+          });
+          parts.push('');
+        });
+        var text = parts.join('\n').trim();
+        var done = function () {
+          copyBtn.textContent = 'Copied';
+          setTimeout(function () { copyBtn.textContent = 'Copy as text'; }, 1800);
+        };
+        // navigator.clipboard is undefined outside a secure context, and can
+        // reject even inside one, so both paths fall back to a manual select.
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () {
+            window.prompt('Copy this:', text);
+          });
+        } else {
+          window.prompt('Copy this:', text);
+        }
+      }
+      return;
+    }
+
     var resubmitBtn = e.target.closest('.lesson-resubmit-btn');
     if (resubmitBtn && currentDetailCourse) {
       // Re-render this lesson as its open (form) state so they can redo it;
