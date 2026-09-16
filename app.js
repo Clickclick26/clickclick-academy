@@ -2431,51 +2431,6 @@
   // after the first has already rendered.
   var unlockInFlight = false;
 
-  // Transitional: the server-side "content" action is the real gate, but until
-  // it is deployed the course text is still sitting in public courses.json /
-  // packs.json next to this file. Rather than ship a front end that only works
-  // after a backend deploy (and a dead site in between), an old backend falls
-  // back to the public files exactly as before.
-  //
-  // The fallback fires only when the function itself says it does not know the
-  // action. A wrong code, or a network failure, is NOT a reason to fall back:
-  // doing that would hand the whole catalogue to anyone the moment the backend
-  // hiccuped, which is the bug this is all meant to fix. It also runs at most
-  // once per attempt, so there is no retry loop.
-  function legacyPublicContent(code) {
-    return Promise.all([
-      fetch('courses.json', { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) throw new Error('courses');
-        return r.json();
-      }),
-      fetch('packs.json', { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) throw new Error('packs');
-        return r.json();
-      }),
-    ]).then(function (pair) {
-      var courses = Array.isArray(pair[0]) ? pair[0] : [];
-      var packs = pair[1] && typeof pair[1] === 'object' ? pair[1] : {};
-      var trimmed = String(code || '').trim();
-      var key = packs[trimmed]
-        ? trimmed
-        : Object.keys(packs).filter(function (k) {
-            return k.toLowerCase() === trimmed.toLowerCase();
-          })[0];
-      if (!key) throw new Error('That code did not work.');
-      var pack = packs[key];
-      var ids = pack.courseIds || [];
-      return {
-        code: key,
-        label: pack.label || key,
-        audience: pack.audience || '',
-        courseIds: ids,
-        courses: courses.filter(function (c) {
-          return ids.indexOf(c.id) > -1;
-        }),
-      };
-    });
-  }
-
   function unlockWithCode(code, opts) {
     if (unlockInFlight) return;
     unlockInFlight = true;
@@ -2485,18 +2440,6 @@
       gateBtn.textContent = 'Checking…';
     }
     academyApi({ type: 'content', accessCode: code })
-      .catch(function (e) {
-        // Two ways the backend can say "the server-side catalogue isn't there
-        // yet": an old function that has never heard of the action, and a new
-        // one deployed before its storage bucket exists. Both mean fall back
-        // to the public files. Neither is a wrong code and neither is a
-        // network failure, which still must NOT fall back.
-        var msg = e.message || '';
-        if (/unknown request type/i.test(msg) || /content store not configured/i.test(msg)) {
-          return legacyPublicContent(code);
-        }
-        throw e;
-      })
       .then(function (data) {
         enterWithContent(data);
       })

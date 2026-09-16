@@ -1,0 +1,24 @@
+# GitHub Pages publishes every tracked file in this repo as a public URL. That
+# is how 20,000 words of paid course text ended up readable at
+# academy.clickclick.video/courses.json with no access code, and how the
+# database SQL and internal drafts below were readable too.
+#
+# Jekyll runs by default here (there is no .nojekyll), so this exclude list is
+# what actually keeps these paths off the web. Anything internal goes in here.
+# Verify after deploying: the URLs below must return 404, not 200.
+exclude:
+  # The course itself. Lives in the private Supabase bucket academy-content
+  # and is served per access code by the academy-progress edge function.
+  - content-source/
+
+  # Database schema, migrations and the setup script. Publishing your own
+  # table structure is free reconnaissance for anyone poking at the backend.
+  - supabase/
+
+  # Internal drafts and specs, including the refund waiver working notes.
+  - docs/
+
+  # Repo housekeeping, no reason for any of it to be on the web.
+  - README.md
+  - CLAUDE.md
+  - AGENTS.md
