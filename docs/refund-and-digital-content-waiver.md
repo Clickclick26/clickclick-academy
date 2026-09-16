@@ -1,59 +1,97 @@
-# Refund policy and digital content waiver (draft)
+# Refunds and the digital content waiver
 
-Not wired into anything yet, there's no checkout to put it on. This is
-ready to paste in once the Stripe/entitlement build from Damon's list
-happens. **Get a solicitor to check the exact wording before it goes live**,
-this is a real consumer-protection area (UK Consumer Contracts
-Regulations 2013) and getting it wrong either loses you the protection
-below or actually breaks the law. This draft gets the shape right, not
-the final legal wording.
+The customer-facing page is live at `refund-policy.html`, linked quietly from
+the Academy footer. This file is the spec for the checkout half, which cannot
+be built until a checkout exists.
 
-## Why this exists
+**Get a solicitor to check the wording before you take a single payment.**
+This is real consumer-protection law (Consumer Contracts (Information,
+Cancellation and Additional Charges) Regulations 2013, and the Consumer
+Rights Act 2015). The shape here is right. The final wording is not Claude's
+to sign off.
 
-UK law gives online buyers 14 days to cancel and get a refund by default,
-even after they've started using digital content, unless you specifically
-ask for and get their consent to waive that right before they get access.
-Without that consent, ticked at the right moment, someone could finish
-all 32 lessons and still be entitled to a full refund on cancellation.
+---
 
-## The checkout checkbox (required, not pre-ticked)
+## The one rule that decides everything
 
-Show this at the point of payment, right before the pay button. It must
-be an active tick, never pre-checked:
+UK consumers get 14 days to cancel an online purchase and get a full refund,
+even after using it. For digital content delivered immediately there is an
+exception, but it only applies if **all three** of these happened:
 
-> ☐ I want access straight away, and understand that once I start the
-> course I give up my 14-day right to cancel for a refund.
+1. The buyer gave **express consent** to getting access before the 14 days
+   were up, and
+2. The buyer **acknowledged** that doing so loses them the cancellation
+   right, and
+3. The trader gave them **confirmation of that consent and acknowledgement**
+   on a durable medium (the order confirmation email counts).
 
-Standard consumer-rights link should sit next to it:
+Miss any one and the waiver is void. The buyer keeps the full 14-day right,
+finishes all 32 lessons, and is legally entitled to their money back.
 
-> [What are my rights?] → a short page or paragraph explaining the normal
-> 14-day cancellation right, and that ticking this box waives it because
-> the content is delivered digitally and starts immediately.
+## Why "hide it" does not work
 
-## Refund policy paragraph (for the sales page)
+Kathryn asked whether the wording could be hard to find. On the goodwill
+refund, yes, freely. On the waiver, no, and not for squeamish reasons: a
+buried consent is not express consent, so burying it **destroys the
+protection it exists to give**. A hidden waiver is worse than no waiver,
+because you think you are covered and you are not. It is also a misleading
+omission under the Consumer Protection from Unfair Trading Regulations 2008.
 
-> **Refunds.** Buying gets you instant access, so by law that means giving
-> up the standard 14-day cooling-off period, you'll be asked to confirm
-> this at checkout. That said: if you start the course and it's genuinely
-> not for you, email hello@clickclick.video within 7 days of purchase and
-> ask for a refund. We'll honour it as long as you haven't completed the
-> course or downloaded the certificate.
+So the split is:
 
-(The 7-day goodwill window and the "haven't completed/no certificate yet"
-condition are business calls, not legal requirements, change freely.
-The legal bit is only the checkbox above.)
+| Thing | Must be visible? | Why |
+|---|---|---|
+| The checkout tick box | **Yes, plainly** | Void otherwise. This is the whole point. |
+| The refund policy page | Reachable | A quiet footer link is normal and fine. |
+| The 7-day goodwill refund | No | Not a legal requirement at all. Shrink it or bin it. |
 
-## What this does NOT cover
+## The checkout tick box (required)
 
-- Doesn't touch the CLocal Creator Programme (free, no payment, not in
-  scope for any of this).
-- Doesn't touch chargebacks/disputes through Stripe directly, that's a
-  separate process Stripe handles.
-- Assumes UK consumer law as the baseline since ClickClick is UK-based.
-  If selling to buyers elsewhere (EU, US) becomes real, the rules differ
-  and this draft would need revisiting.
+Directly above the pay button. **Never pre-ticked.** The buyer cannot pay
+until it is ticked.
 
-## Sources used for this draft (not a substitute for actual legal advice)
+```html
+<label class="checkout-consent">
+  <input type="checkbox" id="consent-waiver" name="consent-waiver" required />
+  <span>
+    I want access straight away, and I understand that once the course is
+    made available to me I lose my 14-day right to cancel for a refund.
+  </span>
+</label>
+<p class="checkout-consent-link">
+  <a href="/refund-policy.html" target="_blank" rel="noopener">Refunds and cancellation</a>
+</p>
+```
+
+One sentence, plain, no scare block. That is as light as it can legally be.
+
+## After payment
+
+The order confirmation email must repeat the consent back to them. This is
+point 3 above and it is the one people forget.
+
+> You told us at checkout that you wanted access straight away, and that you
+> understood this means you no longer have the 14-day right to cancel for a
+> refund. You still have your rights if anything is faulty or not as
+> described.
+
+Store the consent against the order: timestamp, the exact wording shown, and
+the fact it was ticked. If a chargeback ever comes in, that record is the
+evidence.
+
+## What is deliberately NOT prominent
+
+The 7-day goodwill refund. It is on the policy page, it is honoured, and it
+is not advertised on the sales page. That is entirely Kathryn's call and
+entirely legal, because nothing obliges her to offer it.
+
+## Out of scope
+
+- The CLocal Creator Programme. Free, no payment, nothing to refund.
+- Stripe chargebacks and disputes. Separate process, Stripe's own rules.
+- Non-UK buyers. EU and US rules differ. Revisit if that becomes real.
+
+## Sources (not legal advice)
 
 - Which?, [Consumer Contracts Regulations](https://www.which.co.uk/consumer-rights/regulation/consumer-contracts-regulations-ajWHC8m21cAk)
-- Rocket Lawyer UK, [consumer rights when buying digital content](https://www.rocketlawyer.com/gb/en/family-and-personal/buy-and-sell-goods/legal-guide/consumer-rights-when-purchasing-digital-content)
+- Rocket Lawyer UK, [consumer rights when purchasing digital content](https://www.rocketlawyer.com/gb/en/family-and-personal/buy-and-sell-goods/legal-guide/consumer-rights-when-purchasing-digital-content)

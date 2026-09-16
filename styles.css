@@ -2376,3 +2376,23 @@ input {
   color: var(--ink);
   margin-bottom: 0.28rem;
 }
+
+/* Legal link in the footer: present and reachable, deliberately quiet.
+   The refund page has to be findable (and the checkout consent line has to
+   be plainly visible, or the 14-day waiver is not valid), but neither
+   belongs in the middle of the course UI. */
+.foot-legal {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--light);
+}
+
+.foot-legal a {
+  color: var(--light);
+  text-decoration: none;
+}
+
+.foot-legal a:hover {
+  color: var(--mid);
+  text-decoration: underline;
+}
