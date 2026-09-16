@@ -1,2 +1,12 @@
 supabase/.temp/
 .DS_Store
+
+# The course content is the paid product and must never be tracked here.
+# This repo is public and serves GitHub Pages, so anything committed is
+# downloadable from raw.githubusercontent.com regardless of what _config.yml
+# excludes: the exclude only governs the website, not the repo.
+# Source of truth: the private repo Clickclick26/clickclick-academy-content.
+# Live copy: the private Supabase bucket academy-content.
+courses.json
+packs.json
+content-source/

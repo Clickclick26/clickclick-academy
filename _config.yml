@@ -7,9 +7,10 @@
 # what actually keeps these paths off the web. Anything internal goes in here.
 # Verify after deploying: the URLs below must return 404, not 200.
 exclude:
-  # The course itself. Lives in the private Supabase bucket academy-content
-  # and is served per access code by the academy-progress edge function.
-  - content-source/
+  # NOTE: excluding a path here only stops the WEBSITE serving it. It does
+  # nothing about the repo being public, so a tracked file is still readable
+  # from raw.githubusercontent.com. The course content is therefore not in
+  # this repo at all: see .gitignore.
 
   # Database schema, migrations and the setup script. Publishing your own
   # table structure is free reconnaissance for anyone poking at the backend.
