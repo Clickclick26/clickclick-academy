@@ -43,6 +43,12 @@
 //              service role can read, the code is checked here, and a caller gets
 //              back ONLY the courses their pack allows. A wrong code gets 401 and
 //              no course data at all, not even titles.
+//   lookupBuyer {adminKey, query} -> {codes, students}
+//              Everything known about one buyer, searched by email or code, for
+//              when they write in having lost the code or thinking their
+//              progress is gone. Progress is keyed to the student in the
+//              database, never to the browser, so a wiped phone loses nothing:
+//              the same email brings the same record back. REQUIRES adminKey.
 //   portfolioGet    {studentId} -> the creator's own portfolio page, for editing
 //   portfolioSave   {studentId, slug?, portfolio, published} -> {ok, slug}
 //   portfolioUpload {studentId, contentType} -> a signed URL to upload one file
@@ -168,6 +174,56 @@ function findPack(packs: Record<string, PackRow>, code: string) {
   }
   return null
 }
+// Codes come from two places now. packs.json holds the shared internal and
+// CLocal ones. Anything bought through Stripe gets its own row in
+// academy_access_codes, issued by the academy-stripe function, and that row
+// says which pack it opens. Checking packs.json first keeps every existing
+// code working and keeps the common path free of a database round trip.
+//
+// A revoked code resolves to nothing at all, which is the whole refund and
+// chargeback story: the course, the portfolio page and any new certificate
+// all go through here, so revoking one row closes all three.
+async function resolvePack(
+  admin: AdminClient,
+  packs: Record<string, PackRow>,
+  rawCode: unknown,
+): Promise<{ code: string; pack: PackRow; buyer?: { email: string; tier: string } } | null> {
+  const direct = findPack(packs, String(rawCode ?? ""))
+  if (direct) return direct
+
+  const code = String(rawCode ?? "").trim().toUpperCase()
+  if (!code) return null
+
+  const { data, error } = await admin
+    .from("academy_access_codes")
+    .select("code, pack, email, tier, revoked, redeemed_at")
+    .eq("code", code)
+    .limit(1)
+  // The table may not exist yet on a project where the SQL has not been run.
+  // Treat that as "no such code" rather than a 500, so the shared codes in
+  // packs.json keep working either way.
+  if (error) {
+    console.error("access code lookup failed:", error.message)
+    return null
+  }
+
+  const row = data?.[0]
+  if (!row || row.revoked === true) return null
+  const pack = packs[row.pack]
+  if (!pack) return null
+
+  // First use stamps the row, so "has this buyer ever actually opened it"
+  // is answerable without trawling progress.
+  if (!row.redeemed_at) {
+    await admin
+      .from("academy_access_codes")
+      .update({ redeemed_at: new Date().toISOString() })
+      .eq("code", row.code)
+  }
+
+  return { code: row.code, pack, buyer: { email: row.email, tier: row.tier } }
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // deno-lint-ignore no-explicit-any
@@ -286,7 +342,7 @@ async function portfolioEntitlement(admin: AdminClient, studentId: string) {
   if (!student) return { ok: false as const, reason: "No such student." }
 
   const content = await loadContent(admin)
-  const pack = findPack(content.packs, String(student.access_code ?? ""))
+  const pack = await resolvePack(admin, content.packs, student.access_code)
   if (!pack || pack.pack.portfolio !== true) {
     return { ok: false as const, reason: "A portfolio page is part of Certification + Priority." }
   }
@@ -486,7 +542,7 @@ Deno.serve(async (req) => {
         return json(503, { error: "Content store not configured." }, origin)
       }
       const { courses, packs } = loaded
-      const match = findPack(packs, String(body.accessCode ?? ""))
+      const match = await resolvePack(admin, packs, body.accessCode)
       // Same 401 and same shape whether the code is unknown or empty, so the
       // response can't be used to probe which codes exist.
       if (!match) return json(401, { error: "That code did not work." }, origin)
@@ -586,7 +642,7 @@ Deno.serve(async (req) => {
       const studentRecord = certStudent?.[0]
       if (!studentRecord) return json(404, { error: "No such student." }, origin)
 
-      const pack = findPack(content.packs, String(studentRecord.access_code ?? ""))
+      const pack = await resolvePack(admin, content.packs, studentRecord.access_code)
       if (!pack || !(pack.pack.courseIds ?? []).includes(courseId)) {
         return json(403, { error: "That course is not on your access code." }, origin)
       }
@@ -961,6 +1017,91 @@ Deno.serve(async (req) => {
         },
         origin,
       )
+    }
+
+    // Everything known about one buyer, for when they write in saying they
+    // have lost their code or their progress has vanished. Search by email or
+    // by code. Behind the same admin key as the directory, because between
+    // them these read every buyer's name, email and payment.
+    //
+    // Progress lives in the database and is keyed to the student, not the
+    // browser, so a wiped phone loses nothing: they put the same email back
+    // in and the same record comes back. This action is how that gets checked
+    // rather than guessed at.
+    if (type === "lookupBuyer") {
+      const adminKey = Deno.env.get("ACADEMY_ADMIN_KEY")
+      if (!adminKey) return json(500, { error: "Not configured." }, origin)
+      if (!timingSafeEqual(String(body.adminKey ?? ""), adminKey)) {
+        return json(401, { error: "Not authorised." }, origin)
+      }
+
+      const query = String(body.query ?? "").trim()
+      if (query.length < 3) return json(400, { error: "Give me an email or a code." }, origin)
+
+      const { data: codeRows } = await admin
+        .from("academy_access_codes")
+        .select(
+          "code, pack, tier, email, name, amount_total, currency, consent, issued_at, redeemed_at, revoked, revoked_reason, stripe_session_id",
+        )
+        .or(`code.eq.${query.toUpperCase()},email.ilike.%${query}%`)
+        .order("issued_at", { ascending: false })
+        .limit(20)
+
+      // Match on the email they typed, and on any email attached to a code
+      // they typed, so a code alone is enough to find the person.
+      const emails = new Set<string>()
+      if (query.includes("@")) emails.add(query.toLowerCase())
+      for (const row of codeRows ?? []) if (row.email) emails.add(String(row.email).toLowerCase())
+
+      const students: Array<Record<string, unknown>> = []
+      for (const email of Array.from(emails).slice(0, 10)) {
+        const { data: found } = await admin
+          .from("academy_students")
+          .select("id, name, email, access_code, region, created_at")
+          .ilike("email", email)
+          .limit(5)
+        for (const student of found ?? []) {
+          const { data: progress } = await admin
+            .from("academy_progress")
+            .select("course_id, lesson_num, submitted_at")
+            .eq("student_id", student.id)
+
+          const byCourse: Record<string, { done: number; last: string | null }> = {}
+          for (const row of progress ?? []) {
+            const key = String(row.course_id)
+            if (!byCourse[key]) byCourse[key] = { done: 0, last: null }
+            byCourse[key].done += 1
+            const at = String(row.submitted_at ?? "")
+            if (at && (!byCourse[key].last || at > byCourse[key].last!)) byCourse[key].last = at
+          }
+
+          const { data: certs } = await admin
+            .from("academy_certificates")
+            .select("credential_id, course_id, issued_at, approved")
+            .eq("student_id", student.id)
+
+          const { data: portfolio } = await admin
+            .from("academy_portfolios")
+            .select("slug, published, updated_at")
+            .eq("student_id", student.id)
+            .limit(1)
+
+          students.push({
+            studentId: student.id,
+            academyId: academyId(student.id),
+            name: student.name,
+            email: student.email,
+            accessCode: student.access_code,
+            region: student.region ?? "",
+            joinedAt: student.created_at ?? null,
+            progress: byCourse,
+            certificates: certs ?? [],
+            portfolio: portfolio?.[0] ?? null,
+          })
+        }
+      }
+
+      return json(200, { codes: codeRows ?? [], students }, origin)
     }
 
     return json(400, { error: "Unknown request type." }, origin)

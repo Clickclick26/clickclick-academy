@@ -44,6 +44,18 @@
     </div>
 
     <div class="admin-card">
+      <h2>Find one buyer</h2>
+      <p class="sub">For "I have lost my code" and "my progress has gone". Search by the email they paid with, or by the code itself. Progress is saved against their email in the database, never in their browser, so a wiped phone loses nothing: the same email brings the same record back.</p>
+      <div class="field">
+        <label for="buyer-input">Email address or access code</label>
+        <input id="buyer-input" type="text" placeholder="e.g. name@example.com or CC-ABCD-EFGH" />
+      </div>
+      <button type="button" id="buyer-go" class="btn primary">Look them up</button>
+      <p class="sub" id="buyer-status"></p>
+      <div id="buyer-results"></div>
+    </div>
+
+    <div class="admin-card">
       <h2>Search</h2>
       <div class="field">
         <label for="search-input">Filter by name, email, course, or Academy ID</label>
@@ -334,6 +346,97 @@
           // for a feature that is not deployed.
         });
     }
+
+    // --- Find one buyer ---------------------------------------------------
+    // Reads the access code issued against their Stripe payment, plus their
+    // student record, progress, certificates and portfolio page. This is the
+    // answer to both "where is my code" and "is my progress really gone".
+    function renderBuyer(data) {
+      var out = [];
+      var codes = data.codes || [];
+      var students = data.students || [];
+
+      if (!codes.length && !students.length) {
+        document.getElementById('buyer-results').innerHTML = '';
+        document.getElementById('buyer-status').textContent =
+          'Nothing found. Try the other email, or the one on the card.';
+        return;
+      }
+
+      if (codes.length) {
+        out.push('<h3>Codes bought</h3>');
+        out.push('<table class="directory-table"><thead><tr>' +
+          '<th>Code</th><th>Tier</th><th>Email</th><th>Paid</th><th>Bought</th><th>First used</th><th>Status</th>' +
+          '</tr></thead><tbody>');
+        codes.forEach(function (c) {
+          var paid = c.amount_total == null
+            ? '&mdash;'
+            : (c.currency === 'gbp' ? '£' : '') + (c.amount_total / 100).toFixed(2);
+          out.push('<tr>' +
+            '<td><strong>' + esc(c.code) + '</strong></td>' +
+            '<td>' + esc(c.tier) + '</td>' +
+            '<td>' + esc(c.email) + '</td>' +
+            '<td>' + paid + '</td>' +
+            '<td>' + esc(String(c.issued_at || '').slice(0, 10)) + '</td>' +
+            '<td>' + (c.redeemed_at ? esc(String(c.redeemed_at).slice(0, 10)) : 'never') + '</td>' +
+            '<td>' + (c.revoked ? 'REVOKED (' + esc(c.revoked_reason || '') + ')' : 'active') + '</td>' +
+            '</tr>');
+        });
+        out.push('</tbody></table>');
+      }
+
+      students.forEach(function (st) {
+        out.push('<h3>' + esc(st.name) + ' &middot; ' + esc(st.academyId) + '</h3>');
+        out.push('<p class="sub">' + esc(st.email) + ' &middot; code on file: ' +
+          esc(st.accessCode || 'none') + '</p>');
+
+        var courses = Object.keys(st.progress || {});
+        if (!courses.length) {
+          out.push('<p class="sub">No lessons marked done yet.</p>');
+        } else {
+          out.push('<ul>');
+          courses.forEach(function (id) {
+            var p = st.progress[id];
+            out.push('<li>' + esc(id) + ': <strong>' + p.done + '</strong> lessons done' +
+              (p.last ? ', last on ' + esc(String(p.last).slice(0, 10)) : '') + '</li>');
+          });
+          out.push('</ul>');
+        }
+
+        (st.certificates || []).forEach(function (c) {
+          out.push('<p class="sub">Certificate ' + esc(c.credential_id) + ' for ' +
+            esc(c.course_id) + (c.approved === false ? ' (NOT approved)' : '') + '</p>');
+        });
+
+        if (st.portfolio) {
+          out.push('<p class="sub">Portfolio page: ' + esc(st.portfolio.slug) +
+            (st.portfolio.published ? ' (live)' : ' (draft)') + '</p>');
+        }
+      });
+
+      document.getElementById('buyer-results').innerHTML = out.join('');
+      document.getElementById('buyer-status').textContent = '';
+    }
+
+    function lookupBuyer() {
+      var query = document.getElementById('buyer-input').value.trim();
+      var status = document.getElementById('buyer-status');
+      if (query.length < 3) {
+        status.textContent = 'Give me an email or a code.';
+        return;
+      }
+      var key = getAdminKey(false);
+      if (!key) return;
+      status.textContent = 'Looking…';
+      academyApi({ type: 'lookupBuyer', adminKey: key, query: query })
+        .then(renderBuyer)
+        .catch(function (err) { status.textContent = 'Could not look that up: ' + err.message; });
+    }
+
+    document.getElementById('buyer-go').addEventListener('click', lookupBuyer);
+    document.getElementById('buyer-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') lookupBuyer();
+    });
 
     loadPending();
 
