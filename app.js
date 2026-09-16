@@ -2486,7 +2486,13 @@
     }
     academyApi({ type: 'content', accessCode: code })
       .catch(function (e) {
-        if (/unknown request type/i.test(e.message || '')) {
+        // Two ways the backend can say "the server-side catalogue isn't there
+        // yet": an old function that has never heard of the action, and a new
+        // one deployed before its storage bucket exists. Both mean fall back
+        // to the public files. Neither is a wrong code and neither is a
+        // network failure, which still must NOT fall back.
+        var msg = e.message || '';
+        if (/unknown request type/i.test(msg) || /content store not configured/i.test(msg)) {
           return legacyPublicContent(code);
         }
         throw e;
