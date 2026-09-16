@@ -1328,6 +1328,17 @@
   // done:true the moment you click anything, right or wrong, which is fine for
   // "try it" and useless for a gate. Here a wrong answer explains itself and
   // lets you go again, and the lesson only opens when every question is right.
+  // True when the checkable part of a lesson is done. Graded activities
+  // (quiz, match, sequence, graded checklist) record done themselves; the
+  // 13 lessons with an open-ended activity carry a gate quiz instead, and
+  // that has to be actually passed, not merely touched.
+  function lessonChecksPassed(lesson) {
+    if (!lesson) return true;
+    if (lesson.gate) return gatePassed(lesson);
+    if (!lesson.activity) return true;
+    return !!getLessonActivityState(lesson.num).done;
+  }
+
   function gateStateKey(lessonNum) {
     return lessonNum + '::gate';
   }
@@ -1464,39 +1475,42 @@
             : '';
     var submitted = !selfPaced && state === 'submitted' ? lesson._submitted : null;
 
+    // Nothing is sent to ClickClick any more. A student marks their own lesson
+    // done, and the button only opens once the lesson's checkable part is
+    // passed: the graded activity where there is one, and the gate quiz on the
+    // 13 lessons whose activity has no right answer. So "self-marked" still
+    // means they demonstrably did something, not that they clicked a button.
     var actionHtml;
+    var checkOk = lessonChecksPassed(lesson);
     if (selfPaced) {
       actionHtml = '';
     } else if (state === 'locked') {
       actionHtml =
-        '<p class="lesson-locked-note">Submit the lesson before this one to unlock it.</p>';
+        '<p class="lesson-locked-note">Finish the lesson before this one to open it.</p>';
     } else if (state === 'submitted') {
       actionHtml =
         '<div class="lesson-submitted-box">' +
-        (submitted && submitted.note
-          ? '<p class="lesson-submitted-note">' + esc(submitted.note) + '</p>'
-          : '') +
-        (submitted && submitted.filePath
-          ? '<p class="lesson-submitted-file">File attached &#10003;</p>'
-          : '') +
+        '<p class="lesson-done-note">&#10003; Marked done</p>' +
         selfCheckHtml(lesson) +
-        '<button type="button" class="link-btn lesson-resubmit-btn" data-lesson="' +
+        '<button type="button" class="link-btn lesson-undo-btn" data-lesson="' +
         esc(lesson.num) +
-        '">Resubmit</button>' +
+        '">Mark as not done</button>' +
         '</div>';
     } else {
       actionHtml =
-        '<div class="lesson-submit-form" data-lesson="' + esc(lesson.num) + '">' +
-        '<label class="sr-only" for="note-' + esc(lesson.num) + '">Your notes</label>' +
-        '<textarea id="note-' +
-        esc(lesson.num) +
-        '" class="lesson-note-input" placeholder="Paste your work, or describe what you did…"></textarea>' +
-        '<div class="lesson-submit-row">' +
-        '<input type="file" class="lesson-file-input" aria-label="Attach a file (optional)" />' +
-        '<button type="button" class="btn primary lesson-submit-btn" data-lesson="' +
-        esc(lesson.num) +
-        '">Submit &amp; unlock next</button>' +
-        '</div>' +
+        '<div class="lesson-done-form" data-lesson="' + esc(lesson.num) + '">' +
+        '<button type="button" class="btn primary lesson-done-btn" data-lesson="' +
+        esc(lesson.num) + '"' + (checkOk ? '' : ' disabled') +
+        '>Mark done &amp; open the next lesson</button>' +
+        (checkOk
+          ? ''
+          : '<p class="lesson-done-hint">' +
+            esc(
+              lesson.gate
+                ? 'Answer the check above to open this.'
+                : 'Finish the activity above to open this.',
+            ) +
+            '</p>') +
         '<p class="lesson-submit-err" hidden></p>' +
         '</div>';
     }
@@ -2170,71 +2184,49 @@
     renderProgress(course);
   }
 
-  function submitLesson(lessonNum, cardEl) {
+  // Marks a lesson done. No upload, no note, nothing sent to ClickClick: the
+  // lesson's own check is the evidence, and it already happened before this
+  // button became clickable.
+  //
+  // Progress is still recorded server-side, because the certificate and the
+  // certified-creator directory both count completed lessons and a
+  // localStorage-only record would vanish when someone changes browser.
+  function markLessonDone(lessonNum, cardEl) {
     var student = loadStudent();
     if (!student || !currentDetailCourse) return;
-    var note = cardEl.querySelector('.lesson-note-input')
-      ? cardEl.querySelector('.lesson-note-input').value.trim()
-      : '';
-    var fileInput = cardEl.querySelector('.lesson-file-input');
-    var file = fileInput && fileInput.files && fileInput.files[0];
     var errEl = cardEl.querySelector('.lesson-submit-err');
-    var btn = cardEl.querySelector('.lesson-submit-btn');
+    var btn = cardEl.querySelector('.lesson-done-btn');
     if (errEl) errEl.hidden = true;
-    if (!note && !file) {
-      if (errEl) {
-        errEl.textContent = 'Add a note or attach a file first.';
-        errEl.hidden = false;
-      }
-      return;
-    }
+    if (btn && btn.disabled) return;
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Submitting…';
+      btn.textContent = 'Saving…';
     }
 
-    var uploadStep = file
-      ? academyApi({
-          type: 'uploadUrl',
-          studentId: student.studentId,
-          courseId: currentDetailCourse.id,
-          lessonNum: lessonNum,
-          fileName: file.name,
-        }).then(function (up) {
-          return fetch(up.signedUrl, {
-            method: 'PUT',
-            headers: { 'Content-Type': file.type || 'application/octet-stream' },
-            body: file,
-          }).then(function (res) {
-            if (!res.ok) throw new Error('File upload failed. Try again.');
-            return up.path;
-          });
-        })
-      : Promise.resolve(null);
-
-    uploadStep
-      .then(function (filePath) {
-        return academyApi({
-          type: 'submit',
-          studentId: student.studentId,
-          courseId: currentDetailCourse.id,
-          lessonNum: lessonNum,
-          note: note,
-          filePath: filePath,
-        });
-      })
+    academyApi({
+      type: 'submit',
+      studentId: student.studentId,
+      courseId: currentDetailCourse.id,
+      lessonNum: lessonNum,
+      note: 'Marked done by the student.',
+      filePath: null,
+    })
       .then(function () {
         var idx = currentAllNums.indexOf(lessonNum);
-        var nextNum = idx >= 0 && idx < currentAllNums.length - 1 ? currentAllNums[idx + 1] : null;
-        renderProgress(currentDetailCourse, { justSubmittedNum: lessonNum, justUnlockedNum: nextNum });
+        var nextNum =
+          idx >= 0 && idx < currentAllNums.length - 1 ? currentAllNums[idx + 1] : null;
+        renderProgress(currentDetailCourse, {
+          justSubmittedNum: lessonNum,
+          justUnlockedNum: nextNum,
+        });
       })
       .catch(function (err) {
         if (btn) {
           btn.disabled = false;
-          btn.textContent = 'Submit & unlock next';
+          btn.textContent = 'Mark done & open the next lesson';
         }
         if (errEl) {
-          errEl.textContent = err.message || 'Could not submit. Try again.';
+          errEl.textContent = err.message || 'Could not save. Try again.';
           errEl.hidden = false;
         }
       });
@@ -2506,7 +2498,40 @@
     });
   }
 
+  // Mark done is disabled until the lesson's check passes, and that check can
+  // be passed by any of nine different activity handlers plus the gate. Rather
+  // than teach every one of them to re-enable a button, re-evaluate the button
+  // after any click inside a lesson card. Cheap, and it cannot drift out of
+  // sync with a handler somebody adds later.
+  //
+  // Without this a student answers the gate correctly, watches it go green,
+  // and finds the button still greyed out until they reload.
+  function refreshLessonDoneButton(cardEl) {
+    if (!cardEl || !currentDetailCourse) return;
+    var num = cardEl.getAttribute('data-num');
+    if (!num) return;
+    var btn = cardEl.querySelector('.lesson-done-btn');
+    if (!btn || btn.textContent === 'Saving…') return;
+    var lesson = null;
+    (currentDetailCourse.modules || []).forEach(function (m) {
+      (m.lessons || []).forEach(function (l) {
+        if (l.num === num) lesson = l;
+      });
+    });
+    if (!lesson) return;
+    var ok = lessonChecksPassed(lesson);
+    btn.disabled = !ok;
+    var hint = cardEl.querySelector('.lesson-done-hint');
+    if (hint) hint.hidden = ok;
+  }
+
   document.addEventListener('click', function (e) {
+    var cardForRefresh = e.target.closest ? e.target.closest('.lesson-card') : null;
+    if (cardForRefresh) {
+      setTimeout(function () {
+        refreshLessonDoneButton(cardForRefresh);
+      }, 0);
+    }
     var hrefCard = e.target.closest('.course-card[data-href]');
     if (hrefCard && hrefCard.getAttribute('data-href')) {
       window.location.href = hrefCard.getAttribute('data-href');
@@ -2517,11 +2542,11 @@
       openCourseDetail(detailCard.getAttribute('data-id'));
       return;
     }
-    var submitBtn = e.target.closest('.lesson-submit-btn');
-    if (submitBtn) {
-      var lessonNum = submitBtn.getAttribute('data-lesson');
-      var card = submitBtn.closest('.lesson-card');
-      if (lessonNum && card) submitLesson(lessonNum, card);
+    var doneBtn = e.target.closest('.lesson-done-btn');
+    if (doneBtn && !doneBtn.disabled) {
+      var lessonNum = doneBtn.getAttribute('data-lesson');
+      var card = doneBtn.closest('.lesson-card');
+      if (lessonNum && card) markLessonDone(lessonNum, card);
       return;
     }
     var copyBtn = e.target.closest('.resource-copy-btn');
@@ -2557,12 +2582,12 @@
       return;
     }
 
-    var resubmitBtn = e.target.closest('.lesson-resubmit-btn');
-    if (resubmitBtn && currentDetailCourse) {
-      // Re-render this lesson as its open (form) state so they can redo it;
-      // simplest way is just re-fetching progress fresh and letting the
-      // lesson map decide, minus this one lesson's existing submission.
-      var num = resubmitBtn.getAttribute('data-lesson');
+    var undoBtn = e.target.closest('.lesson-undo-btn');
+    if (undoBtn && currentDetailCourse) {
+      // Put this one lesson back to its unmarked state. Re-reads progress from
+      // the server and drops this lesson from the map, so the card re-renders
+      // with its Mark done button instead of the done box.
+      var num = undoBtn.getAttribute('data-lesson');
       var student = loadStudent();
       if (student && num) {
         detailBody.innerHTML = '<p class="detail-loading">Loading…</p>';

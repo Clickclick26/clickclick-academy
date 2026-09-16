@@ -2523,3 +2523,32 @@ input {
   border-radius: 14px;
   background: #efe9da;
 }
+
+/* ---- Mark done, replacing the old submit-a-file form ---- */
+
+.lesson-done-form {
+  margin-top: 0.7rem;
+}
+
+.lesson-done-btn {
+  width: 100%;
+}
+
+.lesson-done-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lesson-done-hint {
+  font-size: 0.78rem;
+  color: var(--mid);
+  text-align: center;
+  margin: 0.45rem 0 0;
+}
+
+.lesson-done-note {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #15803d;
+  margin: 0 0 0.5rem;
+}

@@ -14,8 +14,13 @@
 // Actions (POST body has a "type" field):
 //   identify   {name, email, accessCode} -> {studentId, name}
 //   list       {studentId, courseId} -> {progress: [{lessonNum, note, filePath, submittedAt}]}
-//   uploadUrl  {studentId, courseId, lessonNum, fileName} -> {path, signedUrl, token}
 //   submit     {studentId, courseId, lessonNum, note, filePath?} -> {ok:true}
+//              Records that a student marked a lesson done. Nothing of theirs is
+//              stored beyond the fact and the timestamp: the uploadUrl action and
+//              the whole file-upload path were removed 16 Sep 2026 because nobody
+//              was ever going to look at the files. Students self-mark, gated on
+//              the lesson's own graded activity or gate quiz. filePath stays in
+//              the signature only so existing rows keep working.
 //   directory  {adminKey} -> {rows: [{studentId, name, email, courseId, lessonsSubmitted, lastSubmittedAt}]}
 //              Internal use only (Kathryn's own creator directory, matching brand
 //              requests to certified creators) — not for public/student use. Returns
@@ -79,7 +84,6 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0
 }
 
-const BUCKET = "academy-deliverables"
 const CONTENT_BUCKET = "academy-content"
 
 // Course text changes rarely and a warm isolate can serve many gate submits,
@@ -260,20 +264,6 @@ Deno.serve(async (req) => {
         },
         origin,
       )
-    }
-
-    if (type === "uploadUrl") {
-      const studentId = String(body.studentId ?? "")
-      const courseId = String(body.courseId ?? "")
-      const lessonNum = String(body.lessonNum ?? "")
-      const fileName = String(body.fileName ?? "file").replace(/[^a-zA-Z0-9._-]/g, "_")
-      if (!studentId || !courseId || !lessonNum) {
-        return json(400, { error: "Missing fields." }, origin)
-      }
-      const path = `${studentId}/${courseId}/${lessonNum}/${Date.now()}-${fileName}`
-      const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(path)
-      if (error) throw error
-      return json(200, { path: data.path, signedUrl: data.signedUrl, token: data.token }, origin)
     }
 
     if (type === "submit") {
