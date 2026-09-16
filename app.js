@@ -1176,6 +1176,14 @@
     // path, so "/reels/" and "/p/" links both get normalized to it.
     var ig = s.match(/instagram\.com\/(?:reel|reels|p)\/([a-zA-Z0-9_-]+)/);
     if (ig) return { platform: 'instagram', src: 'https://www.instagram.com/reel/' + ig[1] + '/embed' };
+    // A file we host ourselves, e.g. "videos/academy-jump-cut.mp4". The
+    // teaching clips are rendered in-house, so putting them on YouTube would
+    // hand a paid course a third party's branding, a recommendation rail, and
+    // a tracking cookie. Relative paths only: an absolute URL here would be an
+    // arbitrary origin coming out of a JSON file.
+    if (/^[\w./-]+\.(mp4|webm)$/i.test(s) && s.indexOf('..') === -1) {
+      return { platform: 'file', src: s };
+    }
     return null;
   }
 
@@ -1208,6 +1216,17 @@
   function lessonVideoHtml(video) {
     var info = lessonVideoEmbedSrc(video);
     if (!info) return '';
+    if (info.platform === 'file') {
+      // No autoplay and no loop: these sit inside a lesson someone is reading,
+      // and a clip that starts moving on its own pulls the eye off the text
+      // that explains it.
+      return (
+        '<div class="lesson-video lesson-video--file">' +
+        '<video src="' + esc(info.src) + '" controls preload="metadata" playsinline ' +
+        'title="Lesson video"></video>' +
+        '</div>'
+      );
+    }
     var cls = info.platform === 'instagram' ? 'lesson-video lesson-video--instagram' : 'lesson-video';
     return (
       '<div class="' + cls + '">' +

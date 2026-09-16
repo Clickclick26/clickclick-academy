@@ -2508,3 +2508,18 @@ input {
   padding-left: 0.65rem;
   border-left: 2px solid rgba(123, 94, 167, 0.35);
 }
+
+/* Self-hosted teaching clips. 16:9, no iframe, so it needs its own sizing
+   rather than the aspect-ratio padding trick the embeds use. */
+.lesson-video--file {
+  padding: 0;
+  height: auto;
+}
+
+.lesson-video--file video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  background: #efe9da;
+}
