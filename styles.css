@@ -941,6 +941,23 @@ input {
   height: 100%;
 }
 
+/* TikTok's v2 embed is the same shape of problem as Instagram's: a fixed
+   vertical card with the player plus its own caption and profile chrome
+   underneath. Slightly taller than Instagram's because the caption row
+   wraps to more lines. */
+.lesson-video--tiktok {
+  padding-top: 0;
+  height: 740px;
+  max-width: 340px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.lesson-video--tiktok iframe {
+  position: static;
+  height: 100%;
+}
+
 /* A fake, generic-looking DM mockup (not styled to mimic any specific real
    app) used where a lesson needs a visual before/after example but has no
    real screenshot to show. */

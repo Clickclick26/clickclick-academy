@@ -1233,7 +1233,7 @@
     },
   };
 
-  // Turns a pasted YouTube, Vimeo, or Instagram Reel/post link into a
+  // Turns a pasted YouTube, Vimeo, Instagram Reel or TikTok link into a
   // responsive embed. Anything else (blank, or a URL we don't recognize)
   // just renders nothing, so a lesson with no video yet looks exactly like
   // it did before this existed.
@@ -1248,6 +1248,12 @@
     // path, so "/reels/" and "/p/" links both get normalized to it.
     var ig = s.match(/instagram\.com\/(?:reel|reels|p)\/([a-zA-Z0-9_-]+)/);
     if (ig) return { platform: 'instagram', src: 'https://www.instagram.com/reel/' + ig[1] + '/embed' };
+    // TikTok's embed takes the numeric video id off a /@handle/video/<id>
+    // link. Only the /video/ path embeds: /photo/ posts are carousels and
+    // the player renders them blank, so those links are deliberately not
+    // matched and fall through to rendering nothing.
+    var tt = s.match(/tiktok\.com\/@[\w.-]+\/video\/(\d+)/);
+    if (tt) return { platform: 'tiktok', src: 'https://www.tiktok.com/embed/v2/' + tt[1] };
     // A file we host ourselves, e.g. "videos/academy-jump-cut.mp4". The
     // teaching clips are rendered in-house, so putting them on YouTube would
     // hand a paid course a third party's branding, a recommendation rail, and
@@ -1299,7 +1305,12 @@
         '</div>'
       );
     }
-    var cls = info.platform === 'instagram' ? 'lesson-video lesson-video--instagram' : 'lesson-video';
+    // Instagram and TikTok both serve a tall, portrait player, so they get
+    // their own aspect ratio rather than the 16:9 the others use.
+    var cls =
+      info.platform === 'instagram' || info.platform === 'tiktok'
+        ? 'lesson-video lesson-video--' + info.platform
+        : 'lesson-video';
     return (
       '<div class="' + cls + '">' +
       '<iframe src="' + esc(info.src) + '" title="Lesson video" loading="lazy" allowfullscreen ' +

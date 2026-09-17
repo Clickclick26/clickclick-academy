@@ -1,11 +1,6 @@
 {
   "version": "0.0.1",
   "configurations": [
-    {
-      "name": "academy-static",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "5199"],
-      "port": 5199
-    }
+    { "name": "academy", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8090"], "port": 8090 }
   ]
 }
