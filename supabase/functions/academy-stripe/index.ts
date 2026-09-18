@@ -91,14 +91,29 @@ const LINK_TIERS: Record<string, { tier: string; pack: string; label: string }> 
     pack: "creator-ugc-priority",
     label: "UGC Content Creator Certification + Priority",
   },
+  // The US edition. Dollar prices, and a course with US contracts, FTC rules
+  // and US rates, so it opens different packs from the UK pair.
+  plink_1UH0U42YYPNSFgcIbPfF6E7V: {
+    tier: "certification",
+    pack: "creator-ugc-us",
+    label: "UGC Content Creator Certification (US)",
+  },
+  plink_1UH0Xe2YYPNSFgcIVTiI585T: {
+    tier: "priority",
+    pack: "creator-ugc-us-priority",
+    label: "UGC Content Creator Certification + Priority (US)",
+  },
 }
 
 // Falls back to what was actually paid if the payment link is ever replaced
 // and this file has not caught up. Better a right tier from the wrong signal
 // than a buyer locked out because a link id changed.
-function tierFromAmount(amount: number | null | undefined) {
-  if (typeof amount === "number" && amount >= 20000) return LINK_TIERS.plink_1UGMiS2YYPNSFgcI2CISoeZx
-  return LINK_TIERS.plink_1UGLlO2YYPNSFgcILXoOuuA6
+function tierFromAmount(amount: number | null | undefined, currency?: string | null) {
+  const priority = typeof amount === "number" && amount >= (currency === "usd" ? 26000 : 20000)
+  if (currency === "usd") {
+    return priority ? LINK_TIERS.plink_1UH0Xe2YYPNSFgcIVTiI585T : LINK_TIERS.plink_1UH0U42YYPNSFgcIbPfF6E7V
+  }
+  return priority ? LINK_TIERS.plink_1UGMiS2YYPNSFgcI2CISoeZx : LINK_TIERS.plink_1UGLlO2YYPNSFgcILXoOuuA6
 }
 
 // No 0/O/1/I. These get read down a phone and typed in by hand.
@@ -147,7 +162,7 @@ async function mintCode(admin: AdminClient, session: SessionLike) {
   if (already && already.length > 0) return { row: already[0], created: false }
 
   const linkId = idOf(session.payment_link)
-  const tier = LINK_TIERS[linkId] ?? tierFromAmount(session.amount_total)
+  const tier = LINK_TIERS[linkId] ?? tierFromAmount(session.amount_total, session.currency)
   const email = String(session.customer_details?.email ?? session.customer_email ?? "")
     .trim()
     .toLowerCase()
@@ -515,7 +530,7 @@ Deno.serve(async (req) => {
 
     const { row } = await mintCode(admin, session as unknown as SessionLike)
     const tierInfo = LINK_TIERS[idOf((session as unknown as SessionLike).payment_link)] ??
-      tierFromAmount(session.amount_total)
+      tierFromAmount(session.amount_total, session.currency)
 
     // Kept their cancellation right, so the course cannot be handed over yet
     // -- unless the 14 days have since run out, in which case the right has
