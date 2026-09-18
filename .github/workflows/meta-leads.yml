@@ -1,0 +1,37 @@
+# Pulls new leads from the ClickClick lead forms on Facebook and Instagram and
+# sends each person the follow-up email they are due.
+#
+# The first email is the one that matters: someone who just asked for a free
+# course and hears nothing for an hour has mostly forgotten asking. So this
+# runs every ten minutes. GitHub delays scheduled jobs under load, so in
+# practice it is ten to twenty.
+#
+# Needs one repository secret: CRON_KEY, the same value as the CRON_KEY edge
+# function secret. Safe to run by hand or twice at once: every email is
+# claimed in the database before it is sent.
+name: Lead follow-up emails
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch new leads and send what is due
+        env:
+          URL: https://gapybapywpdogexibtgj.supabase.co/functions/v1/meta-leads
+          KEY: ${{ secrets.CRON_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEY:-}" ]; then
+            echo "CRON_KEY is not set on this repo." >&2
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error \
+            -X POST "$URL" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg k "$KEY" '{type:"run", key:$k}')"
+          echo

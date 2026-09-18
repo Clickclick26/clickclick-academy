@@ -5,9 +5,9 @@
 # thing that makes that true. Nothing else in the system is on a timer, so
 # without this run the code sits in the database unsent forever.
 #
-# Needs two repository secrets (Settings -> Secrets and variables -> Actions):
-#   ACADEMY_FUNCTIONS_URL  https://gapybapywpdogexibtgj.supabase.co/functions/v1/academy-stripe
-#   ACADEMY_ADMIN_KEY      the same value as the Supabase edge function secret
+# Needs one repository secret (Settings -> Secrets and variables -> Actions):
+#   CRON_KEY   the same value as the CRON_KEY edge function secret. The
+#              meta-leads job uses it too.
 #
 # Safe to run more often than needed and safe to run by hand: the function
 # claims each code before emailing it, so a second run sends nothing twice.
@@ -29,12 +29,12 @@ jobs:
     steps:
       - name: Send any codes whose 14 days are up
         env:
-          URL: ${{ secrets.ACADEMY_FUNCTIONS_URL }}
-          KEY: ${{ secrets.ACADEMY_ADMIN_KEY }}
+          URL: https://gapybapywpdogexibtgj.supabase.co/functions/v1/academy-stripe
+          KEY: ${{ secrets.CRON_KEY }}
         run: |
           set -euo pipefail
           if [ -z "${URL:-}" ] || [ -z "${KEY:-}" ]; then
-            echo "ACADEMY_FUNCTIONS_URL or ACADEMY_ADMIN_KEY is not set on this repo." >&2
+            echo "CRON_KEY is not set on this repo." >&2
             exit 1
           fi
           # --fail-with-body so a 401 or a 500 fails the run loudly rather than

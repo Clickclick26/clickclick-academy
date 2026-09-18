@@ -28,7 +28,8 @@
 //   STRIPE_SECRET_KEY       required, this reads sessions back from Stripe
 //   STRIPE_WEBHOOK_SECRET   required only for refunds and chargebacks
 //   RESEND_API_KEY          optional, emails the code as well as showing it
-//   ACADEMY_ADMIN_KEY       required for release, same key academy-progress uses
+//   ACADEMY_ADMIN_KEY       release by hand, same key academy-progress uses
+//   CRON_KEY                release from the scheduled job, shared with meta-leads
 // And RUN-THIS-buyer-codes.sql then RUN-THIS-release-held-codes.sql run once.
 //
 // Verify JWT must be OFF for this function. Stripe will not send a Supabase
@@ -476,14 +477,16 @@ Deno.serve(async (req) => {
     const body = await req.json()
 
     // --- Send the codes whose 14 days are up ------------------------------
-    // Called once a day by .github/workflows/release-held-codes.yml. Behind
-    // the same admin key as academy-progress's admin actions: this reads
-    // buyers' names and emails, and a stranger triggering it could time an
-    // email at someone.
+    // Called twice a day by .github/workflows/release-held-codes.yml with
+    // CRON_KEY, the key the scheduled jobs share. The admin key still works
+    // for running it by hand. Either way it is locked: this reads buyers'
+    // names and emails, and a stranger triggering it could time an email at
+    // someone.
     if (body?.type === "release") {
-      const adminKey = Deno.env.get("ACADEMY_ADMIN_KEY")
-      if (!adminKey) return json(500, { error: "Release not configured." }, origin)
-      if (!timingSafeEqual(String(body.adminKey ?? ""), adminKey)) {
+      const keys = [Deno.env.get("ACADEMY_ADMIN_KEY"), Deno.env.get("CRON_KEY")].filter(Boolean) as string[]
+      if (keys.length === 0) return json(500, { error: "Release not configured." }, origin)
+      const given = String(body.adminKey ?? "")
+      if (!keys.some((k) => timingSafeEqual(given, k))) {
         return json(401, { error: "Not authorised." }, origin)
       }
 
