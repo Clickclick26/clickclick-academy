@@ -9,13 +9,17 @@
 //      per run at most.
 //
 // The sequences, by which form they came through:
-//   creator-uk / creator-us  day 0 the code, day 2 the usage point, day 5 the
-//                            paid course, skipped if they have already bought
+//   creator-uk / creator-us  day 0 the code; day 2 a "five minutes" nudge if
+//                            they have not opened the course, the usage point
+//                            if they have; then the paid course, sent the
+//                            moment they finish the free one, or on day 7 if
+//                            they never do. Skipped if they have bought.
 //   brand                    day 0 the score link, day 3 an offer to talk
 //
 // Actions (POST, JSON):
 //   run          {type, key}                        from the scheduled job
-//   preview      {type, key, to, audience, step}    sends one email to a
+//   preview      {type, key, to, audience, step,    sends one email to a
+//                 started?, finished?}
 //                                                   @clickclick.video inbox
 //   unsubscribe  {type, u, s}                       from the unsubscribe page
 // Plus the one-click unsubscribe POST mail apps send by themselves, which
@@ -61,12 +65,23 @@ const ALLOWED_ORIGINS = new Set([
   "http://127.0.0.1:5199",
 ])
 
-// Days after the lead came in that each step goes out.
+// Days after the lead came in that each step goes out. For creators the
+// last step can come sooner: finishing the free course brings it forward.
 const DELAYS: Record<Audience, number[]> = {
-  "creator-uk": [0, 2, 5],
-  "creator-us": [0, 2, 5],
+  "creator-uk": [0, 2, 7],
+  "creator-us": [0, 2, 7],
   brand: [0, 3],
 }
+
+const FREE_COURSE: Record<string, string> = {
+  "creator-uk": "golden-quarter-ugc",
+  "creator-us": "golden-quarter-ugc-us",
+}
+// The five core lessons. The bonus lesson (1.06) is the taste of the paid
+// course, so finishing does not wait on it.
+const CORE_LESSONS = ["1.01", "1.02", "1.03", "1.04", "1.05"]
+
+type Progress = { started: boolean; finished: boolean }
 
 // Two follow-ups never land on the same day, even for a lead first seen late.
 const MIN_GAP_HOURS = 20
@@ -282,9 +297,10 @@ function longDate(d: Date, us: boolean) {
 
 type Email = { subject: string; paras: string[]; button?: { label: string; href: string }; after?: string[] }
 
-function creatorEmail(step: number, us: boolean): Email {
+function creatorEmail(step: number, us: boolean, progress: Progress): Email {
   const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
   const price = us ? "$199" : "£149"
+  const bf = longDate(blackFriday(new Date()), us)
   // The group is UK and Ireland only and screens on where people are based,
   // so US leads are never invited. They would only be declined.
   const group = us ? [] : [
@@ -306,6 +322,19 @@ function creatorEmail(step: number, us: boolean): Email {
     }
   }
 
+  if (step === 1 && !progress.started) {
+    return {
+      subject: "Lesson one takes five minutes",
+      paras: [
+        "You asked for The Golden Quarter and have not opened it yet. That is normal.",
+        "Lesson one takes about five minutes. It explains why the Black Friday work you see in November was booked in September, which is the part most creators find out too late.",
+        `Your code is ${code}.`,
+      ],
+      button: { label: "Open lesson one", href: ACADEMY },
+      after: group.length ? [`P.S. ${group[0]}`] : [],
+    }
+  }
+
   if (step === 1) {
     return {
       subject: "The Black Friday video that is still running in January",
@@ -313,22 +342,43 @@ function creatorEmail(step: number, us: boolean): Email {
         "A video made for Black Friday rarely stops on Black Friday. It runs through December, and often into the January sales. That is three campaigns, and most creators are paid for one.",
         `The fix is one line on your invoice: usage, paid social, ${us ? "US" : "UK"}, with an end date. Lesson three of the course walks through it.`,
         ...(us ? [] : ["What to charge for it, with the exact words to use when a brand asks: https://www.clickclick.video/creators/usage-rates/"]),
-        `Not opened the course yet? Your code is ${code}.`,
       ],
       button: { label: "Open the course", href: ACADEMY },
       after: group.length ? [`P.S. ${group[0]}`] : [],
     }
   }
 
+  // The pitch. Finishers hear it as a win the moment they are done; everyone
+  // else hears it once, on day 7, as the season closing in. Either way it
+  // carries the one real deadline there is: brands book Black Friday
+  // creators in September and October.
+  const roster = "Certified creators go on the roster ClickClick matches brands from, so getting it done this month puts you there before the season is booked."
+  const last = ["If it is not for you, no problem. This is the last email about it."]
+  const button = { label: "See the full course", href: "https://www.clickclick.video/creators/#price" }
+
+  if (progress.finished) {
+    return {
+      subject: "You did the Golden Quarter",
+      paras: [
+        "You finished The Golden Quarter. Most people who start a free course never do.",
+        `The rate calculator in the bonus lesson is one tool from the full UGC Content Creator Certification. The rest is 32 lessons: hooks and scripting, filming and editing on a phone, pricing, invoices, and a ${us ? "US" : "UK"} client contract you can use as it is.`,
+        `Brands book their Black Friday creators in September and October. ${roster}`,
+        `${price}, one payment, 12 months. No live calls. What you have done so far stays saved to your email.`,
+      ],
+      button,
+      after: last,
+    }
+  }
+
   return {
-    subject: "If you want the rest of it",
+    subject: "Before Black Friday is booked",
     paras: [
-      "The Golden Quarter was five lessons. The full UGC Content Creator Certification is 32: hooks and scripting, filming and editing on a phone, pricing and usage, and invoices.",
-      `It comes with a ${us ? "US" : "UK"} client contract you can use as it is, and a certificate with its own credential ID.`,
-      `${price}, one payment, 12 months. No live calls and no start date. Your Golden Quarter progress stays saved to your email.`,
+      `Black Friday is ${bf}. Brands book the creators for it in September and October, so most of that work is being decided now.`,
+      `The Golden Quarter is still there when you want it, with code ${code}. Its bonus lesson has the rate calculator from the full course.`,
+      `If you want the whole thing now: the UGC Content Creator Certification, 32 lessons, ${price} for 12 months. ${roster}`,
     ],
-    button: { label: "See the full course", href: "https://www.clickclick.video/creators/#price" },
-    after: ["If it is not for you, no problem. This is the last email about it."],
+    button,
+    after: last,
   }
 }
 
@@ -394,12 +444,19 @@ ${(email.after ?? []).map((p) => `<p>${linkify(p)}</p>`).join("\n")}
 // next time: no key, a timeout, a rate limit.
 type SendResult = "ok" | "retry" | "reject"
 
-async function sendStep(lead: Pick<Lead, "leadgen_id" | "audience" | "email" | "name">, step: number, to = lead.email): Promise<SendResult> {
+async function sendStep(
+  lead: Pick<Lead, "leadgen_id" | "audience" | "email" | "name">,
+  step: number,
+  to = lead.email,
+  progress: Progress = { started: false, finished: false },
+): Promise<SendResult> {
   const apiKey = Deno.env.get("RESEND_API_KEY")
   if (!apiKey || !lead.audience) return "retry"
   if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return "reject"
 
-  const email = lead.audience === "brand" ? brandEmail(step) : creatorEmail(step, lead.audience === "creator-us")
+  const email = lead.audience === "brand"
+    ? brandEmail(step)
+    : creatorEmail(step, lead.audience === "creator-us", progress)
   const firstName = String(lead.name ?? "").trim().split(/\s+/)[0] || "there"
   const why = lead.audience === "brand"
     ? "You are getting this because you asked for the readiness score on Facebook or Instagram."
@@ -435,6 +492,27 @@ async function sendStep(lead: Pick<Lead, "leadgen_id" | "audience" | "email" | "
   }
 }
 
+// How far a lead has got in their free course, found by the email they
+// used in the Academy. A lead who used a different email there just looks
+// like a non-starter, which only means they get the gentler emails.
+async function courseProgress(admin: AdminClient, email: string, courseId: string): Promise<Progress> {
+  const { data: students, error } = await admin
+    .from("academy_students")
+    .select("id")
+    .ilike("email", email)
+  if (error) throw error
+  const ids = (students ?? []).map((s: { id: string }) => s.id)
+  if (ids.length === 0) return { started: false, finished: false }
+  const { data: rows, error: pErr } = await admin
+    .from("academy_progress")
+    .select("lesson_num")
+    .in("student_id", ids)
+    .eq("course_id", courseId)
+  if (pErr) throw pErr
+  const done = new Set((rows ?? []).map((r: { lesson_num: string }) => r.lesson_num))
+  return { started: done.size > 0, finished: CORE_LESSONS.every((n) => done.has(n)) }
+}
+
 // A creator who has bought does not need to be sold the course.
 async function hasBought(admin: AdminClient, email: string) {
   const { data, error } = await admin
@@ -464,10 +542,22 @@ async function sendDue(admin: AdminClient) {
   let failed = 0
   for (const lead of (data ?? []) as Lead[]) {
     const delays = DELAYS[lead.audience as Audience]
-    const step = lead.steps_sent
-    if (!delays || step >= delays.length) continue
-    if (now < new Date(lead.created_time).getTime() + delays[step] * 86400000) continue
+    if (!delays || lead.steps_sent >= delays.length) continue
     if (lead.last_sent_at && now - new Date(lead.last_sent_at).getTime() < MIN_GAP_HOURS * 3600000) continue
+
+    // Creators past the welcome email: what they have done decides what
+    // comes next. Finishing the free course jumps straight to the pitch,
+    // skipping anything still queued, so nobody is told to "start lesson
+    // one" after they have finished.
+    let progress: Progress = { started: false, finished: false }
+    let step = lead.steps_sent
+    const courseId = FREE_COURSE[lead.audience as string]
+    if (courseId && step >= 1) {
+      progress = await courseProgress(admin, lead.email as string, courseId)
+      if (progress.finished) step = delays.length - 1
+    }
+    const dueNow = progress.finished && step === delays.length - 1
+    if (!dueNow && now < new Date(lead.created_time).getTime() + delays[step] * 86400000) continue
 
     const isSalesStep = lead.audience !== "brand" && step === delays.length - 1
     if (isSalesStep && await hasBought(admin, lead.email as string)) {
@@ -483,12 +573,12 @@ async function sendDue(admin: AdminClient) {
       .from("meta_leads")
       .update({ steps_sent: step + 1, last_sent_at: new Date().toISOString() })
       .eq("leadgen_id", lead.leadgen_id)
-      .eq("steps_sent", step)
+      .eq("steps_sent", lead.steps_sent)
       .select("leadgen_id")
     if (claimErr) throw claimErr
     if (!claimed || claimed.length === 0) continue
 
-    const result = await sendStep(lead, step)
+    const result = await sendStep(lead, step, lead.email, progress)
     if (result === "ok") {
       sent++
     } else if (result === "reject") {
@@ -500,7 +590,7 @@ async function sendDue(admin: AdminClient) {
       // Put it back so the next run tries again.
       failed++
       await admin.from("meta_leads")
-        .update({ steps_sent: step, last_sent_at: lead.last_sent_at })
+        .update({ steps_sent: lead.steps_sent, last_sent_at: lead.last_sent_at })
         .eq("leadgen_id", lead.leadgen_id)
         .eq("steps_sent", step + 1)
     }
@@ -552,7 +642,8 @@ Deno.serve(async (req) => {
     if (!DELAYS[audience]) return json(400, { error: "Unknown audience." }, origin)
     const step = Number(body.step ?? 0)
     if (!(step >= 0 && step < DELAYS[audience].length)) return json(400, { error: "Unknown step." }, origin)
-    const result = await sendStep({ leadgen_id: "preview", audience, email: to, name: "Sarah" }, step, to)
+    const progress: Progress = { started: Boolean(body.started), finished: Boolean(body.finished) }
+    const result = await sendStep({ leadgen_id: "preview", audience, email: to, name: "Sarah" }, step, to, progress)
     return json(result === "ok" ? 200 : 502, { ok: result === "ok", result }, origin)
   }
 
