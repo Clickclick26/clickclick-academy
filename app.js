@@ -1191,6 +1191,21 @@
         '.  Monthly retainer (4 videos): £' + retainerGBP + ' / $' + retainerUSD + '.'
       );
     },
+    // The US edition of the certification quotes in dollars only. Same base
+    // rate and multipliers as ugcRate, so the two editions cannot disagree.
+    ugcRateUSD: function (inputs) {
+      var level = parseFloat(inputs.level) || 1;
+      var months = Math.max(1, parseFloat(inputs.usageMonths) || 1);
+      var usageMult = 1 + (months - 1) * 0.15;
+      var single = Math.round(190 * level * usageMult);
+      var bundle = Math.round(single * 3 * 0.85);
+      var retainer = Math.round(single * 4 * 0.75);
+      return (
+        'Single video: $' + single +
+        '.  3-video bundle: $' + bundle +
+        '.  Monthly retainer (4 videos): $' + retainer + '.'
+      );
+    },
     // 30% of the £11.99 VIP plan per referral, and how many referrals it
     // takes to cover the £14.99 Creator plan itself. The closing line scales
     // with the actual figure instead of one generic "covers your plan"
