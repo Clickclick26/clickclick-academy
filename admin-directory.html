@@ -351,6 +351,21 @@
     // Reads the access code issued against their Stripe payment, plus their
     // student record, progress, certificates and portfolio page. This is the
     // answer to both "where is my code" and "is my progress really gone".
+    // A code with no code_sent_at has never been emailed. Usually that means
+    // the buyer kept their 14-day cancellation right and it is waiting out the
+    // period; if the due date has passed it means the send failed and the
+    // twice-daily release job has not managed it yet. Either way it is the one
+    // state worth spotting here, because the buyer is sitting with nothing.
+    function buyerStatus(c) {
+      if (c.revoked) return 'REVOKED (' + esc(c.revoked_reason || '') + ')';
+      if (c.code_sent_at) return 'active';
+      var due = new Date(c.issued_at);
+      if (isNaN(due)) return 'not sent';
+      due.setDate(due.getDate() + 14);
+      var when = due.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      return due > new Date() ? 'held until ' + when : 'OVERDUE since ' + when;
+    }
+
     function renderBuyer(data) {
       var out = [];
       var codes = data.codes || [];
@@ -379,7 +394,7 @@
             '<td>' + paid + '</td>' +
             '<td>' + esc(String(c.issued_at || '').slice(0, 10)) + '</td>' +
             '<td>' + (c.redeemed_at ? esc(String(c.redeemed_at).slice(0, 10)) : 'never') + '</td>' +
-            '<td>' + (c.revoked ? 'REVOKED (' + esc(c.revoked_reason || '') + ')' : 'active') + '</td>' +
+            '<td>' + buyerStatus(c) + '</td>' +
             '</tr>');
         });
         out.push('</tbody></table>');

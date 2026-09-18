@@ -1,0 +1,47 @@
+# Sends the access codes that were held for the 14-day cancellation period.
+#
+# A buyer who kept their cancellation right at checkout is told on the
+# thank-you page that their code will arrive on a given date. This is the
+# thing that makes that true. Nothing else in the system is on a timer, so
+# without this run the code sits in the database unsent forever.
+#
+# Needs two repository secrets (Settings -> Secrets and variables -> Actions):
+#   ACADEMY_FUNCTIONS_URL  https://gapybapywpdogexibtgj.supabase.co/functions/v1/academy-stripe
+#   ACADEMY_ADMIN_KEY      the same value as the Supabase edge function secret
+#
+# Safe to run more often than needed and safe to run by hand: the function
+# claims each code before emailing it, so a second run sends nothing twice.
+name: Release held access codes
+
+on:
+  schedule:
+    # Twice a day rather than once, because the buyer is promised a date and a
+    # code that comes due at 20:00 should not wait until the next morning to
+    # go out. Off the hour on purpose: GitHub queues scheduled jobs and the
+    # top of the hour is the busiest slot.
+    - cron: "10 8 * * *"
+    - cron: "10 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send any codes whose 14 days are up
+        env:
+          URL: ${{ secrets.ACADEMY_FUNCTIONS_URL }}
+          KEY: ${{ secrets.ACADEMY_ADMIN_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${URL:-}" ] || [ -z "${KEY:-}" ]; then
+            echo "ACADEMY_FUNCTIONS_URL or ACADEMY_ADMIN_KEY is not set on this repo." >&2
+            exit 1
+          fi
+          # --fail-with-body so a 401 or a 500 fails the run loudly rather than
+          # passing silently with an error in the body. A held code that never
+          # goes out is exactly the failure that must not be quiet.
+          curl --fail-with-body --silent --show-error \
+            -X POST "$URL" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg k "$KEY" '{type:"release", adminKey:$k}')"
+          echo

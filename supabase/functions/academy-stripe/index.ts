@@ -10,6 +10,11 @@
 //     charge.dispute.created      -> revoke it
 //     charge.refund.updated       -> revoke it if the refund succeeded
 //
+//   release  {adminKey}  once a day from GitHub Actions
+//     Sends the codes of anyone who kept their 14-day cancellation right and
+//     whose 14 days are now up. Without this the thank-you page's promise
+//     that "we will send it on <date>" was never kept by anything.
+//
 //   claim  {sessionId}  from the thank-you page on clickclick.video
 //     Retrieves the session from Stripe, checks it is actually paid, and
 //     mints the same code. Deliberately not dependent on the webhook: the
@@ -23,7 +28,8 @@
 //   STRIPE_SECRET_KEY       required, this reads sessions back from Stripe
 //   STRIPE_WEBHOOK_SECRET   required only for refunds and chargebacks
 //   RESEND_API_KEY          optional, emails the code as well as showing it
-// And RUN-THIS-buyer-codes.sql run once.
+//   ACADEMY_ADMIN_KEY       required for release, same key academy-progress uses
+// And RUN-THIS-buyer-codes.sql then RUN-THIS-release-held-codes.sql run once.
 //
 // Verify JWT must be OFF for this function. Stripe will not send a Supabase
 // anon key with its webhooks, and the thank-you page is on a different site.
@@ -134,7 +140,7 @@ function idOf(value: unknown): string {
 async function mintCode(admin: AdminClient, session: SessionLike) {
   const { data: already, error: findErr } = await admin
     .from("academy_access_codes")
-    .select("code, tier, pack, email, name, revoked, issued_at, consent")
+    .select("code, tier, pack, email, name, revoked, issued_at, consent, code_sent_at")
     .eq("stripe_session_id", session.id)
     .limit(1)
   if (findErr) throw findErr
@@ -164,7 +170,7 @@ async function mintCode(admin: AdminClient, session: SessionLike) {
         currency: session.currency ?? null,
         consent,
       })
-      .select("code, tier, pack, email, name, revoked, issued_at, consent")
+      .select("code, tier, pack, email, name, revoked, issued_at, consent, code_sent_at")
       .single()
     if (!insErr) return { row: created, created: true }
 
@@ -173,7 +179,7 @@ async function mintCode(admin: AdminClient, session: SessionLike) {
     if (insErr.code === "23505") {
       const { data: raced } = await admin
         .from("academy_access_codes")
-        .select("code, tier, pack, email, name, revoked, issued_at, consent")
+        .select("code, tier, pack, email, name, revoked, issued_at, consent, code_sent_at")
         .eq("stripe_session_id", session.id)
         .limit(1)
       if (raced && raced.length > 0) return { row: raced[0], created: false }
@@ -213,6 +219,23 @@ function heldUntil(issuedAt: unknown): string {
   return start.toISOString()
 }
 
+// The 14 days are up, so the right to cancel has expired and the course can
+// be handed over. An unparseable issued_at reads as "not yet" rather than
+// "release it", because the wrong answer here gives away a refundable course.
+function coolingOffOver(issuedAt: unknown): boolean {
+  const due = new Date(heldUntil(issuedAt)).getTime()
+  return Number.isFinite(due) && due <= Date.now()
+}
+
+// Same compare as academy-progress uses for its admin actions. Length first,
+// then every character, so a wrong key cannot be found a byte at a time.
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
+}
+
 function escapeHtml(value: unknown): string {
   return String(value ?? "")
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -227,7 +250,7 @@ async function sendCodeEmail(row: {
   email: string
   name?: string
   tier?: string
-}) {
+}, released = false) {
   const apiKey = Deno.env.get("RESEND_API_KEY")
   if (!apiKey) {
     console.error("no RESEND_API_KEY, skipping code email for", row.code)
@@ -251,7 +274,9 @@ async function sendCodeEmail(row: {
       : "",
     "Your progress is saved against your email rather than the device you are on, so nothing is lost if you clear your browser or move to a different phone.",
     "",
-    "When you paid you asked for access straight away and gave up the 14-day cancellation right. That is why you can open it now.",
+    released
+      ? "At checkout you chose to keep your 14-day cancellation right, so we held this back rather than sending it. That period has now passed, so here it is."
+      : "When you paid you asked for access straight away and gave up the 14-day cancellation right. That is why you can open it now.",
     "",
     "Lost this email? Reply to it and we will find your code.",
     "",
@@ -266,7 +291,11 @@ async function sendCodeEmail(row: {
 <p>Put that code in, then put your name and this email address in once. That is what saves your progress, so use the same email every time.</p>
 ${isPriority ? '<p>Your portfolio page is in there too, under "Your portfolio page". Fill it in whenever you have something worth showing.</p>' : ""}
 <p>Your progress is saved against your email rather than the device you are on, so nothing is lost if you clear your browser or move to a different phone.</p>
-<p style="color:#5c5c5c;font-size:14px">When you paid you asked for access straight away and gave up the 14-day cancellation right. That is why you can open it now.</p>
+<p style="color:#5c5c5c;font-size:14px">${
+    released
+      ? "At checkout you chose to keep your 14-day cancellation right, so we held this back rather than sending it. That period has now passed, so here it is."
+      : "When you paid you asked for access straight away and gave up the 14-day cancellation right. That is why you can open it now."
+  }</p>
 <p style="color:#5c5c5c;font-size:14px">Lost this email? Reply to it and we will find your code.</p>
 <p style="color:#5c5c5c;font-size:14px">ClickClick Video Marketing Ltd</p>
 </div>`
@@ -292,6 +321,41 @@ ${isPriority ? '<p>Your portfolio page is in there too, under "Your portfolio pa
     console.error("code email failed:", (err as Error).message)
     return false
   }
+}
+
+// Claims the send before making it. code_sent_at is set with a conditional
+// update, so of two callers racing on the same code exactly one gets the row
+// back and the other stops; the daily release and a buyer refreshing the
+// thank-you page cannot both email. A send that then fails puts the stamp
+// back to null, because a buyer with no code must stay on the retry list.
+async function deliverCode(admin: AdminClient, row: {
+  code: string
+  email: string
+  name?: string
+  tier?: string
+  code_sent_at?: string | null
+}, released = false): Promise<boolean> {
+  if (row.code_sent_at) return false
+  if (!row.email) return false
+
+  const { data: claimed, error } = await admin
+    .from("academy_access_codes")
+    .update({ code_sent_at: new Date().toISOString() })
+    .eq("code", row.code)
+    .is("code_sent_at", null)
+    .select("code")
+  if (error) throw error
+  if (!claimed || claimed.length === 0) return false
+
+  const ok = await sendCodeEmail(row, released)
+  if (!ok) {
+    await admin
+      .from("academy_access_codes")
+      .update({ code_sent_at: null })
+      .eq("code", row.code)
+    console.error("code email failed, left", row.code, "on the retry list")
+  }
+  return ok
 }
 
 // A refund or a chargeback should take back what was bought. Revoking the
@@ -366,9 +430,9 @@ Deno.serve(async (req) => {
         if (session.payment_status === "paid") {
           const { row, created } = await mintCode(admin, session)
           console.log("minted", row.code, "for", row.email, created ? "(new)" : "(already had one)")
-          // Only ever email on the insert that actually created the row, so a
+          // deliverCode decides whether this one has already gone out, so a
           // webhook retry or the thank-you page racing it cannot send twice.
-          if (created && consentGiven(row.consent)) await sendCodeEmail(row)
+          if (consentGiven(row.consent)) await deliverCode(admin, row)
         }
         return json(200, { received: true }, origin)
       }
@@ -394,8 +458,42 @@ Deno.serve(async (req) => {
       return json(200, { received: true, ignored: event.type }, origin)
     }
 
-    // --- The thank-you page asking for its code ---------------------------
     const body = await req.json()
+
+    // --- Send the codes whose 14 days are up ------------------------------
+    // Called once a day by .github/workflows/release-held-codes.yml. Behind
+    // the same admin key as academy-progress's admin actions: this reads
+    // buyers' names and emails, and a stranger triggering it could time an
+    // email at someone.
+    if (body?.type === "release") {
+      const adminKey = Deno.env.get("ACADEMY_ADMIN_KEY")
+      if (!adminKey) return json(500, { error: "Release not configured." }, origin)
+      if (!timingSafeEqual(String(body.adminKey ?? ""), adminKey)) {
+        return json(401, { error: "Not authorised." }, origin)
+      }
+
+      const dueBefore = new Date(Date.now() - COOLING_OFF_DAYS * 86400000).toISOString()
+      const { data: waiting, error: waitErr } = await admin
+        .from("academy_access_codes")
+        .select("code, tier, pack, email, name, revoked, issued_at, consent, code_sent_at")
+        .is("code_sent_at", null)
+        .eq("revoked", false)
+        .lte("issued_at", dueBefore)
+        .limit(200)
+      if (waitErr) throw waitErr
+
+      let sent = 0
+      for (const row of waiting ?? []) {
+        // A row here is usually someone who kept their cancellation right,
+        // but it can also be a send that failed earlier. Only the first kind
+        // should be told their waiting period is over.
+        if (await deliverCode(admin, row, !consentGiven(row.consent))) sent++
+      }
+      console.log("release:", sent, "sent of", (waiting ?? []).length, "due")
+      return json(200, { sent, due: (waiting ?? []).length }, origin)
+    }
+
+    // --- The thank-you page asking for its code ---------------------------
     if (body?.type !== "claim") return json(400, { error: "Unknown request type." }, origin)
 
     const sessionId = String(body.sessionId ?? "").trim()
@@ -415,13 +513,16 @@ Deno.serve(async (req) => {
       return json(402, { error: "That payment has not gone through." }, origin)
     }
 
-    const { row, created } = await mintCode(admin, session as unknown as SessionLike)
+    const { row } = await mintCode(admin, session as unknown as SessionLike)
     const tierInfo = LINK_TIERS[idOf((session as unknown as SessionLike).payment_link)] ??
       tierFromAmount(session.amount_total)
 
-    // Kept their cancellation right, so the course cannot be handed over yet.
-    // The row still exists and the payment is recorded; only the code waits.
-    if (!consentGiven(row.consent)) {
+    // Kept their cancellation right, so the course cannot be handed over yet
+    // -- unless the 14 days have since run out, in which case the right has
+    // expired and this page hands it straight over. The row still exists and
+    // the payment is recorded either way; only the code waits.
+    const waived = consentGiven(row.consent)
+    if (!waived && !coolingOffOver(row.issued_at)) {
       return json(
         200,
         {
@@ -435,7 +536,9 @@ Deno.serve(async (req) => {
       )
     }
 
-    if (created) await sendCodeEmail(row)
+    // Not gated on `created`: a webhook that minted the row and then failed
+    // to send is exactly the case this needs to cover.
+    if (!row.revoked) await deliverCode(admin, row, !waived)
 
     return json(
       200,

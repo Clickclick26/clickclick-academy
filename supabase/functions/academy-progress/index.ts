@@ -1078,7 +1078,7 @@ Deno.serve(async (req) => {
       const { data: codeRows } = await admin
         .from("academy_access_codes")
         .select(
-          "code, pack, tier, email, name, amount_total, currency, consent, issued_at, redeemed_at, revoked, revoked_reason, stripe_session_id",
+          "code, pack, tier, email, name, amount_total, currency, consent, issued_at, redeemed_at, revoked, revoked_reason, code_sent_at, stripe_session_id",
         )
         .or(`code.eq.${query.toUpperCase()},email.ilike.%${query}%`)
         .order("issued_at", { ascending: false })
