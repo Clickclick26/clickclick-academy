@@ -33,6 +33,7 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "jsr:@supabase/supabase-js@2"
+import { upsertContact } from "../_shared/crm.ts"
 
 type AdminClient = ReturnType<typeof createClient>
 type Audience = "brand" | "creator-uk" | "creator-us"
@@ -183,9 +184,48 @@ async function fetchLeads(admin: AdminClient, systemToken: string) {
         .select("leadgen_id")
       if (error) throw error
       inserted += data?.length ?? 0
+
+      // New leads only: the ones this run actually inserted.
+      const fresh = new Set((data ?? []).map((r: { leadgen_id: string }) => r.leadgen_id))
+      for (const row of rows) {
+        if (fresh.has(row.leadgen_id)) await leadToCrm(admin, row)
+      }
     }
   }
   return { forms: (forms.data ?? []).length, fetched, inserted }
+}
+
+// Every new lead also becomes a CRM contact, so sales can see them and the
+// creators can be picked out later for upsells. Best effort: the CRM being
+// unhappy must not stop the lead's email.
+async function leadToCrm(admin: AdminClient, row: {
+  form_name: string
+  audience: Audience | null
+  email: string | null
+  name: string | null
+  answers: Record<string, string>
+  created_time: string
+}) {
+  // Meta's own test tool sends leads with placeholder text for the email.
+  if (!row.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(row.email)) return
+  const tags = ["facebook-lead"]
+  if (row.audience === "brand") tags.push("business", "readiness-score")
+  if (row.audience === "creator-uk") tags.push("creator", "golden-quarter", "uk")
+  if (row.audience === "creator-us") tags.push("creator", "golden-quarter", "us")
+  const extra = Object.entries(row.answers)
+    .filter(([k]) => !["email", "full_name", "first_name", "last_name"].includes(k))
+    .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`)
+  try {
+    await upsertContact(admin, {
+      email: row.email,
+      name: row.name,
+      source: "facebook-lead-ad",
+      tags,
+      note: [`Facebook lead form "${row.form_name}", ${row.created_time.slice(0, 10)}`, ...extra].join("\n"),
+    })
+  } catch (err) {
+    console.error("lead -> crm failed:", (err as Error).message)
+  }
 }
 
 // --------------------------------------------------------- Unsubscribe ----
@@ -348,9 +388,16 @@ ${(email.after ?? []).map((p) => `<p>${linkify(p)}</p>`).join("\n")}
   return { text, html }
 }
 
-async function sendStep(lead: Pick<Lead, "leadgen_id" | "audience" | "email" | "name">, step: number, to = lead.email) {
+// "reject" means Resend refused the address itself (a typo, a fake one from
+// Meta's test tool). Retrying that every ten minutes forever would be a loop,
+// so the caller stops the lead instead. "retry" is anything that might work
+// next time: no key, a timeout, a rate limit.
+type SendResult = "ok" | "retry" | "reject"
+
+async function sendStep(lead: Pick<Lead, "leadgen_id" | "audience" | "email" | "name">, step: number, to = lead.email): Promise<SendResult> {
   const apiKey = Deno.env.get("RESEND_API_KEY")
-  if (!apiKey || !to || !lead.audience) return false
+  if (!apiKey || !lead.audience) return "retry"
+  if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return "reject"
 
   const email = lead.audience === "brand" ? brandEmail(step) : creatorEmail(step, lead.audience === "creator-us")
   const firstName = String(lead.name ?? "").trim().split(/\s+/)[0] || "there"
@@ -379,12 +426,12 @@ async function sendStep(lead: Pick<Lead, "leadgen_id" | "audience" | "email" | "
     })
     if (!res.ok) {
       console.error("resend rejected a lead email:", res.status, await res.text())
-      return false
+      return res.status === 422 ? "reject" : "retry"
     }
-    return true
+    return "ok"
   } catch (err) {
     console.error("lead email failed:", (err as Error).message)
-    return false
+    return "retry"
   }
 }
 
@@ -441,8 +488,14 @@ async function sendDue(admin: AdminClient) {
     if (claimErr) throw claimErr
     if (!claimed || claimed.length === 0) continue
 
-    if (await sendStep(lead, step)) {
+    const result = await sendStep(lead, step)
+    if (result === "ok") {
       sent++
+    } else if (result === "reject") {
+      failed++
+      await admin.from("meta_leads")
+        .update({ stopped_at: new Date().toISOString(), stopped_reason: "email address rejected" })
+        .eq("leadgen_id", lead.leadgen_id)
     } else {
       // Put it back so the next run tries again.
       failed++
@@ -499,8 +552,8 @@ Deno.serve(async (req) => {
     if (!DELAYS[audience]) return json(400, { error: "Unknown audience." }, origin)
     const step = Number(body.step ?? 0)
     if (!(step >= 0 && step < DELAYS[audience].length)) return json(400, { error: "Unknown step." }, origin)
-    const ok = await sendStep({ leadgen_id: "preview", audience, email: to, name: "Sarah Jane" }, step, to)
-    return json(ok ? 200 : 502, { ok }, origin)
+    const result = await sendStep({ leadgen_id: "preview", audience, email: to, name: "Sarah" }, step, to)
+    return json(result === "ok" ? 200 : 502, { ok: result === "ok", result }, origin)
   }
 
   if (body.type === "run") {

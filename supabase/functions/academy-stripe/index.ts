@@ -39,6 +39,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "jsr:@supabase/supabase-js@2"
 import Stripe from "npm:stripe@17.7.0"
+import { addToList, BOUGHT_LIST, upsertContact } from "../_shared/crm.ts"
 
 const ALLOWED_ORIGINS = new Set([
   "https://www.clickclick.video",
@@ -186,9 +187,15 @@ async function mintCode(admin: AdminClient, session: SessionLike) {
         currency: session.currency ?? null,
         consent,
       })
-      .select("code, tier, pack, email, name, revoked, issued_at, consent, code_sent_at")
+      .select("code, tier, pack, email, name, revoked, issued_at, consent, code_sent_at, amount_total, currency")
       .single()
-    if (!insErr) return { row: created, created: true }
+    if (!insErr) {
+      // Only on the first mint for this payment, so the alert and the CRM
+      // entry happen once however many times the webhook or the thank-you
+      // page call in.
+      await onNewSale(admin, created as SaleRow, tier.label)
+      return { row: created, created: true }
+    }
 
     // 23505 is a unique violation. Either the code collided, or the other
     // path minted this session's code while we were working. Read it back.
@@ -206,6 +213,78 @@ async function mintCode(admin: AdminClient, session: SessionLike) {
   throw new Error("Could not mint a unique access code.")
 }
 
+
+type SaleRow = {
+  code: string
+  email: string
+  name?: string
+  pack: string
+  tier: string
+  consent?: string
+  amount_total?: number | null
+  currency?: string | null
+}
+
+function money(amount: number | null | undefined, currency: string | null | undefined) {
+  if (typeof amount !== "number") return "unknown amount"
+  const cur = (currency ?? "gbp").toUpperCase()
+  try {
+    return new Intl.NumberFormat(cur === "USD" ? "en-US" : "en-GB", { style: "currency", currency: cur }).format(amount / 100)
+  } catch {
+    return `${(amount / 100).toFixed(2)} ${cur}`
+  }
+}
+
+// What happens once per new sale, on top of the buyer's own code email:
+// Kathryn hears about it, and the buyer lands in the CRM on the "Bought a
+// course" list so they can be upsold later. Both best effort: neither may
+// ever get in the way of the buyer receiving what they paid for.
+async function onNewSale(admin: AdminClient, row: SaleRow, label: string) {
+  const price = money(row.amount_total, row.currency)
+  const us = row.pack.includes("-us")
+
+  try {
+    const contactId = await upsertContact(admin, {
+      email: row.email,
+      name: row.name,
+      source: "academy",
+      stage: "won",
+      tags: ["academy", "creator", "bought", row.pack, us ? "us" : "uk"],
+      note: `Bought ${label} for ${price} (code ${row.code})`,
+    })
+    if (contactId) await addToList(admin, BOUGHT_LIST, contactId)
+  } catch (err) {
+    console.error("buyer -> crm failed:", (err as Error).message)
+  }
+
+  const apiKey = Deno.env.get("RESEND_API_KEY")
+  if (!apiKey) return
+  const held = !consentGiven(row.consent)
+  const lines = [
+    `${price}: ${label}`,
+    `Buyer: ${row.name || "(no name)"} <${row.email}>`,
+    `Code: ${row.code}`,
+    held
+      ? "They kept their 14-day cancellation right, so the code goes out automatically when the 14 days are up."
+      : "They asked for access now, so they already have their code.",
+    "They are in the CRM on the \"Bought a course\" list.",
+  ]
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "ClickClick Academy <hello@clickclick.video>",
+        to: ["hello@clickclick.video"],
+        subject: `New sale: ${price} ${label}`,
+        text: lines.join("\n\n"),
+      }),
+    })
+    if (!res.ok) console.error("sale alert rejected:", res.status, await res.text())
+  } catch (err) {
+    console.error("sale alert failed:", (err as Error).message)
+  }
+}
 
 // The 14-day cancellation right. At checkout the buyer picks one of two
 // answers, and the answer decides whether the code goes out now.
