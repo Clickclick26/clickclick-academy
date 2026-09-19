@@ -23,6 +23,9 @@
 //                                                   @clickclick.video inbox
 //   insights     {type, key, since, until,          read-only ad stats (spend,
 //                 breakdown?, level?}              reach, sign-ups), e.g. by region
+//   broadcast    {type, key, campaign, audience,    one-off email to an audience;
+//                 dryRun (default true), sendAt?,  once per lead per campaign,
+//                 testTo?}                          buyers and unsubscribes skipped
 //   unsubscribe  {type, u, s}                       from the unsubscribe page
 // Plus the one-click unsubscribe POST mail apps send by themselves, which
 // carries u and s in the query string.
@@ -600,6 +603,129 @@ async function sendDue(admin: AdminClient) {
   return { sent, failed }
 }
 
+// ------------------------------------------------------------ Broadcasts ----
+//
+// One-off emails to a whole audience, written here so every word Kathryn
+// approved is in version control. Each lead gets a campaign at most once:
+// meta_lead_broadcasts is claimed before sending.
+
+type Broadcast = { subject: string; html: string; text: string }
+
+function foundingSep26(us: boolean, firstName: string, unsub: string): Broadcast {
+  const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
+  const promo = us ? "FOUNDING60" : "FOUNDING50"
+  const off = us ? "$60" : "£50"
+  const contract = us ? "US" : "UK"
+  const ends = us ? "September 30, 11:59pm Eastern" : "30 September, 11:59pm"
+  const oct31 = us ? "October 31" : "31 October"
+  const season = us ? "Thanksgiving, Black Friday and the holidays" : "Black Friday and Christmas"
+  const course = "https://www.clickclick.video/creators/#price"
+  const subject = us ? "Before brands book their Black Friday creators" : "Your certificate is five lessons away"
+  const why = "You're getting this because you asked for The Golden Quarter on Facebook or Instagram."
+
+  const text = [
+    `Hi ${firstName},`,
+    "Your free course, The Golden Quarter, is waiting for you. Five short lessons, each one about ten minutes, and it saves your place if you stop halfway.",
+    `Open lesson one: ${ACADEMY}\nYour code: ${code}`,
+    "Finish it and you get a certificate with its own credential ID, something you can show a brand.",
+    `Why now: brands are booking creators for ${season} right now, through October. The first 20 people to get certified by ${oct31} go to the top of the list we match brands from.`,
+    `Founding-member price: ${off} off the full course. 32 lessons, the ${contract} client contract, and the certificate brands check. Use code ${promo} at checkout. Ends ${ends}.\nSee the full course: ${course}`,
+    `And if you want to ask questions or see what other creators are working on, our Facebook group is open: ${GROUP}`,
+    "Kathryn\nClickClick",
+    `${why} Unsubscribe: ${unsub}\n${ADDRESS}`,
+  ].join("\n\n")
+
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+<p>Your free course, The Golden Quarter, is waiting for you. Five short lessons, each one about ten minutes, and it saves your place if you stop halfway.</p>
+<p><a href="${ACADEMY}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Open lesson one</a></p>
+<p style="margin:0 0 18px;font-size:14px;color:#5c5c5c">Your code: <b style="color:#141414;letter-spacing:.04em">${code}</b></p>
+<p>Finish it and you get a certificate with its own credential ID, something you can show a brand.</p>
+<p><b>Why now:</b> brands are booking creators for ${season} right now, through October. The first 20 people to get certified by ${oct31} go to the top of the list we match brands from.</p>
+<div style="background:#f6f3ec;border-radius:12px;padding:16px 18px;margin:20px 0">
+<p style="margin:0 0 6px;font-weight:600">Founding-member price: ${off} off the full course</p>
+<p style="margin:0 0 10px;font-size:15px">32 lessons, the ${contract} client contract, and the certificate brands check. Use code <b>${promo}</b> at checkout. Ends ${ends}.</p>
+<a href="${course}" style="color:#141414;font-weight:600">See the full course &rarr;</a>
+</div>
+<p>And if you want to ask questions or see what other creators are working on, our Facebook group is open: <a href="${GROUP}" style="color:#141414">UGC Creators UK, Ireland &amp; USA</a>.</p>
+<p>Kathryn<br>ClickClick</p>
+<p style="color:#5c5c5c;font-size:13px;margin-top:28px">${escapeHtml(why)} <a href="${unsub}" style="color:#5c5c5c">Unsubscribe</a><br>${escapeHtml(ADDRESS)}</p>
+</div>`
+  return { subject, html, text }
+}
+
+const CAMPAIGNS: Record<string, (us: boolean, firstName: string, unsub: string) => Broadcast> = {
+  "founding-sep26": foundingSep26,
+}
+
+async function sendBroadcast(opts: {
+  admin: AdminClient
+  campaign: string
+  audience: Audience
+  sendAt?: string
+  dryRun: boolean
+}) {
+  const { admin, campaign, audience, sendAt, dryRun } = opts
+  const build = CAMPAIGNS[campaign]
+  if (!build || audience === "brand") throw new Error("Unknown campaign or audience.")
+  const apiKey = Deno.env.get("RESEND_API_KEY")
+  if (!apiKey) throw new Error("No RESEND_API_KEY.")
+
+  const { data, error } = await admin
+    .from("meta_leads")
+    .select("leadgen_id, audience, email, name")
+    .eq("audience", audience)
+    .is("stopped_at", null)
+    .not("email", "is", null)
+  if (error) throw error
+
+  const result = { eligible: 0, sent: 0, skipped: [] as string[], failed: 0 }
+  for (const lead of (data ?? []) as Lead[]) {
+    const email = lead.email as string
+    if (await hasBought(admin, email)) { result.skipped.push("bought"); continue }
+    const { data: already } = await admin.from("meta_lead_broadcasts")
+      .select("leadgen_id").eq("leadgen_id", lead.leadgen_id).eq("campaign", campaign).limit(1)
+    if (already?.length) { result.skipped.push("already sent"); continue }
+    result.eligible++
+    if (dryRun) continue
+
+    // Claim first, so two calls can never both send it.
+    const { error: claimErr } = await admin.from("meta_lead_broadcasts")
+      .insert({ leadgen_id: lead.leadgen_id, campaign })
+    if (claimErr) { result.skipped.push("claimed elsewhere"); continue }
+
+    const firstName = String(lead.name ?? "").trim().split(/\s+/)[0] || "there"
+    const links = await unsubscribeLinks(lead.leadgen_id)
+    const b = build(audience === "creator-us", firstName, links.page)
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "Kathryn at ClickClick <hello@clickclick.video>",
+        to: [email],
+        reply_to: "hello@clickclick.video",
+        subject: b.subject,
+        text: b.text,
+        html: b.html,
+        ...(sendAt ? { scheduled_at: sendAt } : {}),
+        headers: {
+          "List-Unsubscribe": `<${links.oneClick}>, <mailto:hello@clickclick.video?subject=unsubscribe>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+      }),
+    })
+    if (res.ok) {
+      result.sent++
+    } else {
+      result.failed++
+      console.error("broadcast send failed:", res.status, await res.text())
+      await admin.from("meta_lead_broadcasts").delete()
+        .eq("leadgen_id", lead.leadgen_id).eq("campaign", campaign)
+    }
+  }
+  return result
+}
+
 // ----------------------------------------------------------------- Serve ----
 
 Deno.serve(async (req) => {
@@ -691,6 +817,34 @@ Deno.serve(async (req) => {
       return json(200, { rows }, origin)
     } catch (err) {
       return json(502, { error: (err as Error).message }, origin)
+    }
+  }
+
+  if (body.type === "broadcast") {
+    const campaign = String(body.campaign ?? "")
+    const audience = String(body.audience ?? "") as Audience
+    const sendAt = body.sendAt ? String(body.sendAt) : undefined
+    const testTo = body.testTo ? String(body.testTo).trim().toLowerCase() : ""
+    const build = CAMPAIGNS[campaign]
+    if (!build || !DELAYS[audience] || audience === "brand") {
+      return json(400, { error: "Unknown campaign or audience." }, origin)
+    }
+    // A test goes to one @clickclick.video inbox only and is not recorded.
+    if (testTo) {
+      if (!testTo.endsWith("@clickclick.video")) return json(400, { error: "Tests only go to @clickclick.video." }, origin)
+      const b = build(audience === "creator-us", "Sarah", "https://www.clickclick.video/unsubscribe/")
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from: "Kathryn at ClickClick <hello@clickclick.video>", to: [testTo], subject: `[TEST] ${b.subject}`, text: b.text, html: b.html }),
+      })
+      return json(res.ok ? 200 : 502, { ok: res.ok }, origin)
+    }
+    try {
+      const result = await sendBroadcast({ admin, campaign, audience, sendAt, dryRun: body.dryRun !== false })
+      return json(200, result, origin)
+    } catch (err) {
+      return json(500, { error: (err as Error).message }, origin)
     }
   }
 
