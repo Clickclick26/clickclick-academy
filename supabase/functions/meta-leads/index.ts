@@ -21,6 +21,8 @@
 //   preview      {type, key, to, audience, step,    sends one email to a
 //                 started?, finished?}
 //                                                   @clickclick.video inbox
+//   insights     {type, key, since, until,          read-only ad stats (spend,
+//                 breakdown?, level?}              reach, sign-ups), e.g. by region
 //   unsubscribe  {type, u, s}                       from the unsubscribe page
 // Plus the one-click unsubscribe POST mail apps send by themselves, which
 // carries u and s in the query string.
@@ -301,9 +303,9 @@ function creatorEmail(step: number, us: boolean, progress: Progress): Email {
   const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
   const price = us ? "$199" : "£149"
   const bf = longDate(blackFriday(new Date()), us)
-  // The group is UK and Ireland only and screens on where people are based,
-  // so US leads are never invited. They would only be declined.
-  const group = us ? [] : [
+  // The group covers the UK, Ireland and the US (since 18 Sep 2026), so
+  // every creator lead gets the invite.
+  const group = [
     `Free mini course on reading your first brand brief. Join the group to get it: ${GROUP}`,
   ]
 
@@ -645,6 +647,51 @@ Deno.serve(async (req) => {
     const progress: Progress = { started: Boolean(body.started), finished: Boolean(body.finished) }
     const result = await sendStep({ leadgen_id: "preview", audience, email: to, name: "Sarah" }, step, to, progress)
     return json(result === "ok" ? 200 : 502, { ok: result === "ok", result }, origin)
+  }
+
+  // Read-only ad stats for reports: spend, reach and sign-ups, optionally
+  // split by region. Uses the same system-user token (ads_read, View
+  // performance only), so it can look but never change or spend anything.
+  if (body.type === "insights") {
+    const token = Deno.env.get("META_LEADS_TOKEN")
+    if (!token) return json(503, { error: "No token." }, origin)
+    const since = String(body.since ?? "")
+    const until = String(body.until ?? "")
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(since) || !/^\d{4}-\d{2}-\d{2}$/.test(until)) {
+      return json(400, { error: "since and until must be YYYY-MM-DD." }, origin)
+    }
+    const breakdown = String(body.breakdown ?? "")
+    if (breakdown && !["region", "country", "age", "gender", "publisher_platform"].includes(breakdown)) {
+      return json(400, { error: "Unknown breakdown." }, origin)
+    }
+    const level = body.level === "ad" ? "ad" : "campaign"
+    const params: Record<string, string> = {
+      level,
+      fields: "campaign_name,ad_name,spend,impressions,reach,actions,cost_per_action_type",
+      time_range: JSON.stringify({ since, until }),
+      limit: "500",
+    }
+    if (breakdown) params.breakdowns = breakdown
+    try {
+      const data = await graph(`act_${Deno.env.get("META_AD_ACCOUNT_ID") ?? "1122147610145033"}/insights`, token, params)
+      const rows = (data.data ?? []).map((r: Record<string, unknown>) => {
+        const acts = (r.actions ?? []) as Array<{ action_type: string; value: string }>
+        const leads = acts.filter((a) => a.action_type === "lead" || a.action_type === "leadgen_grouped")
+          .reduce((m, a) => Math.max(m, Number(a.value)), 0)
+        return {
+          campaign: r.campaign_name,
+          ad: r.ad_name,
+          [breakdown || "all"]: breakdown ? r[breakdown] : "all",
+          spend: Number(r.spend ?? 0),
+          impressions: Number(r.impressions ?? 0),
+          reach: Number(r.reach ?? 0),
+          leads,
+        }
+      })
+      return json(200, { rows }, origin)
+    } catch (err) {
+      return json(502, { error: (err as Error).message }, origin)
+    }
   }
 
   if (body.type === "run") {
