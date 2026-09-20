@@ -877,7 +877,11 @@ Deno.serve(async (req) => {
     }
     // A test goes to one @clickclick.video inbox only and is not recorded.
     if (testTo) {
-      if (!testTo.endsWith("@clickclick.video")) return json(400, { error: "Tests only go to @clickclick.video." }, origin)
+      // Our own inbox, or mail-tester's throwaway spam-score sink. Both are
+      // places we control the content of, so neither can be used to post a
+      // ClickClick-branded email to a stranger.
+      const testOk = testTo.endsWith("@clickclick.video") || testTo.endsWith("@srv1.mail-tester.com")
+      if (!testOk) return json(400, { error: "Tests only go to @clickclick.video." }, origin)
       const b = build(audience === "creator-us", "Sarah", "https://www.clickclick.video/unsubscribe/")
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
