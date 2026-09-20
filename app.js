@@ -1766,6 +1766,121 @@
     );
   }
 
+  // The four boxes that put a certified creator on
+  // clickclick.video/creators/verified/. A portfolio page is part of the paid
+  // tier; this is the free version of being findable, and it is deliberately
+  // four fields rather than a page builder. Every save goes back to Kathryn
+  // for a look, because a certificate on its own can be rushed.
+  function listingCardHtml() {
+    return (
+      '<div class="certificate-card listing-card" id="listing-card" hidden>' +
+      '<div class="certificate-card-head">' +
+      '<span class="certificate-seal" aria-hidden="true">&#128269;</span>' +
+      '<div>' +
+      '<p class="certificate-eyebrow">The verified list</p>' +
+      '<h3>Let brands find you</h3>' +
+      '</div>' +
+      '</div>' +
+      '<p class="certificate-sub">Brands tell us what they need filmed and we send them names. ' +
+      'Four things and you are on the list. We look at every one before it goes up.</p>' +
+      '<form class="listing-form" id="listing-form">' +
+      '<label>Your photo<input type="file" id="listing-avatar" accept="image/jpeg,image/png,image/webp" /></label>' +
+      '<label>What do you film?<input type="text" id="listing-niche" maxlength="60" placeholder="Beauty, food, pets" required /></label>' +
+      '<label>Where are you?<input type="text" id="listing-location" maxlength="60" placeholder="Manchester, UK" required /></label>' +
+      '<label>TikTok or Instagram<input type="text" id="listing-handle" maxlength="40" placeholder="yourhandle" /></label>' +
+      '<div class="certificate-actions">' +
+      '<button type="submit" class="btn primary">Save my listing</button>' +
+      '</div>' +
+      '<p class="listing-msg" id="listing-msg" hidden></p>' +
+      '</form>' +
+      '</div>'
+    );
+  }
+
+  // Fills the card in and wires it up. Called after the detail view renders,
+  // and it quietly does nothing for anyone without a certificate: the server
+  // is the real gate, this just avoids showing a form that would be refused.
+  function setupListingCard() {
+    var card = document.getElementById('listing-card');
+    var form = document.getElementById('listing-form');
+    var student = loadStudent();
+    if (!card || !form || !student || !student.studentId) return;
+
+    var msg = document.getElementById('listing-msg');
+    var avatarPath = '';
+
+    academyApi({ type: 'listingGet', studentId: student.studentId })
+      .then(function (data) {
+        card.hidden = false;
+        var l = (data && data.listing) || {};
+        avatarPath = l.avatar || '';
+        document.getElementById('listing-niche').value = l.niche || '';
+        document.getElementById('listing-location').value = l.location || '';
+        document.getElementById('listing-handle').value = l.handle || '';
+        if (data && data.listed && msg) {
+          msg.textContent = 'You are on the list. Editing this sends it back to us for a look.';
+          msg.hidden = false;
+        }
+      })
+      .catch(function () {
+        // Not certified yet, or the call failed. Either way, no card.
+      });
+
+    var saving = false;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (saving) return;
+      saving = true;
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+      if (msg) msg.hidden = true;
+
+      var file = (document.getElementById('listing-avatar') || {}).files;
+      file = file && file[0];
+
+      var step = file
+        ? academyApi({ type: 'listingUpload', studentId: student.studentId, contentType: file.type })
+            .then(function (up) {
+              return fetch(up.url, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file })
+                .then(function (r) {
+                  if (!r.ok) throw new Error('Your photo did not upload. Try a smaller one.');
+                  avatarPath = up.path;
+                });
+            })
+        : Promise.resolve();
+
+      step
+        .then(function () {
+          return academyApi({
+            type: 'listingSave',
+            studentId: student.studentId,
+            niche: document.getElementById('listing-niche').value,
+            location: document.getElementById('listing-location').value,
+            handle: document.getElementById('listing-handle').value,
+            avatar: avatarPath
+          });
+        })
+        .then(function () {
+          if (msg) {
+            msg.textContent = 'Saved. We will have a look and put you up.';
+            msg.removeAttribute('data-kind');
+            msg.hidden = false;
+          }
+        })
+        .catch(function (err) {
+          if (msg) {
+            msg.textContent = (err && err.message) || 'That did not save. Try again in a minute.';
+            msg.setAttribute('data-kind', 'bad');
+            msg.hidden = false;
+          }
+        })
+        .then(function () {
+          saving = false;
+          if (btn) { btn.disabled = false; btn.textContent = 'Save my listing'; }
+        });
+    });
+  }
+
   // Wraps text across multiple centred canvas lines instead of running off
   // the edge, since a long course title won't fit on one line at this size.
   function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -2111,7 +2226,7 @@
         : '<div class="progress-track" role="progressbar" aria-valuenow="' + doneCount +
           '" aria-valuemin="0" aria-valuemax="' + lessonCount + '"><div class="progress-fill"></div></div>'
       ) +
-      (complete ? certificateCardHtml(course, lessonCount, modules.length) : '') +
+      (complete ? certificateCardHtml(course, lessonCount, modules.length) + listingCardHtml() : '') +
       '</div>' +
       courseIntroHtml(course) +
       modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum, selfPaced); }).join('') +
@@ -2279,6 +2394,7 @@
     // API call entirely and just render the lessons straight away.
     if (course.selfPaced) {
       detailBody.innerHTML = courseDetailHtml(course, {}, opts.justUnlockedNum);
+      setupListingCard();
       return;
     }
     var student = loadStudent();
@@ -2334,6 +2450,7 @@
           byNum[p.lessonNum] = p;
         });
         detailBody.innerHTML = courseDetailHtml(course, byNum, opts.justUnlockedNum);
+        setupListingCard();
         var lessonCount = flatLessonNums(course).length;
         var doneCount = Object.keys(byNum).length;
         animateProgressBar(doneCount, lessonCount);
@@ -2348,6 +2465,7 @@
       })
       .catch(function () {
         detailBody.innerHTML = courseDetailHtml(course, {});
+        setupListingCard();
       });
   }
 
@@ -2769,6 +2887,7 @@
               if (p.lessonNum !== num) byNum[p.lessonNum] = p;
             });
             detailBody.innerHTML = courseDetailHtml(currentDetailCourse, byNum);
+            setupListingCard();
             animateProgressBar(Object.keys(byNum).length, flatLessonNums(currentDetailCourse).length);
           });
       }

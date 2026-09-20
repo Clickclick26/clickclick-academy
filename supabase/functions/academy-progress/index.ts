@@ -1150,75 +1150,175 @@ Deno.serve(async (req) => {
     // minutes, so the certificate alone never puts anyone in front of a brand.
     // Paid creators are marked, because a brief goes to them first.
     if (type === "creatorList") {
-      const { data: rows, error } = await admin
-        .from("academy_portfolios")
-        .select("student_id, slug, data, updated_at")
-        .eq("published", true)
-        .eq("listed", true)
-        .order("updated_at", { ascending: false })
-        .limit(200)
-      if (error) throw error
+      // Two kinds of card, one page. A paid creator has a portfolio page and
+      // links to it; a free certified creator has the four boxes and links to
+      // their own social. Both need an approved certificate and Kathryn's
+      // tick, so "verified" means the same thing either way.
+      const [listingRes, portfolioRes] = await Promise.all([
+        admin
+          .from("academy_listings")
+          .select("student_id, niche, location, handle, avatar, updated_at")
+          .eq("listed", true)
+          .order("updated_at", { ascending: false })
+          .limit(300),
+        admin
+          .from("academy_portfolios")
+          .select("student_id, slug, data, updated_at")
+          .eq("published", true)
+          .eq("listed", true)
+          .order("updated_at", { ascending: false })
+          .limit(300),
+      ])
+      if (listingRes.error) throw listingRes.error
+      if (portfolioRes.error) throw portfolioRes.error
 
-      const ids = (rows ?? []).map((r) => r.student_id)
+      const listings = listingRes.data ?? []
+      const portfolios = portfolioRes.data ?? []
+      const ids = Array.from(
+        new Set([...listings, ...portfolios].map((r) => String(r.student_id))),
+      )
       if (!ids.length) return json(200, { creators: [] }, origin)
 
-      const { data: certs } = await admin
-        .from("academy_certificates")
-        .select("student_id, credential_id, issued_at")
-        .in("student_id", ids)
-        .eq("approved", true)
-        .order("issued_at", { ascending: true })
+      const [certRes, studentRes] = await Promise.all([
+        admin
+          .from("academy_certificates")
+          .select("student_id, credential_id, issued_at")
+          .in("student_id", ids)
+          .eq("approved", true)
+          .order("issued_at", { ascending: true }),
+        admin.from("academy_students").select("id, name, region").in("id", ids),
+      ])
 
-      const { data: students } = await admin
-        .from("academy_students")
-        .select("id, region, access_code")
-        .in("id", ids)
-
-      // The paid tiers are the ones whose code was minted for a purchase, so
-      // read it from the code rather than anything the creator can type.
-      const codes = (students ?? []).map((st) => String(st.access_code ?? "")).filter(Boolean)
-      const { data: paidCodes } = codes.length
-        ? await admin.from("academy_access_codes").select("code").in("code", codes)
-        : { data: [] as { code: string }[] }
-      const paidSet = new Set((paidCodes ?? []).map((c) => String(c.code)))
-
-      const certFor = new Map<string, { credential_id: string; issued_at: string }>()
-      for (const c of certs ?? []) {
+      const certFor = new Map<string, { id: string; at: string }>()
+      for (const c of certRes.data ?? []) {
         const key = String(c.student_id)
-        if (!certFor.has(key)) certFor.set(key, { credential_id: String(c.credential_id), issued_at: String(c.issued_at) })
+        if (!certFor.has(key)) certFor.set(key, { id: String(c.credential_id), at: String(c.issued_at) })
       }
-      const studentFor = new Map((students ?? []).map((st) => [String(st.id), st]))
+      const studentFor = new Map((studentRes.data ?? []).map((st) => [String(st.id), st]))
+      const portfolioFor = new Map(portfolios.map((p) => [String(p.student_id), p]))
 
-      const creators = (rows ?? [])
-        .map((row) => {
-          const key = String(row.student_id)
-          const cert = certFor.get(key)
-          // No approved certificate, no listing: "verified" has to mean
-          // something checkable or the whole page is worthless to a brand.
-          if (!cert) return null
-          const portfolio = (row.data ?? {}) as Record<string, unknown>
-          const works = Array.isArray(portfolio.works) ? portfolio.works : []
-          const student = studentFor.get(key)
-          return {
-            slug: row.slug,
-            name: String(portfolio.name ?? ""),
-            tagline: String(portfolio.tagline ?? ""),
-            niche: String(portfolio.niche ?? ""),
-            location: String(portfolio.location ?? student?.region ?? ""),
-            avatar: publicUrl(supabaseUrl, String(portfolio.avatar ?? "")),
-            works: works.length,
-            credentialId: cert.credential_id,
-            certifiedAt: cert.issued_at,
-            paid: paidSet.has(String(student?.access_code ?? "")),
-          }
+      const creators: Record<string, unknown>[] = []
+      for (const id of ids) {
+        const cert = certFor.get(id)
+        // No approved certificate, no card. "Verified" has to be checkable or
+        // the page is worth nothing to a brand.
+        if (!cert) continue
+        const student = studentFor.get(id)
+        const portfolio = portfolioFor.get(id)
+        const page = (portfolio?.data ?? {}) as Record<string, unknown>
+        const listing = listings.find((l) => String(l.student_id) === id)
+
+        creators.push({
+          name: String(page.name ?? student?.name ?? ""),
+          tagline: String(page.tagline ?? ""),
+          niche: String(page.niche ?? listing?.niche ?? ""),
+          location: String(page.location ?? listing?.location ?? student?.region ?? ""),
+          avatar: publicUrl(supabaseUrl, String(page.avatar ?? listing?.avatar ?? "")),
+          handle: String(listing?.handle ?? ""),
+          slug: portfolio ? String(portfolio.slug) : "",
+          credentialId: cert.id,
+          certifiedAt: cert.at,
+          paid: Boolean(portfolio),
+          updatedAt: String(portfolio?.updated_at ?? listing?.updated_at ?? ""),
         })
-        .filter(Boolean)
+      }
 
-      // Paid creators first, then most recently updated. Same rule the brief
-      // routing uses, so the page shows what actually happens.
-      creators.sort((a, b) => Number((b as { paid: boolean }).paid) - Number((a as { paid: boolean }).paid))
+      // Paid creators first, then most recently updated. Same order a brief
+      // is worked through, so the page shows what actually happens.
+      creators.sort((a, b) => {
+        const paid = Number(b.paid) - Number(a.paid)
+        if (paid) return paid
+        return String(b.updatedAt).localeCompare(String(a.updatedAt))
+      })
 
       return json(200, { creators }, origin)
+    }
+
+    // listingGet    {studentId} -> their four boxes, or blanks
+    // listingSave   {studentId, niche, location, handle, avatar} -> {ok}
+    // listingUpload {studentId, contentType} -> a signed URL for their photo
+    //
+    // Open to anyone holding an approved certificate, unlike the portfolio
+    // page, which stays part of the paid tier. Saving always clears the
+    // listed flag: an edited card goes back through Kathryn before a brand
+    // sees it, so a card cannot be quietly changed after it is approved.
+    if (type === "listingGet" || type === "listingSave" || type === "listingUpload") {
+      const studentId = String(body.studentId ?? "")
+      if (!studentId) return json(400, { error: "Missing fields." }, origin)
+
+      const { data: certRows, error: certErr } = await admin
+        .from("academy_certificates")
+        .select("credential_id")
+        .eq("student_id", studentId)
+        .eq("approved", true)
+        .limit(1)
+      if (certErr) throw certErr
+      if (!certRows?.length) {
+        return json(403, { error: "Finish a course first: the listing is for certified creators." }, origin)
+      }
+
+      if (type === "listingUpload") {
+        const contentType = String(body.contentType ?? "").toLowerCase()
+        const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }
+        const ext = EXT[contentType]
+        if (!ext) return json(400, { error: "A photo, please: JPG, PNG or WebP." }, origin)
+
+        const rand = crypto.randomUUID().replace(/-/g, "").slice(0, 16)
+        const path = `${studentId}/${rand}.${ext}`
+        const { data, error } = await admin.storage
+          .from(PORTFOLIO_BUCKET)
+          .createSignedUploadUrl(path)
+        if (error) {
+          console.error("listing upload url failed:", error.message)
+          return json(503, { error: "File store not ready." }, origin)
+        }
+        return json(200, { path, token: data.token, url: data.signedUrl }, origin)
+      }
+
+      if (type === "listingGet") {
+        const { data, error } = await admin
+          .from("academy_listings")
+          .select("niche, location, handle, avatar, listed")
+          .eq("student_id", studentId)
+          .limit(1)
+        if (error) throw error
+        const row = data?.[0]
+        return json(
+          200,
+          {
+            listing: {
+              niche: row?.niche ?? "",
+              location: row?.location ?? "",
+              handle: row?.handle ?? "",
+              avatar: row?.avatar ?? "",
+            },
+            listed: row?.listed === true,
+          },
+          origin,
+        )
+      }
+
+      const niche = String(body.niche ?? "").replace(/[<>]/g, "").trim().slice(0, 60)
+      const location = String(body.location ?? "").replace(/[<>]/g, "").trim().slice(0, 60)
+      const avatar = String(body.avatar ?? "").trim().slice(0, 300)
+      // Stored as a bare handle, never a link: it is rendered into an href on
+      // clickclick.video, and "javascript:" typed into a link field is the
+      // oldest trick there is.
+      const handle = String(body.handle ?? "").replace(/[^A-Za-z0-9._]/g, "").slice(0, 40)
+
+      if (!niche || !location) return json(400, { error: "Say what you film and where you are." }, origin)
+      if (avatar && !avatar.startsWith(`${studentId}/`)) {
+        return json(400, { error: "That photo is not yours." }, origin)
+      }
+
+      const { error } = await admin
+        .from("academy_listings")
+        .upsert(
+          { student_id: studentId, niche, location, handle, avatar, listed: false, updated_at: new Date().toISOString() },
+          { onConflict: "student_id" },
+        )
+      if (error) throw error
+      return json(200, { ok: true, listed: false }, origin)
     }
 
     // brief  {brand, email, website?, budget?, brief, hp?} -> {ok}
