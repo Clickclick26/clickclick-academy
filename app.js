@@ -2523,9 +2523,11 @@
       gateBtn.disabled = true;
       gateBtn.textContent = 'Checking…';
     }
+    var onDone = (opts && opts.onDone) || function () {};
     academyApi({ type: 'content', accessCode: code })
       .then(function (data) {
         enterWithContent(data);
+        onDone(data);
       })
       .catch(function (e) {
         // An expired code is a paying customer whose year is up. Saying "that
@@ -2561,9 +2563,32 @@
   // on the next reload instead of living forever in someone's localStorage.
   // A failure here drops to the gate and stops. It never retries, so a dead
   // backend shows the gate rather than spinning.
+  // A link from an email can carry the code: ?k=CODE, and optionally ?c=course
+  // to land straight on that course. Most people will not copy a code out of
+  // an email and type it into a box, so the email does it for them. The code
+  // is wiped from the address bar straight away, so a shared screenshot or a
+  // bookmark does not carry it, and the referrer of the next click does not
+  // leak it either.
+  function codeFromLink() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var code = (params.get('k') || '').trim();
+      if (!code) return null;
+      var courseId = (params.get('c') || '').trim();
+      params.delete('k');
+      params.delete('c');
+      var rest = params.toString();
+      history.replaceState({}, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+      return { code: code, courseId: courseId };
+    } catch (e) {
+      return null;
+    }
+  }
+
   function restoreOrGate() {
+    var link = codeFromLink();
     var saved = loadSession();
-    var code = saved && saved.code;
+    var code = (link && link.code) || (saved && saved.code);
 
     if (!code) {
       try {
@@ -2577,6 +2602,9 @@
     }
 
     unlockWithCode(code, {
+      onDone: function () {
+        if (link && link.courseId) openCourseDetail(link.courseId);
+      },
       onFail: function () {
         clearSession();
         session = null;

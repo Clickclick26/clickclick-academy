@@ -78,6 +78,16 @@ const DELAYS: Record<Audience, number[]> = {
   brand: [0, 3],
 }
 
+// The link an email sends people to. It carries the access code, so nobody has
+// to copy one out of an email and type it into a box: that step was losing
+// about five people in six. app.js reads ?k= and ?c=, unlocks, and wipes both
+// from the address bar.
+function courseLink(us: boolean): string {
+  const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
+  const course = us ? "golden-quarter-ugc-us" : "golden-quarter-ugc"
+  return `${ACADEMY}?k=${code}&c=${course}`
+}
+
 const FREE_COURSE: Record<string, string> = {
   "creator-uk": "golden-quarter-ugc",
   "creator-us": "golden-quarter-ugc-us",
@@ -314,12 +324,12 @@ function creatorEmail(step: number, us: boolean, progress: Progress): Email {
 
   if (step === 0) {
     return {
-      subject: `Your code: ${code}`,
+      subject: "The Golden Quarter is open",
       paras: [
-        `Your code for The Golden Quarter is ${code}.`,
-        "Open the Academy, type the code in, then put your name and this email address in once. That is what saves your progress.",
+        "Your free course, The Golden Quarter, is ready. The button below opens it, so there is no code to type.",
+        "It asks for your name and email once, which is what saves your place and puts your name on the certificate.",
       ],
-      button: { label: "Open the course", href: ACADEMY },
+      button: { label: "Open lesson one", href: courseLink(us) },
       after: [
         "Five short lessons. Start with the first one: it explains why the Black Friday work you see in November was booked in September.",
         ...group,
@@ -333,9 +343,9 @@ function creatorEmail(step: number, us: boolean, progress: Progress): Email {
       paras: [
         "You asked for The Golden Quarter and have not opened it yet. That is normal.",
         "Lesson one takes about five minutes. It explains why the Black Friday work you see in November was booked in September, which is the part most creators find out too late.",
-        `Your code is ${code}.`,
+        "The button opens it straight away, no code needed.",
       ],
-      button: { label: "Open lesson one", href: ACADEMY },
+      button: { label: "Open lesson one", href: courseLink(us) },
       after: group.length ? [`P.S. ${group[0]}`] : [],
     }
   }
@@ -654,8 +664,44 @@ function foundingSep26(us: boolean, firstName: string, unsub: string): Broadcast
   return { subject, html, text }
 }
 
+// Sent 20 Sep 2026 to everyone who asked for the free course and never got in.
+// 50 of the first 58 stopped at the code box, so this is the same course with
+// the code taken out of their hands. One link, on purpose: a wall of links
+// reads as spam to Gmail.
+function oneClickSep26(us: boolean, firstName: string, unsub: string): Broadcast {
+  const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
+  const link = courseLink(us)
+  const subject = "The Golden Quarter, without the code"
+  const why = "You're getting this because you asked for The Golden Quarter on Facebook or Instagram."
+
+  const text = [
+    `Hi ${firstName},`,
+    "You asked for The Golden Quarter, then had to find a code in an email and type it into a box. Most people did not bother, and that is my fault rather than theirs.",
+    `This link opens the course on its own, no code: ${link}`,
+    "It asks for your name and email once. That is what saves your place and puts your name on the certificate.",
+    "Five lessons, about ten minutes each. The first one is why the Black Friday work you see in November was booked in September.",
+    `If you would rather type it in yourself, your code is still ${code}.`,
+    "Kathryn\nClickClick",
+    `${why} Unsubscribe: ${unsub}\n${ADDRESS}`,
+  ].join("\n\n")
+
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+<p>You asked for The Golden Quarter, then had to find a code in an email and type it into a box. Most people did not bother, and that is my fault rather than theirs.</p>
+<p>This link opens the course on its own, no code:</p>
+<p><a href="${link}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Open lesson one</a></p>
+<p>It asks for your name and email once. That is what saves your place and puts your name on the certificate.</p>
+<p>Five lessons, about ten minutes each. The first one is why the Black Friday work you see in November was booked in September.</p>
+<p style="font-size:14px;color:#5c5c5c">If you would rather type it in yourself, your code is still <b style="color:#141414;letter-spacing:.04em">${code}</b>.</p>
+<p>Kathryn<br>ClickClick</p>
+<p style="color:#5c5c5c;font-size:13px;margin-top:28px">${escapeHtml(why)} <a href="${unsub}" style="color:#5c5c5c">Unsubscribe</a><br>${escapeHtml(ADDRESS)}</p>
+</div>`
+  return { subject, html, text }
+}
+
 const CAMPAIGNS: Record<string, (us: boolean, firstName: string, unsub: string) => Broadcast> = {
   "founding-sep26": foundingSep26,
+  "one-click-sep26": oneClickSep26,
 }
 
 async function sendBroadcast(opts: {
