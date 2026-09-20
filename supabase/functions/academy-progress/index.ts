@@ -1446,6 +1446,124 @@ Deno.serve(async (req) => {
       return json(200, { ok: true, listed: false }, origin)
     }
 
+    // testimonialGet    {studentId} -> the clip they have already sent, if any
+    // testimonialUpload {studentId, contentType} -> a signed URL for the video
+    // testimonialSave   {studentId, path, note, consent} -> {ok}
+    //
+    // A minute of phone video is 60 to 150MB, which is three times what Gmail
+    // will carry, so "email it to me" quietly fails at the last step. One slot
+    // per creator, replaceable: five versions and no decision helps nobody.
+    if (type === "testimonialGet" || type === "testimonialUpload" || type === "testimonialSave") {
+      const studentId = String(body.studentId ?? "")
+      if (!studentId) return json(400, { error: "Missing fields." }, origin)
+
+      const { data: certRows, error: certErr } = await admin
+        .from("academy_certificates")
+        .select("credential_id")
+        .eq("student_id", studentId)
+        .eq("approved", true)
+        .limit(1)
+      if (certErr) throw certErr
+      if (!certRows?.length) {
+        return json(403, { error: "Finish the course first." }, origin)
+      }
+
+      if (type === "testimonialUpload") {
+        const contentType = String(body.contentType ?? "").toLowerCase()
+        const EXT: Record<string, string> = {
+          "video/mp4": "mp4",
+          "video/quicktime": "mov",
+          "video/webm": "webm",
+          "video/x-m4v": "m4v",
+        }
+        const ext = EXT[contentType]
+        if (!ext) return json(400, { error: "Video only: MP4, MOV or WebM." }, origin)
+
+        const rand = crypto.randomUUID().replace(/-/g, "").slice(0, 16)
+        const path = `${studentId}/testimonial-${rand}.${ext}`
+        const { data, error } = await admin.storage
+          .from(PORTFOLIO_BUCKET)
+          .createSignedUploadUrl(path)
+        if (error) {
+          console.error("testimonial upload url failed:", error.message)
+          return json(503, { error: "File store not ready." }, origin)
+        }
+        return json(200, { path, token: data.token, url: data.signedUrl }, origin)
+      }
+
+      if (type === "testimonialGet") {
+        const { data, error } = await admin
+          .from("academy_testimonials")
+          .select("path, note, created_at")
+          .eq("student_id", studentId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+        if (error) throw error
+
+        // Somebody who cleared the lessons in a couple of minutes is never
+        // asked for a video about a course they did not read. They keep the
+        // certificate; they just do not get the ask.
+        const { data: stamps } = await admin
+          .from("academy_progress")
+          .select("submitted_at")
+          .eq("student_id", studentId)
+          .order("submitted_at", { ascending: true })
+        const times = (stamps ?? [])
+          .map((r) => new Date(String(r.submitted_at)).getTime())
+          .filter((t) => !Number.isNaN(t))
+        const span = times.length > 1 ? times[times.length - 1] - times[0] : 0
+        const eligible = span >= 12 * 60_000
+
+        return json(200, { testimonial: data?.[0] ?? null, eligible }, origin)
+      }
+
+      const path = String(body.path ?? "").trim()
+      const note = String(body.note ?? "").replace(/[<>]/g, "").trim().slice(0, 500)
+      if (!path.startsWith(`${studentId}/`)) {
+        return json(400, { error: "That file is not yours." }, origin)
+      }
+      // No permission tick. Nothing is needed to receive a video, only to
+      // publish one, and a second required field halves how many people
+      // finish. The page promises instead that nothing goes public without
+      // asking, and that ask happens when the edited version goes back.
+      const consent = false
+
+      // One slot each. Sending a new one replaces the old.
+      await admin.from("academy_testimonials").delete().eq("student_id", studentId)
+      const { error } = await admin
+        .from("academy_testimonials")
+        .insert({ student_id: studentId, path, note, consent })
+      if (error) throw error
+
+      // Kathryn watches these herself, so the only automation is telling her
+      // one has landed.
+      const apiKey = Deno.env.get("RESEND_API_KEY")
+      if (apiKey) {
+        const { data: who } = await admin
+          .from("academy_students")
+          .select("name, email")
+          .eq("id", studentId)
+          .limit(1)
+        const person = who?.[0]
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "ClickClick <hello@clickclick.video>",
+            to: ["hello@clickclick.video"],
+            subject: `Video from ${person?.name ?? "a creator"}`,
+            text: [
+              `${person?.name ?? "A creator"} (${person?.email ?? "unknown"}) sent a clip.`,
+              note ? `They said: ${note}` : "",
+              `File: ${publicUrl(supabaseUrl, path)}`,
+            ].filter(Boolean).join("\n\n"),
+          }),
+        }).catch((e) => console.error("testimonial email failed:", e))
+      }
+
+      return json(200, { ok: true }, origin)
+    }
+
     // brief  {brand, email, website?, budget?, brief, hp?} -> {ok}
     //
     // A brand saying what they need. It is answered by hand: no dashboard, no

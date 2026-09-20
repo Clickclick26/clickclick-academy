@@ -2672,3 +2672,30 @@ input {
 .assessment-q--wrong legend { color: #b3261e; }
 .assessment-msg { margin: 1rem 0 0; font-weight: 500; }
 .assessment-msg[data-kind="bad"] { color: #b3261e; }
+
+/* The 60-second clip. One obvious road (film now), one quiet side road
+   (pick an existing file), and a real progress bar: on mobile data a
+   spinner tells somebody nothing and they close the tab. */
+.testimonial-prompt-head { margin: 1rem 0 .35rem; font-weight: 600; }
+.testimonial-prompts { margin: 0 0 1.1rem; padding-left: 1.1rem; }
+.testimonial-prompts li { margin-bottom: .25rem; }
+.testimonial-film-btn { display: inline-block; cursor: pointer; }
+.testimonial-alt { margin: .6rem 0 1rem; font-size: .9rem; }
+.testimonial-note-label { display: block; font-size: .93rem; font-weight: 500; }
+.testimonial-note-label input {
+  display: block; width: 100%; margin-top: .3rem; padding: .6rem .7rem;
+  font: inherit; border: 1px solid rgba(20, 19, 15, .22);
+  border-radius: 10px; background: #fff; color: inherit;
+}
+.testimonial-promise { margin: .8rem 0 0; font-size: .86rem; color: #6b6559; }
+.testimonial-bar {
+  height: 10px; border-radius: 999px; overflow: hidden;
+  background: rgba(20, 19, 15, .1);
+}
+.testimonial-bar span {
+  display: block; width: 0; height: 100%;
+  background: #14130f; transition: width .2s ease;
+}
+.testimonial-progress-text { margin: .6rem 0 0; font-weight: 500; }
+.testimonial-done-head { margin: 0 0 .4rem; font-weight: 600; }
+.testimonial-done-line { margin: 0 0 .6rem; }

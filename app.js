@@ -1888,6 +1888,182 @@
     });
   }
 
+  // The 60 seconds to camera. Sits straight under the certificate, because
+  // that is the moment they are proudest and it fades fast. Only shown once
+  // their listing is saved: give them something first, ask second.
+  //
+  // Email cannot carry this. A minute of phone video is 60 to 150MB and Gmail
+  // stops at 25MB, so "send it over" would fail silently at the last step.
+  function testimonialCardHtml() {
+    return (
+      '<div class="certificate-card testimonial-card" id="testimonial-card" hidden>' +
+      '<div class="certificate-card-head">' +
+      '<span class="certificate-seal" aria-hidden="true">&#127909;</span>' +
+      '<div>' +
+      '<p class="certificate-eyebrow">A favour</p>' +
+      '<h3>Would you film me 60 seconds?</h3>' +
+      '</div>' +
+      '</div>' +
+      '<p class="certificate-sub">Tell people what the course was actually like, straight to camera on your phone. ' +
+      'I will colour it, caption it and send it back, yours to keep and post. Nothing in return, I just want the honest version.</p>' +
+      '<p class="testimonial-prompt-head">Say this, in any order:</p>' +
+      '<ul class="testimonial-prompts">' +
+      '<li>What you were doing before the course.</li>' +
+      '<li>What clicked for you.</li>' +
+      '<li>What you are doing with it now.</li>' +
+      '</ul>' +
+      '<div id="testimonial-idle">' +
+      '<label class="btn primary testimonial-film-btn" for="testimonial-file">Film a 60-second clip</label>' +
+      '<input type="file" id="testimonial-file" accept="video/*" capture="user" hidden />' +
+      '<p class="testimonial-alt"><button type="button" class="link-btn" id="testimonial-pick">or pick one you already made</button></p>' +
+      '<input type="file" id="testimonial-library" accept="video/mp4,video/quicktime,video/webm" hidden />' +
+      '<label class="testimonial-note-label">Anything you would like me to cut?' +
+      '<input type="text" id="testimonial-note" maxlength="500" placeholder="Optional" /></label>' +
+      '<p class="testimonial-promise">It will not go anywhere public without me asking you first.</p>' +
+      '</div>' +
+      '<div id="testimonial-progress" hidden>' +
+      '<div class="testimonial-bar"><span id="testimonial-bar-fill"></span></div>' +
+      '<p class="testimonial-progress-text" id="testimonial-progress-text">Sending\u2026</p>' +
+      '<p class="testimonial-promise">Keep this tab open. On mobile data this can take a few minutes, and you can lock your phone.</p>' +
+      '</div>' +
+      '<div id="testimonial-done" hidden>' +
+      '<p class="testimonial-done-head">&#10003; Got it. Thank you.</p>' +
+      '<p class="testimonial-done-line" id="testimonial-done-line"></p>' +
+      '<p><button type="button" class="link-btn" id="testimonial-again">Send a different one</button></p>' +
+      '</div>' +
+      '<p class="listing-msg" id="testimonial-msg" hidden></p>' +
+      '</div>'
+    );
+  }
+
+  // Two working days from now, named as a weekday rather than "soon": a real
+  // day is what turns this from a black hole into something they expect back.
+  function editBackBy() {
+    var d = new Date();
+    var added = 0;
+    while (added < 2) {
+      d.setDate(d.getDate() + 1);
+      var day = d.getDay();
+      if (day !== 0 && day !== 6) added += 1;
+    }
+    return d.toLocaleDateString('en-GB', { weekday: 'long' });
+  }
+
+  function setupTestimonialCard() {
+    var card = document.getElementById('testimonial-card');
+    var student = loadStudent();
+    if (!card || !student || !student.studentId) return;
+
+    var idle = document.getElementById('testimonial-idle');
+    var progress = document.getElementById('testimonial-progress');
+    var doneBox = document.getElementById('testimonial-done');
+    var doneLine = document.getElementById('testimonial-done-line');
+    var msg = document.getElementById('testimonial-msg');
+    var fill = document.getElementById('testimonial-bar-fill');
+    var progressText = document.getElementById('testimonial-progress-text');
+
+    function showDone() {
+      idle.hidden = true;
+      progress.hidden = true;
+      doneBox.hidden = false;
+      doneLine.textContent =
+        'I will have your edited version back to you by ' + editBackBy() +
+        ', captioned and graded, the same format brands pay for.';
+    }
+
+    // Give first, ask second: the favour only appears once they have their
+    // listing saved, so the page has done something for them before it wants
+    // something from them.
+    academyApi({ type: 'listingGet', studentId: student.studentId })
+      .then(function (listing) {
+        var saved = listing && listing.listing && listing.listing.niche && listing.listing.location;
+        if (!saved) return null;
+        return academyApi({ type: 'testimonialGet', studentId: student.studentId });
+      })
+      .then(function (data) {
+        // Someone who clicked through the lessons is never asked.
+        if (!data || data.eligible === false) return;
+        card.hidden = false;
+        if (data.testimonial) showDone();
+      })
+      .catch(function () {
+        // Not certified, or the call failed. Leave the card hidden.
+      });
+
+    var sending = false;
+
+    // Real bytes, not a spinner: on 4G people close the tab after about
+    // twenty seconds of a screen that is not obviously moving.
+    function upload(file) {
+      if (sending || !file) return;
+      sending = true;
+      idle.hidden = true;
+      progress.hidden = false;
+      if (msg) msg.hidden = true;
+      var started = Date.now();
+
+      academyApi({ type: 'testimonialUpload', studentId: student.studentId, contentType: file.type })
+        .then(function (up) {
+          return new Promise(function (resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('PUT', up.url, true);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.upload.onprogress = function (e) {
+              if (!e.lengthComputable) return;
+              var pct = Math.round((e.loaded / e.total) * 100);
+              fill.style.width = pct + '%';
+              var elapsed = (Date.now() - started) / 1000;
+              var left = e.loaded > 0 ? Math.round((elapsed / e.loaded) * (e.total - e.loaded)) : 0;
+              var mins = Math.ceil(left / 60);
+              progressText.textContent =
+                'Sending\u2026 ' + pct + '%' + (left > 45 ? ' (about ' + mins + ' minute' + (mins === 1 ? '' : 's') + ' left)' : '');
+            };
+            xhr.onload = function () {
+              if (xhr.status >= 200 && xhr.status < 300) resolve(up.path);
+              else reject(new Error('That did not upload. Try again on wifi if you can.'));
+            };
+            xhr.onerror = function () { reject(new Error('The connection dropped. Have another go.')); };
+            xhr.send(file);
+          });
+        })
+        .then(function (path) {
+          return academyApi({
+            type: 'testimonialSave',
+            studentId: student.studentId,
+            path: path,
+            note: (document.getElementById('testimonial-note') || {}).value || ''
+          });
+        })
+        .then(showDone)
+        .catch(function (err) {
+          idle.hidden = false;
+          progress.hidden = true;
+          if (msg) {
+            msg.textContent = (err && err.message) || 'That did not send. Try again in a minute.';
+            msg.setAttribute('data-kind', 'bad');
+            msg.hidden = false;
+          }
+        })
+        .then(function () { sending = false; });
+    }
+
+    var filmInput = document.getElementById('testimonial-file');
+    var libraryInput = document.getElementById('testimonial-library');
+    var pickBtn = document.getElementById('testimonial-pick');
+    var againBtn = document.getElementById('testimonial-again');
+
+    if (filmInput) filmInput.addEventListener('change', function () { upload(this.files && this.files[0]); });
+    if (libraryInput) libraryInput.addEventListener('change', function () { upload(this.files && this.files[0]); });
+    if (pickBtn) pickBtn.addEventListener('click', function () { libraryInput.click(); });
+    if (againBtn) {
+      againBtn.addEventListener('click', function () {
+        doneBox.hidden = true;
+        idle.hidden = false;
+        fill.style.width = '0%';
+      });
+    }
+  }
+
   // The four boxes that put a certified creator on
   // clickclick.video/creators/verified/. A portfolio page is part of the paid
   // tier; this is the free version of being findable, and it is deliberately
@@ -2348,7 +2524,7 @@
         : '<div class="progress-track" role="progressbar" aria-valuenow="' + doneCount +
           '" aria-valuemin="0" aria-valuemax="' + lessonCount + '"><div class="progress-fill"></div></div>'
       ) +
-      (complete ? assessmentCardHtml() + certificateCardHtml(course, lessonCount, modules.length) + listingCardHtml() : '') +
+      (complete ? assessmentCardHtml() + certificateCardHtml(course, lessonCount, modules.length) + testimonialCardHtml() + listingCardHtml() : '') +
       '</div>' +
       courseIntroHtml(course) +
       modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum, selfPaced); }).join('') +
@@ -2518,6 +2694,7 @@
       detailBody.innerHTML = courseDetailHtml(course, {}, opts.justUnlockedNum);
       setupListingCard();
       setupAssessmentCard(course);
+      setupTestimonialCard();
       return;
     }
     var student = loadStudent();
@@ -2575,6 +2752,7 @@
         detailBody.innerHTML = courseDetailHtml(course, byNum, opts.justUnlockedNum);
         setupListingCard();
         setupAssessmentCard(course);
+        setupTestimonialCard();
         var lessonCount = flatLessonNums(course).length;
         var doneCount = Object.keys(byNum).length;
         animateProgressBar(doneCount, lessonCount);
@@ -2591,6 +2769,7 @@
         detailBody.innerHTML = courseDetailHtml(course, {});
         setupListingCard();
         setupAssessmentCard(course);
+        setupTestimonialCard();
       });
   }
 
@@ -3014,7 +3193,9 @@
             detailBody.innerHTML = courseDetailHtml(currentDetailCourse, byNum);
             setupListingCard();
             setupAssessmentCard(currentDetailCourse);
+            setupTestimonialCard();
         setupAssessmentCard(course);
+        setupTestimonialCard();
             animateProgressBar(Object.keys(byNum).length, flatLessonNums(currentDetailCourse).length);
           });
       }
