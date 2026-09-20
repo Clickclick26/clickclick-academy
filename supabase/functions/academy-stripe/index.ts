@@ -105,16 +105,53 @@ const LINK_TIERS: Record<string, { tier: string; pack: string; label: string }> 
     pack: "creator-ugc-us-priority",
     label: "UGC Content Creator Certification + Priority (US)",
   },
+  // The business course, "Make Your Own Videos", £199, added 20 Sep 2026.
+  // A different audience from everything above: a shop filming its own front
+  // door, not a creator chasing brand work. Same pair-of-links shape as the
+  // certification — a UK link where we are the seller, and a Managed Payments
+  // link where Stripe is merchant of record and owns the VAT, which is what
+  // makes an Irish or EU sale legal without registering for VAT there. A UK
+  // seller gets no threshold on B2C digital services into the EU: the VAT is
+  // due from the first sale, so an EU buyer must never go through the UK link.
+  plink_1UHpx72YYPNSFgcITi6Eu55j: {
+    tier: "business",
+    pack: "business-video",
+    label: "Make Your Own Videos",
+  },
+  plink_1UHpuP2YYPNSFgcIGRirwPH6: {
+    tier: "business",
+    pack: "business-video",
+    label: "Make Your Own Videos",
+  },
 }
 
 // Falls back to what was actually paid if the payment link is ever replaced
 // and this file has not caught up. Better a right tier from the wrong signal
 // than a buyer locked out because a link id changed.
+//
+// This only works because the amounts do not collide:
+//   GBP   9900 creator FOUNDING50 · 13900 business FIRSTFORTY · 14900 creator
+//        19900 business · 24900 creator priority
+//   USD  19900 US creator · 32900 US creator priority
+//
+// Note 19900 means the BUSINESS course in pounds and the US CERTIFICATION in
+// dollars, so the currency branch has to come first. Before the two links
+// above existed, £199 fell through to the cheapest GBP tier and would have
+// handed a business buyer the creator certification.
+//
+// If a new price is ever added that collides with one of these, this function
+// stops being safe and the collision has to be resolved here first.
+const BUSINESS_AMOUNTS_GBP = new Set([13900, 19900])
+
 function tierFromAmount(amount: number | null | undefined, currency?: string | null) {
-  const priority = typeof amount === "number" && amount >= (currency === "usd" ? 26000 : 20000)
   if (currency === "usd") {
+    const priority = typeof amount === "number" && amount >= 26000
     return priority ? LINK_TIERS.plink_1UH0Xe2YYPNSFgcIVTiI585T : LINK_TIERS.plink_1UH0U42YYPNSFgcIbPfF6E7V
   }
+  if (typeof amount === "number" && BUSINESS_AMOUNTS_GBP.has(amount)) {
+    return LINK_TIERS.plink_1UHpx72YYPNSFgcITi6Eu55j
+  }
+  const priority = typeof amount === "number" && amount >= 20000
   return priority ? LINK_TIERS.plink_1UGMiS2YYPNSFgcI2CISoeZx : LINK_TIERS.plink_1UGLlO2YYPNSFgcILXoOuuA6
 }
 
