@@ -1141,6 +1141,134 @@ Deno.serve(async (req) => {
       return json(200, { codes: codeRows ?? [], students }, origin)
     }
 
+    // ------------------------------------------------ The Click List ----
+    //
+    // creatorList  {}  -> the creators on clickclick.video/creators/verified/
+    //
+    // Only rows Kathryn has ticked (academy_portfolios.listed). Finishing the
+    // free course issues a certificate and that can be rushed in twenty
+    // minutes, so the certificate alone never puts anyone in front of a brand.
+    // Paid creators are marked, because a brief goes to them first.
+    if (type === "creatorList") {
+      const { data: rows, error } = await admin
+        .from("academy_portfolios")
+        .select("student_id, slug, data, updated_at")
+        .eq("published", true)
+        .eq("listed", true)
+        .order("updated_at", { ascending: false })
+        .limit(200)
+      if (error) throw error
+
+      const ids = (rows ?? []).map((r) => r.student_id)
+      if (!ids.length) return json(200, { creators: [] }, origin)
+
+      const { data: certs } = await admin
+        .from("academy_certificates")
+        .select("student_id, credential_id, issued_at")
+        .in("student_id", ids)
+        .eq("approved", true)
+        .order("issued_at", { ascending: true })
+
+      const { data: students } = await admin
+        .from("academy_students")
+        .select("id, region, access_code")
+        .in("id", ids)
+
+      // The paid tiers are the ones whose code was minted for a purchase, so
+      // read it from the code rather than anything the creator can type.
+      const codes = (students ?? []).map((st) => String(st.access_code ?? "")).filter(Boolean)
+      const { data: paidCodes } = codes.length
+        ? await admin.from("academy_access_codes").select("code").in("code", codes)
+        : { data: [] as { code: string }[] }
+      const paidSet = new Set((paidCodes ?? []).map((c) => String(c.code)))
+
+      const certFor = new Map<string, { credential_id: string; issued_at: string }>()
+      for (const c of certs ?? []) {
+        const key = String(c.student_id)
+        if (!certFor.has(key)) certFor.set(key, { credential_id: String(c.credential_id), issued_at: String(c.issued_at) })
+      }
+      const studentFor = new Map((students ?? []).map((st) => [String(st.id), st]))
+
+      const creators = (rows ?? [])
+        .map((row) => {
+          const key = String(row.student_id)
+          const cert = certFor.get(key)
+          // No approved certificate, no listing: "verified" has to mean
+          // something checkable or the whole page is worthless to a brand.
+          if (!cert) return null
+          const portfolio = (row.data ?? {}) as Record<string, unknown>
+          const works = Array.isArray(portfolio.works) ? portfolio.works : []
+          const student = studentFor.get(key)
+          return {
+            slug: row.slug,
+            name: String(portfolio.name ?? ""),
+            tagline: String(portfolio.tagline ?? ""),
+            niche: String(portfolio.niche ?? ""),
+            location: String(portfolio.location ?? student?.region ?? ""),
+            avatar: publicUrl(supabaseUrl, String(portfolio.avatar ?? "")),
+            works: works.length,
+            credentialId: cert.credential_id,
+            certifiedAt: cert.issued_at,
+            paid: paidSet.has(String(student?.access_code ?? "")),
+          }
+        })
+        .filter(Boolean)
+
+      // Paid creators first, then most recently updated. Same rule the brief
+      // routing uses, so the page shows what actually happens.
+      creators.sort((a, b) => Number((b as { paid: boolean }).paid) - Number((a as { paid: boolean }).paid))
+
+      return json(200, { creators }, origin)
+    }
+
+    // brief  {brand, email, website?, budget?, brief, hp?} -> {ok}
+    //
+    // A brand saying what they need. It is answered by hand: no dashboard, no
+    // messaging, no accounts. hp is a honeypot, filled in only by bots.
+    if (type === "brief") {
+      if (String(body.hp ?? "")) return json(200, { ok: true }, origin)
+
+      const brand = String(body.brand ?? "").trim().slice(0, 120)
+      const email = String(body.email ?? "").trim().toLowerCase().slice(0, 200)
+      const website = String(body.website ?? "").trim().slice(0, 300)
+      const budget = String(body.budget ?? "").trim().slice(0, 60)
+      const brief = String(body.brief ?? "").trim().slice(0, 4000)
+
+      if (!brand || !brief) return json(400, { error: "Tell us who you are and what you need." }, origin)
+      if (!EMAIL_RE.test(email)) return json(400, { error: "That email address does not look right." }, origin)
+
+      const { error } = await admin
+        .from("brand_briefs")
+        .insert({ brand, email, website: website || null, budget: budget || null, brief })
+      if (error) throw error
+
+      // Kathryn answers these herself, so the only automation is telling her.
+      const apiKey = Deno.env.get("RESEND_API_KEY")
+      if (apiKey) {
+        const lines = [
+          `Brand: ${brand}`,
+          `Email: ${email}`,
+          website ? `Site: ${website}` : "",
+          budget ? `Budget: ${budget}` : "",
+          "",
+          brief,
+        ].filter(Boolean)
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "ClickClick <hello@clickclick.video>",
+            to: ["hello@clickclick.video"],
+            reply_to: email,
+            subject: `Brief from ${brand}`,
+            text: lines.join("\n"),
+          }),
+        }).catch((e) => console.error("brief email failed:", e))
+      }
+
+      return json(200, { ok: true }, origin)
+    }
+
     return json(400, { error: "Unknown request type." }, origin)
   } catch (err) {
     console.error("academy-progress error:", err)
