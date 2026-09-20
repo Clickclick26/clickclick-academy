@@ -2,9 +2,14 @@
 # sends each person the follow-up email they are due.
 #
 # The first email is the one that matters: someone who just asked for a free
-# course and hears nothing for an hour has mostly forgotten asking. So this
-# runs every ten minutes. GitHub delays scheduled jobs under load, so in
-# practice it is ten to twenty.
+# course and hears nothing for an hour has mostly forgotten asking.
+#
+# The schedule here is OFF. It said every ten minutes and GitHub actually ran
+# it every three to five hours, throttled with no warning and no failure, so
+# leads were waiting half a day for the link to their course. pg_cron inside
+# Supabase does the job now (supabase/lead-cron.sql) and is not throttled.
+# This is kept as the manual button: press Run workflow if the database
+# scheduler is ever down, or to force a fetch.
 #
 # Needs one repository secret: CRON_KEY, the same value as the CRON_KEY edge
 # function secret. Safe to run by hand or twice at once: every email is
@@ -12,8 +17,6 @@
 name: Lead follow-up emails
 
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
