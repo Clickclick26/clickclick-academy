@@ -245,6 +245,12 @@ async function resolvePack(
   return { code: row.code, pack, buyer: { email: row.email, tier: row.tier } }
 }
 
+// The final check. Same shape as any accredited course: a pass mark, marked
+// on the server against the real answers, and as many retakes as they like.
+// A stopwatch was the wrong tool. Nobody is stopped from reading quickly,
+// they are stopped from holding a credential without knowing the material.
+const ASSESSMENT_PASS = 0.75
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // deno-lint-ignore no-explicit-any
@@ -649,6 +655,106 @@ Deno.serve(async (req) => {
       return json(200, { rows }, origin)
     }
 
+    // assessmentGet  {courseId} -> the questions, with no answers in them
+    // assess {studentId, courseId, answers:[{num, index, choice}]} -> marked
+    //
+    // The quiz questions already written into each lesson, pulled together as
+    // one final check and marked here rather than in the browser. The browser
+    // never sees which option is right, so a click-through cannot pass it.
+    if (type === "assessmentGet" || type === "assess") {
+      const courseId = String(body.courseId ?? "")
+      if (!courseId) return json(400, { error: "Missing fields." }, origin)
+
+      let content
+      try {
+        content = await loadContent(admin)
+      } catch (_e) {
+        return json(503, { error: "Content store not configured." }, origin)
+      }
+      const course = (content.courses as Array<Record<string, unknown>>).find(
+        (c) => String(c.id) === courseId,
+      )
+      if (!course) return json(404, { error: "No such course." }, origin)
+
+      type Q = { num: string; index: number; q: string; options: string[]; correct: number }
+      const questions: Q[] = []
+      for (const m of (course.modules as Array<{ lessons?: Array<Record<string, unknown>>} >) ?? []) {
+        for (const lesson of m.lessons ?? []) {
+          const activity = lesson.activity as Record<string, unknown> | undefined
+          if (!activity || activity.kind !== "quiz") continue
+          const list = (activity.questions as Array<Record<string, unknown>>) ?? []
+          list.forEach((item, index) => {
+            questions.push({
+              num: String(lesson.num ?? ""),
+              index,
+              q: String(item.q ?? ""),
+              options: (item.options as string[]) ?? [],
+              correct: Number(item.correct ?? -1),
+            })
+          })
+        }
+      }
+      if (!questions.length) {
+        return json(400, { error: "This course has no final check." }, origin)
+      }
+
+      if (type === "assessmentGet") {
+        return json(
+          200,
+          {
+            pass: Math.ceil(questions.length * ASSESSMENT_PASS),
+            total: questions.length,
+            questions: questions.map((q) => ({ num: q.num, index: q.index, q: q.q, options: q.options })),
+          },
+          origin,
+        )
+      }
+
+      const studentId = String(body.studentId ?? "")
+      if (!studentId) return json(400, { error: "Missing fields." }, origin)
+
+      const given = new Map<string, number>()
+      for (const a of (body.answers as Array<Record<string, unknown>>) ?? []) {
+        given.set(`${String(a.num ?? "")}|${Number(a.index ?? -1)}`, Number(a.choice ?? -1))
+      }
+
+      let score = 0
+      const wrong: string[] = []
+      for (const q of questions) {
+        const key = `${q.num}|${q.index}`
+        if (given.get(key) === q.correct) score += 1
+        else wrong.push(key)
+      }
+      const needed = Math.ceil(questions.length * ASSESSMENT_PASS)
+      const passed = score >= needed
+
+      const { data: previous } = await admin
+        .from("academy_assessments")
+        .select("attempts")
+        .eq("student_id", studentId)
+        .eq("course_id", courseId)
+        .limit(1)
+      const attempts = Number(previous?.[0]?.attempts ?? 0) + 1
+
+      const { error } = await admin.from("academy_assessments").upsert(
+        {
+          student_id: studentId,
+          course_id: courseId,
+          score,
+          total: questions.length,
+          passed,
+          attempts,
+          taken_at: new Date().toISOString(),
+        },
+        { onConflict: "student_id,course_id" },
+      )
+      if (error) throw error
+
+      // Which ones were wrong, never what the right answer was: that is the
+      // difference between having another go and copying the answer sheet.
+      return json(200, { score, total: questions.length, needed, passed, wrong }, origin)
+    }
+
     if (type === "certificate") {
       const studentId = String(body.studentId ?? "")
       const courseId = String(body.courseId ?? "")
@@ -701,12 +807,31 @@ Deno.serve(async (req) => {
 
       const { data: doneRows, error: doneErr } = await admin
         .from("academy_progress")
-        .select("lesson_num")
+        .select("lesson_num, submitted_at")
         .eq("student_id", studentId)
         .eq("course_id", courseId)
       if (doneErr) throw doneErr
       const done = new Set((doneRows ?? []).map((r) => String(r.lesson_num)))
       const missing = lessonNums.filter((n) => !done.has(n))
+
+      // The lessons being ticked says they went through it. The final check
+      // says they know it, and that is what a brand is trusting.
+      const { data: assessed } = await admin
+        .from("academy_assessments")
+        .select("passed, score, total")
+        .eq("student_id", studentId)
+        .eq("course_id", courseId)
+        .limit(1)
+      if (missing.length === 0 && assessed?.[0]?.passed !== true) {
+        return json(
+          403,
+          {
+            error: "One thing left: the final check. Pass it and your certificate is issued.",
+            needsAssessment: true,
+          },
+          origin,
+        )
+      }
 
       if (missing.length > 0) {
         return json(

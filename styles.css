@@ -2643,3 +2643,32 @@ input {
 }
 .listing-msg { margin: .9rem 0 0; font-weight: 500; }
 .listing-msg[data-kind="bad"] { color: #b3261e; }
+
+/* The final check. Same card shell as the certificate, so it reads as the
+   last step of the course rather than a test bolted on the side. */
+.assessment-q {
+  margin: 0 0 1.25rem;
+  padding: 0 0 0 .1rem;
+  border: 0;
+}
+.assessment-q legend {
+  padding: 0;
+  margin-bottom: .5rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.assessment-opt {
+  display: flex;
+  gap: .55rem;
+  align-items: flex-start;
+  padding: .5rem .6rem;
+  margin-bottom: .35rem;
+  border: 1px solid rgba(20, 19, 15, .14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .55);
+  cursor: pointer;
+}
+.assessment-opt:hover { border-color: rgba(20, 19, 15, .3); }
+.assessment-q--wrong legend { color: #b3261e; }
+.assessment-msg { margin: 1rem 0 0; font-weight: 500; }
+.assessment-msg[data-kind="bad"] { color: #b3261e; }

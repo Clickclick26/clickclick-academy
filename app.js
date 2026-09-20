@@ -1766,6 +1766,128 @@
     );
   }
 
+  // The final check. Eight questions pulled from the lessons, marked on the
+  // server, six to pass, retake as often as they like. The browser never
+  // learns which option is right, which is the whole point: two of the first
+  // three certificates were clicked through in under two minutes.
+  function assessmentCardHtml() {
+    return (
+      '<div class="certificate-card assessment-card" id="assessment-card" hidden>' +
+      '<div class="certificate-card-head">' +
+      '<span class="certificate-seal" aria-hidden="true">&#128221;</span>' +
+      '<div>' +
+      '<p class="certificate-eyebrow">Final check</p>' +
+      '<h3>One last thing before your certificate</h3>' +
+      '</div>' +
+      '</div>' +
+      '<p class="certificate-sub" id="assessment-intro">Eight questions from the lessons. Six right and your certificate is issued. Get it wrong and you can go again, as many times as you like.</p>' +
+      '<form class="assessment-form" id="assessment-form"></form>' +
+      '<p class="assessment-msg" id="assessment-msg" hidden></p>' +
+      '</div>'
+    );
+  }
+
+  function setupAssessmentCard(course) {
+    var card = document.getElementById('assessment-card');
+    var form = document.getElementById('assessment-form');
+    var student = loadStudent();
+    if (!card || !form || !student || !student.studentId || !course) return;
+
+    var msg = document.getElementById('assessment-msg');
+
+    academyApi({ type: 'assessmentGet', courseId: course.id })
+      .then(function (data) {
+        var qs = (data && data.questions) || [];
+        if (!qs.length) return;
+        card.hidden = false;
+        form.innerHTML =
+          qs
+            .map(function (q, n) {
+              var name = 'q' + q.num.replace('.', '_') + '_' + q.index;
+              return (
+                '<fieldset class="assessment-q" data-num="' + esc(q.num) + '" data-index="' + q.index + '">' +
+                '<legend>' + (n + 1) + '. ' + esc(q.q) + '</legend>' +
+                (q.options || [])
+                  .map(function (opt, i) {
+                    return (
+                      '<label class="assessment-opt"><input type="radio" name="' + esc(name) +
+                      '" value="' + i + '" /> ' + esc(opt) + '</label>'
+                    );
+                  })
+                  .join('') +
+                '</fieldset>'
+              );
+            })
+            .join('') +
+          '<div class="certificate-actions"><button type="submit" class="btn primary">Send my answers</button></div>';
+      })
+      .catch(function () {
+        // No final check on this course, or the call failed. Leave it hidden.
+      });
+
+    var sending = false;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (sending) return;
+
+      var answers = [];
+      var unanswered = 0;
+      form.querySelectorAll('.assessment-q').forEach(function (fs) {
+        var picked = fs.querySelector('input[type="radio"]:checked');
+        if (!picked) {
+          unanswered += 1;
+          return;
+        }
+        answers.push({
+          num: fs.getAttribute('data-num'),
+          index: Number(fs.getAttribute('data-index')),
+          choice: Number(picked.value)
+        });
+      });
+
+      if (unanswered) {
+        if (msg) {
+          msg.textContent = unanswered === 1 ? 'One question still to answer.' : unanswered + ' questions still to answer.';
+          msg.setAttribute('data-kind', 'bad');
+          msg.hidden = false;
+        }
+        return;
+      }
+
+      sending = true;
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Marking…'; }
+
+      academyApi({ type: 'assess', studentId: student.studentId, courseId: course.id, answers: answers })
+        .then(function (res) {
+          form.querySelectorAll('.assessment-q').forEach(function (fs) {
+            var key = fs.getAttribute('data-num') + '|' + fs.getAttribute('data-index');
+            fs.classList.toggle('assessment-q--wrong', (res.wrong || []).indexOf(key) !== -1);
+          });
+          if (msg) {
+            msg.textContent = res.passed
+              ? 'You got ' + res.score + ' out of ' + res.total + '. That is a pass, your certificate is below.'
+              : 'You got ' + res.score + ' out of ' + res.total + ', and you need ' + res.needed +
+                '. The ones to look at again are marked. Have another go when you are ready.';
+            msg.setAttribute('data-kind', res.passed ? 'good' : 'bad');
+            msg.hidden = false;
+          }
+          if (res.passed) renderProgress(course, {});
+        })
+        .catch(function (err) {
+          if (msg) {
+            msg.textContent = (err && err.message) || 'That did not send. Try again in a minute.';
+            msg.setAttribute('data-kind', 'bad');
+            msg.hidden = false;
+          }
+        })
+        .then(function () {
+          sending = false;
+          if (btn) { btn.disabled = false; btn.textContent = 'Send my answers'; }
+        });
+    });
+  }
+
   // The four boxes that put a certified creator on
   // clickclick.video/creators/verified/. A portfolio page is part of the paid
   // tier; this is the free version of being findable, and it is deliberately
@@ -2226,7 +2348,7 @@
         : '<div class="progress-track" role="progressbar" aria-valuenow="' + doneCount +
           '" aria-valuemin="0" aria-valuemax="' + lessonCount + '"><div class="progress-fill"></div></div>'
       ) +
-      (complete ? certificateCardHtml(course, lessonCount, modules.length) + listingCardHtml() : '') +
+      (complete ? assessmentCardHtml() + certificateCardHtml(course, lessonCount, modules.length) + listingCardHtml() : '') +
       '</div>' +
       courseIntroHtml(course) +
       modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum, selfPaced); }).join('') +
@@ -2395,6 +2517,7 @@
     if (course.selfPaced) {
       detailBody.innerHTML = courseDetailHtml(course, {}, opts.justUnlockedNum);
       setupListingCard();
+      setupAssessmentCard(course);
       return;
     }
     var student = loadStudent();
@@ -2451,6 +2574,7 @@
         });
         detailBody.innerHTML = courseDetailHtml(course, byNum, opts.justUnlockedNum);
         setupListingCard();
+        setupAssessmentCard(course);
         var lessonCount = flatLessonNums(course).length;
         var doneCount = Object.keys(byNum).length;
         animateProgressBar(doneCount, lessonCount);
@@ -2466,6 +2590,7 @@
       .catch(function () {
         detailBody.innerHTML = courseDetailHtml(course, {});
         setupListingCard();
+        setupAssessmentCard(course);
       });
   }
 
@@ -2888,6 +3013,8 @@
             });
             detailBody.innerHTML = courseDetailHtml(currentDetailCourse, byNum);
             setupListingCard();
+            setupAssessmentCard(currentDetailCourse);
+        setupAssessmentCard(course);
             animateProgressBar(Object.keys(byNum).length, flatLessonNums(currentDetailCourse).length);
           });
       }
