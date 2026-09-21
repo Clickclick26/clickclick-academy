@@ -1579,11 +1579,13 @@ Deno.serve(async (req) => {
     // testimonialGet    {studentId} -> the clip they have already sent, if any
     // testimonialUpload {studentId, contentType, parts?} -> a signed URL per piece
     // testimonialSave   {studentId, path, note, parts?} -> {ok}
+    // testimonialUpload {studentId, kind: "photo", contentType} -> a signed URL for the quote photo
+    // testimonialQuote  {studentId, quote, photoPath?, consent: true} -> {ok}
     //
     // A minute of phone video is 60 to 150MB, which is three times what Gmail
     // will carry, so "email it to me" quietly fails at the last step. One slot
     // per creator, replaceable: five versions and no decision helps nobody.
-    if (type === "testimonialGet" || type === "testimonialUpload" || type === "testimonialSave") {
+    if (type === "testimonialGet" || type === "testimonialUpload" || type === "testimonialSave" || type === "testimonialQuote") {
       const studentId = String(body.studentId ?? "")
       if (!studentId) return json(400, { error: "Missing fields." }, origin)
 
@@ -1597,6 +1599,20 @@ Deno.serve(async (req) => {
       if (doneErr) throw doneErr
       if (new Set((done ?? []).map((r) => String(r.lesson_num))).size < 5) {
         return json(403, { error: "Finish the lessons first." }, origin)
+      }
+
+      if (type === "testimonialUpload" && body.kind === "photo") {
+        const PHOTO_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }
+        const ext = PHOTO_EXT[String(body.contentType ?? "").toLowerCase()]
+        if (!ext) return json(400, { error: "A photo, please: JPG, PNG or WebP." }, origin)
+        const rand = crypto.randomUUID().replace(/-/g, "").slice(0, 16)
+        const path = `${studentId}/testimonial-photo-${rand}.${ext}`
+        const { data, error } = await admin.storage.from(PORTFOLIO_BUCKET).createSignedUploadUrl(path)
+        if (error) {
+          console.error("testimonial photo url failed:", error.message)
+          return json(503, { error: "File store not ready." }, origin)
+        }
+        return json(200, { path, url: data.signedUrl, urls: [data.signedUrl] }, origin)
       }
 
       if (type === "testimonialUpload") {
@@ -1637,13 +1653,58 @@ Deno.serve(async (req) => {
       if (type === "testimonialGet") {
         const { data, error } = await admin
           .from("academy_testimonials")
-          .select("path, note, created_at")
+          .select("path, note, created_at, quote")
           .eq("student_id", studentId)
           .order("created_at", { ascending: false })
           .limit(1)
         if (error) throw error
 
-        return json(200, { testimonial: data?.[0] ?? null, eligible: true }, origin)
+        const row = data?.[0]
+        return json(200, {
+          testimonial: row && row.path ? row : null,
+          quote: row?.quote ?? null,
+          eligible: true,
+        }, origin)
+      }
+
+      // The easier route: one sentence, a photo if they like. It can go on
+      // the site as it is, so it needs the permission tick, unlike the video.
+      if (type === "testimonialQuote") {
+        const quote = String(body.quote ?? "").replace(/[<>]/g, "").trim().slice(0, 400)
+        const photoPath = String(body.photoPath ?? "").trim()
+        if (quote.length < 3) return json(400, { error: "Write a sentence first." }, origin)
+        if (body.consent !== true) return json(400, { error: "Tick the box to say we can use it." }, origin)
+        if (photoPath && !photoPath.startsWith(`${studentId}/testimonial-photo-`)) {
+          return json(400, { error: "That photo is not yours." }, origin)
+        }
+        const fields = { quote, photo_path: photoPath || null, quote_consent: true, quote_at: new Date().toISOString() }
+        const { data: existing } = await admin.from("academy_testimonials").select("id").eq("student_id", studentId).limit(1)
+        const { error } = existing?.length
+          ? await admin.from("academy_testimonials").update(fields).eq("student_id", studentId)
+          : await admin.from("academy_testimonials").insert({ student_id: studentId, path: "", note: "", consent: false, parts: 1, ...fields })
+        if (error) throw error
+
+        const apiKey = Deno.env.get("RESEND_API_KEY")
+        if (apiKey) {
+          const { data: who } = await admin.from("academy_students").select("name, email").eq("id", studentId).limit(1)
+          const person = who?.[0]
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "ClickClick <hello@clickclick.video>",
+              to: ["hello@clickclick.video"],
+              subject: `Testimonial from ${person?.name ?? "a creator"}`,
+              text: [
+                `${person?.name ?? "A creator"} (${person?.email ?? "unknown"}) wrote:`,
+                `"${quote}"`,
+                photoPath ? `Photo: ${publicUrl(supabaseUrl, photoPath)}` : "No photo.",
+                "They ticked the box to say ClickClick can use their name, these words and the photo on the website and social media.",
+              ].join("\n\n"),
+            }),
+          }).catch((e) => console.error("quote email failed:", e))
+        }
+        return json(200, { ok: true }, origin)
       }
 
       const path = String(body.path ?? "").trim()
@@ -1659,11 +1720,17 @@ Deno.serve(async (req) => {
       // asking, and that ask happens when the edited version goes back.
       const consent = false
 
-      // One slot each. Sending a new one replaces the old.
+      // One slot each. Sending a new clip replaces the old one, and keeps any
+      // written quote they already sent.
+      const { data: prev } = await admin
+        .from("academy_testimonials")
+        .select("quote, photo_path, quote_consent, quote_at")
+        .eq("student_id", studentId)
+        .limit(1)
       await admin.from("academy_testimonials").delete().eq("student_id", studentId)
       const { error } = await admin
         .from("academy_testimonials")
-        .insert({ student_id: studentId, path, note, consent, parts })
+        .insert({ student_id: studentId, path, note, consent, parts, ...(prev?.[0] ?? {}) })
       if (error) throw error
 
       // Kathryn watches these herself, so the only automation is telling her

@@ -1932,6 +1932,20 @@
       '<p><button type="button" class="link-btn" id="testimonial-again">Send a different one</button></p>' +
       '</div>' +
       '<p class="listing-msg" id="testimonial-msg" hidden></p>' +
+      // The easier route, for anyone who will not film: one sentence, and a
+      // photo if they are happy for it to be used. It can go on the site as
+      // written, so it asks for permission outright.
+      '<div class="testimonial-quote" id="tq-form">' +
+      '<p class="testimonial-prompt-head">Not a filmer? Write one sentence instead.</p>' +
+      '<textarea id="tq-text" maxlength="400" rows="3" placeholder="What did the course change for you?"></textarea>' +
+      '<label class="testimonial-note-label">A photo of yourself, if you are happy for us to use it (optional)' +
+      '<input type="file" id="tq-photo" accept="image/jpeg,image/png,image/webp" /></label>' +
+      '<label class="tq-consent"><input type="checkbox" id="tq-consent" /> ' +
+      '<span>ClickClick can use my name, these words and my photo on its website and social media.</span></label>' +
+      '<button type="button" class="btn" id="tq-send">Send my sentence</button>' +
+      '<p class="listing-msg" id="tq-msg" hidden></p>' +
+      '</div>' +
+      '<p class="testimonial-done-head" id="tq-done" hidden>&#10003; Thank you. Your words are in.</p>' +
       '</div>'
     );
   }
@@ -1979,11 +1993,60 @@
       .then(function (data) {
         card.hidden = false;
         if (data && data.testimonial) showDone();
+        if (data && data.quote) showQuoteDone();
       })
       .catch(function () {
         // Lessons not finished yet, or the call failed. Leave the card hidden.
         if (onNotOpen) onNotOpen();
       });
+
+    function showQuoteDone() {
+      var f = document.getElementById('tq-form');
+      var d = document.getElementById('tq-done');
+      if (f) f.hidden = true;
+      if (d) d.hidden = false;
+    }
+
+    var quoteBtn = document.getElementById('tq-send');
+    if (quoteBtn) {
+      quoteBtn.addEventListener('click', function () {
+        var text = ((document.getElementById('tq-text') || {}).value || '').trim();
+        var ok = (document.getElementById('tq-consent') || {}).checked;
+        var photo = ((document.getElementById('tq-photo') || {}).files || [])[0];
+        var qmsg = document.getElementById('tq-msg');
+        function sayQ(t) {
+          if (!qmsg) return;
+          qmsg.textContent = t;
+          qmsg.setAttribute('data-kind', 'bad');
+          qmsg.hidden = false;
+        }
+        if (text.length < 3) return sayQ('Write a sentence first.');
+        if (!ok) return sayQ('Tick the box to say we can use it.');
+        if (qmsg) qmsg.hidden = true;
+        quoteBtn.disabled = true;
+        quoteBtn.textContent = 'Sending\u2026';
+        var photoStep = photo
+          ? academyApi({ type: 'testimonialUpload', kind: 'photo', studentId: student.studentId, contentType: photo.type })
+              .then(function (up) {
+                return fetch(up.url, { method: 'PUT', headers: { 'Content-Type': photo.type }, body: photo })
+                  .then(function (r) {
+                    if (!r.ok) throw new Error('The photo did not upload. Try again, or send it without one.');
+                    return up.path;
+                  });
+              })
+          : Promise.resolve('');
+        photoStep
+          .then(function (photoPath) {
+            return academyApi({ type: 'testimonialQuote', studentId: student.studentId, quote: text, photoPath: photoPath, consent: true });
+          })
+          .then(showQuoteDone)
+          .catch(function (err) { sayQ((err && err.message) || 'That did not send. Try again in a minute.'); })
+          .then(function () {
+            quoteBtn.disabled = false;
+            quoteBtn.textContent = 'Send my sentence';
+          });
+      });
+    }
 
     var sending = false;
 
