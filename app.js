@@ -147,9 +147,14 @@
       .replace(/"/g, '&quot;');
   }
 
+  // The unlocked code is kept in localStorage, like the student record, so
+  // someone who closes the tab and comes back tomorrow is let straight in.
+  // It was sessionStorage until 22 Sep 2026, which sent every returning
+  // student back to the code box ("please send a password"). The code is
+  // checked with the server again on every visit, and signing out clears it.
   function loadSession() {
     try {
-      var raw = sessionStorage.getItem(STORAGE_KEY);
+      var raw = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
       var data = JSON.parse(raw);
       if (!data || !Array.isArray(data.courseIds)) return null;
@@ -161,13 +166,15 @@
 
   function saveSession(data) {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(LEGACY_OK_KEY);
     } catch (e) {}
   }
 
   function clearSession() {
     try {
+      localStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(LEGACY_OK_KEY);
     } catch (e) {}
