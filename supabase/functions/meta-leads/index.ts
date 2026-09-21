@@ -906,6 +906,44 @@ Deno.serve(async (req) => {
   // broadcasts, and deliberately plain text: this is for a note to one person,
   // never a campaign. Campaigns go through CAMPAIGNS so the wording stays in
   // version control.
+  // campaigns {key} -> id, name, status of every campaign on the ad account
+  // campaignStatus {key, id, status: "PAUSED" | "ACTIVE"} -> switch one
+  //
+  // Ads Manager locks up in the browser when a campaign toggle is clicked, and
+  // "pause the ads" is not something that should depend on a web page loading.
+  // Switching on is allowed too, but only ever because Kathryn asked.
+  if (body.type === "campaigns" || body.type === "campaignStatus") {
+    const token = Deno.env.get("META_LEADS_TOKEN")
+    if (!token) return json(503, { error: "No token." }, origin)
+    const account = `act_${Deno.env.get("META_AD_ACCOUNT_ID") ?? "1122147610145033"}`
+    try {
+      if (body.type === "campaigns") {
+        const data = await graph(`${account}/campaigns`, token, {
+          fields: "id,name,status,effective_status,daily_budget",
+          limit: "50",
+        })
+        return json(200, { campaigns: data.data ?? [] }, origin)
+      }
+      const id = String(body.id ?? "")
+      const status = String(body.status ?? "")
+      if (!/^\d+$/.test(id) || !["PAUSED", "ACTIVE"].includes(status)) {
+        return json(400, { error: "Needs a campaign id and PAUSED or ACTIVE." }, origin)
+      }
+      const res = await fetch(`${GRAPH}/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ status, access_token: token }),
+      })
+      const out = await res.json()
+      if (!res.ok || out.error) {
+        return json(502, { error: out.error?.message ?? `Meta said ${res.status}` }, origin)
+      }
+      return json(200, { ok: true, id, status }, origin)
+    } catch (e) {
+      return json(502, { error: (e as Error).message }, origin)
+    }
+  }
+
   if (body.type === "sendOne") {
     const to = String(body.to ?? "").trim().toLowerCase()
     const subject = String(body.subject ?? "").trim().slice(0, 200)
