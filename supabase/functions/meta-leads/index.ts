@@ -349,7 +349,7 @@ function creatorEmail(step: number, us: boolean, progress: Progress, link = cour
     return {
       subject: "Lesson one takes five minutes",
       paras: [
-        "You asked for The Golden Quarter and have not opened it yet. That is normal.",
+        "You asked for The Golden Quarter and have not started it yet. That is normal.",
         "Lesson one takes about five minutes. It explains why the Black Friday work you see in November was booked in September, which is the part most creators find out too late.",
         "The button opens it straight away, no code needed.",
       ],
@@ -741,6 +741,88 @@ ${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
   return { subject, html, text }
 }
 
+// The "your basket is waiting" email (22 Sep 2026, Kathryn's wording): for
+// anyone who opened the course and then stalled. No mention of any glitch:
+// the course now remembers people, so this simply says their place is kept.
+function resumeEmail(us: boolean, firstName: string, unsub: string, link: string): Broadcast {
+  const subject = "Your place is saved"
+  const why = "You're getting this because you asked for The Golden Quarter."
+  const paras = [
+    "Your place in The Golden Quarter is saved, along with anything you've already done.",
+    "Lesson one takes about five minutes. It covers why the Black Friday work you see in November gets booked in September.",
+  ]
+  const after = "It's set up to remember you, so you can dip in whenever suits."
+  const text = [`Hi ${firstName},`, ...paras, `Continue the course: ${link}`, after, "Kathryn\nClickClick", `${why} Unsubscribe: ${unsub}\n${ADDRESS}`].join("\n\n")
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
+<p><a href="${link}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Continue the course</a></p>
+<p>${escapeHtml(after)}</p>
+<p>Kathryn<br>ClickClick</p>
+<p style="color:#5c5c5c;font-size:13px;margin-top:28px">${escapeHtml(why)} <a href="${unsub}" style="color:#5c5c5c">Unsubscribe</a><br>${escapeHtml(ADDRESS)}</p>
+</div>`
+  return { subject, html, text }
+}
+
+// Sends resumeEmail once to each lead who opened the course, has not
+// finished it, and has done nothing for a day. Runs with every cron run;
+// meta_lead_broadcasts (campaign "resume") is the once-only claim. Only
+// people in meta_leads, i.e. who agreed to hear from us. Capped per run so
+// the drip keeps its share of Resend's daily limit.
+async function sendResumes(admin: AdminClient, max = 30) {
+  const apiKey = Deno.env.get("RESEND_API_KEY")
+  if (!apiKey) return { resumes: 0 }
+  const now = Date.now()
+  const { data: students, error } = await admin
+    .from("academy_students")
+    .select("id, email, created_at")
+    .in("access_code", ["GOLDENQUARTER", "GOLDENQUARTERUS"])
+    .gte("created_at", new Date(now - 7 * 86400000).toISOString())
+    .lte("created_at", new Date(now - 86400000).toISOString())
+  if (error) throw error
+  let sent = 0
+  for (const st of (students ?? []) as Array<{ id: string; email: string; created_at: string }>) {
+    if (sent >= max) break
+    const { data: leads } = await admin.from("meta_leads")
+      .select("leadgen_id, audience, name, email, last_sent_at")
+      .ilike("email", st.email).is("stopped_at", null).not("audience", "is", null).limit(1)
+    const lead = leads?.[0] as Lead | undefined
+    if (!lead || lead.audience === "brand") continue
+    const { data: already } = await admin.from("meta_lead_broadcasts")
+      .select("leadgen_id").eq("leadgen_id", lead.leadgen_id).eq("campaign", "resume").limit(1)
+    if (already?.length) continue
+    if (lead.last_sent_at && now - new Date(lead.last_sent_at).getTime() < MIN_GAP_HOURS * 3600000) continue
+    const { data: rows } = await admin.from("academy_progress")
+      .select("lesson_num, submitted_at").eq("student_id", st.id)
+    const done = new Set((rows ?? []).map((r: { lesson_num: string }) => r.lesson_num))
+    if (CORE_LESSONS.every((n) => done.has(n))) continue
+    const lastTouch = Math.max(new Date(st.created_at).getTime(),
+      ...(rows ?? []).map((r: { submitted_at: string }) => new Date(r.submitted_at).getTime()))
+    if (now - lastTouch < 86400000) continue
+
+    // Daytime only, in their own time zone: 8am to 8pm UK or US Eastern.
+    const hour = Number(new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric", hour12: false, timeZone: lead.audience === "creator-us" ? "America/New_York" : "Europe/London",
+    }).format(new Date()))
+    if (hour < 8 || hour >= 20) continue
+
+    const { error: claimErr } = await admin.from("meta_lead_broadcasts").insert({ leadgen_id: lead.leadgen_id, campaign: "resume" })
+    if (claimErr) continue
+    const us = lead.audience === "creator-us"
+    const firstName = String(lead.name ?? "").trim().split(/\s+/)[0] || "there"
+    const links = await unsubscribeLinks(lead.leadgen_id)
+    const res = await sendCampaignEmail(apiKey, lead.email as string, resumeEmail(us, firstName, links.page, await leadCourseLink(us, lead.leadgen_id)), links.oneClick)
+    if (res.ok) {
+      sent++
+      await admin.from("meta_leads").update({ last_sent_at: new Date().toISOString() }).eq("leadgen_id", lead.leadgen_id)
+    } else {
+      console.error("resume send failed:", res.status, await res.text())
+      await admin.from("meta_lead_broadcasts").delete().eq("leadgen_id", lead.leadgen_id).eq("campaign", "resume")
+    }
+  }
+  return { resumes: sent }
+}
+
 // link is the lead's own signed course link (leadCourseLink); older
 // campaigns ignore it.
 type BroadcastBuilder = (us: boolean, firstName: string, unsub: string, link: string) => Broadcast
@@ -748,9 +830,33 @@ const CAMPAIGNS: Record<string, BroadcastBuilder> = {
   "founding-sep26": foundingSep26,
   "one-click-sep26": oneClickSep26,
   "buried-sep26": buriedSep26,
+  // Sent automatically by sendResumes; listed here so it can be test-sent.
+  "resume": resumeEmail,
 }
 // Campaigns only for people who never opened the course.
 const NOT_STARTED_ONLY = new Set(["buried-sep26"])
+
+// One campaign-style email from Kathryn, with the one-click unsubscribe
+// headers every marketing email here carries.
+async function sendCampaignEmail(apiKey: string, to: string, b: Broadcast, oneClick: string, sendAt?: string) {
+  return await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: "Kathryn at ClickClick <hello@clickclick.video>",
+      to: [to],
+      reply_to: "hello@clickclick.video",
+      subject: b.subject,
+      text: b.text,
+      html: b.html,
+      ...(sendAt ? { scheduled_at: sendAt } : {}),
+      headers: {
+        "List-Unsubscribe": `<${oneClick}>, <mailto:hello@clickclick.video?subject=unsubscribe>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
+    }),
+  })
+}
 
 async function sendBroadcast(opts: {
   admin: AdminClient
@@ -799,23 +905,7 @@ async function sendBroadcast(opts: {
     const firstName = String(lead.name ?? "").trim().split(/\s+/)[0] || "there"
     const links = await unsubscribeLinks(lead.leadgen_id)
     const b = build(audience === "creator-us", firstName, links.page, await leadCourseLink(audience === "creator-us", lead.leadgen_id))
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: "Kathryn at ClickClick <hello@clickclick.video>",
-        to: [email],
-        reply_to: "hello@clickclick.video",
-        subject: b.subject,
-        text: b.text,
-        html: b.html,
-        ...(sendAt ? { scheduled_at: sendAt } : {}),
-        headers: {
-          "List-Unsubscribe": `<${links.oneClick}>, <mailto:hello@clickclick.video?subject=unsubscribe>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-        },
-      }),
-    })
+    const res = await sendCampaignEmail(apiKey, email, b, links.oneClick, sendAt)
     if (res.ok) {
       result.sent++
     } else {
@@ -1058,6 +1148,11 @@ Deno.serve(async (req) => {
       result.fetch = "skipped, META_LEADS_TOKEN is not set"
     }
     Object.assign(result, await sendDue(admin))
+    try {
+      Object.assign(result, await sendResumes(admin))
+    } catch (err) {
+      console.error("resumes failed:", (err as Error).message)
+    }
     return json(result.fetchError ? 502 : 200, result, origin)
   }
 
