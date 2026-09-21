@@ -85,7 +85,7 @@ const DELAYS: Record<Audience, number[]> = {
 function courseLink(us: boolean): string {
   const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
   const course = us ? "golden-quarter-ugc-us" : "golden-quarter-ugc"
-  return `${ACADEMY}?k=${code}&c=${course}`
+  return `${ACADEMY}?k=${code}&c=${course}&src=email`
 }
 
 const FREE_COURSE: Record<string, string> = {

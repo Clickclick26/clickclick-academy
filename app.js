@@ -3008,9 +3008,13 @@
   function sourceFromLink() {
     try {
       var params = new URLSearchParams(window.location.search);
-      var src = (params.get('src') || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 30);
-      if (!params.has('src')) return;
-      params.delete('src');
+      // ?src= is ours; utm_source is what everyone else's tools use.
+      var raw = params.get('src') || params.get('utm_source') || '';
+      var src = raw.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 30);
+      if (!params.has('src') && !params.has('utm_source')) return;
+      ['src', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function (k) {
+        params.delete(k);
+      });
       var rest = params.toString();
       history.replaceState({}, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
       if (src) sessionStorage.setItem(SRC_KEY, src);
