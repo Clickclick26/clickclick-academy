@@ -82,10 +82,20 @@ const DELAYS: Record<Audience, number[]> = {
 // to copy one out of an email and type it into a box: that step was losing
 // about five people in six. app.js reads ?k= and ?c=, unlocks, and wipes both
 // from the address bar.
-function courseLink(us: boolean): string {
+//
+// A lead's own link also carries their lead id, signed, so the Academy can
+// fill in the name and email Meta already gave us instead of asking again
+// (academy-progress identifyLead checks the signature).
+function courseLink(us: boolean, lead?: { id: string; sig: string }): string {
   const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
   const course = us ? "golden-quarter-ugc-us" : "golden-quarter-ugc"
-  return `${ACADEMY}?k=${code}&c=${course}&src=email`
+  const who = lead ? `&l=${encodeURIComponent(lead.id)}&s=${lead.sig}` : ""
+  return `${ACADEMY}?k=${code}&c=${course}&src=email${who}`
+}
+
+async function leadCourseLink(us: boolean, leadgenId: string): Promise<string> {
+  if (!leadgenId || leadgenId === "preview") return courseLink(us)
+  return courseLink(us, { id: leadgenId, sig: await sign(leadgenId) })
 }
 
 const FREE_COURSE: Record<string, string> = {
@@ -312,8 +322,7 @@ function longDate(d: Date, us: boolean) {
 
 type Email = { subject: string; paras: string[]; button?: { label: string; href: string }; after?: string[] }
 
-function creatorEmail(step: number, us: boolean, progress: Progress): Email {
-  const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
+function creatorEmail(step: number, us: boolean, progress: Progress, link = courseLink(us)): Email {
   const price = us ? "$199" : "£149"
   const bf = longDate(blackFriday(new Date()), us)
   // The group covers the UK, Ireland and the US (since 18 Sep 2026), so
@@ -326,10 +335,9 @@ function creatorEmail(step: number, us: boolean, progress: Progress): Email {
     return {
       subject: "The Golden Quarter is open",
       paras: [
-        "Your free course, The Golden Quarter, is ready. The button below opens it, so there is no code to type.",
-        "It asks for your name and email once, which is what saves your place and puts your name on the certificate.",
+        "Your free course, The Golden Quarter, is ready. The button below opens it, so there is no code to type and nothing to fill in.",
       ],
-      button: { label: "Open lesson one", href: courseLink(us) },
+      button: { label: "Open lesson one", href: link },
       after: [
         "Five short lessons. Start with the first one: it explains why the Black Friday work you see in November was booked in September.",
         ...group,
@@ -345,7 +353,7 @@ function creatorEmail(step: number, us: boolean, progress: Progress): Email {
         "Lesson one takes about five minutes. It explains why the Black Friday work you see in November was booked in September, which is the part most creators find out too late.",
         "The button opens it straight away, no code needed.",
       ],
-      button: { label: "Open lesson one", href: courseLink(us) },
+      button: { label: "Open lesson one", href: link },
       after: group.length ? [`P.S. ${group[0]}`] : [],
     }
   }
@@ -358,7 +366,7 @@ function creatorEmail(step: number, us: boolean, progress: Progress): Email {
         `The fix is one line on your invoice: usage, paid social, ${us ? "US" : "UK"}, with an end date. Lesson three of the course walks through it.`,
         ...(us ? [] : ["What to charge for it, with the exact words to use when a brand asks: https://www.clickclick.video/creators/usage-rates/"]),
       ],
-      button: { label: "Open the course", href: ACADEMY },
+      button: { label: "Open the course", href: link },
       after: group.length ? [`P.S. ${group[0]}`] : [],
     }
   }
@@ -389,7 +397,7 @@ function creatorEmail(step: number, us: boolean, progress: Progress): Email {
     subject: "Before Black Friday is booked",
     paras: [
       `Black Friday is ${bf}. Brands book the creators for it in September and October, so most of that work is being decided now.`,
-      `The Golden Quarter is still there when you want it, with code ${code}. Its bonus lesson has the rate calculator from the full course.`,
+      `The Golden Quarter is still there when you want it: ${link} Its bonus lesson has the rate calculator from the full course.`,
       `If you want the whole thing now: the UGC Content Creator Certification, 32 lessons, ${price} for 12 months. ${roster}`,
     ],
     button,
@@ -471,7 +479,7 @@ async function sendStep(
 
   const email = lead.audience === "brand"
     ? brandEmail(step)
-    : creatorEmail(step, lead.audience === "creator-us", progress)
+    : creatorEmail(step, lead.audience === "creator-us", progress, await leadCourseLink(lead.audience === "creator-us", lead.leadgen_id))
   const firstName = String(lead.name ?? "").trim().split(/\s+/)[0] || "there"
   // Academy sign-ups joined by ticking the box on the course form, not a lead ad.
   const why = lead.audience === "brand"
@@ -702,10 +710,47 @@ function oneClickSep26(us: boolean, firstName: string, unsub: string): Broadcast
   return { subject, html, text }
 }
 
-const CAMPAIGNS: Record<string, (us: boolean, firstName: string, unsub: string) => Broadcast> = {
+// Sent 21 Sep 2026 to leads who never opened the course. Until 20 Sep the
+// "every 10 minutes" GitHub job really ran every 2 to 5 hours, so most of
+// them got their link long after they had moved on. Stefan's copy, approved
+// by Kathryn. Plain, one link, no offer: most never ticked a marketing box.
+function buriedSep26(us: boolean, firstName: string, unsub: string, link: string): Broadcast {
+  const subject = "Your course link, in case it got buried"
+  const why = "You're getting this because you asked for The Golden Quarter on Facebook or Instagram."
+  const paras = [
+    "A few days ago you asked for The Golden Quarter, my free UGC course. My first email may have gone to spam or Promotions, so here's the link again.",
+    "Lesson one takes five minutes. It explains why brands book their Black Friday creators in September, and what that means for you this month.",
+  ]
+  const after = "No code to type, no calls, and nobody will ask about your follower count."
+  const text = [
+    `Hi ${firstName},`,
+    ...paras,
+    `Open lesson one: ${link}`,
+    after,
+    "Kathryn\nClickClick",
+    `${why} Unsubscribe: ${unsub}\n${ADDRESS}`,
+  ].join("\n\n")
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
+<p><a href="${link}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Open lesson one</a></p>
+<p>${escapeHtml(after)}</p>
+<p>Kathryn<br>ClickClick</p>
+<p style="color:#5c5c5c;font-size:13px;margin-top:28px">${escapeHtml(why)} <a href="${unsub}" style="color:#5c5c5c">Unsubscribe</a><br>${escapeHtml(ADDRESS)}</p>
+</div>`
+  return { subject, html, text }
+}
+
+// link is the lead's own signed course link (leadCourseLink); older
+// campaigns ignore it.
+type BroadcastBuilder = (us: boolean, firstName: string, unsub: string, link: string) => Broadcast
+const CAMPAIGNS: Record<string, BroadcastBuilder> = {
   "founding-sep26": foundingSep26,
   "one-click-sep26": oneClickSep26,
+  "buried-sep26": buriedSep26,
 }
+// Campaigns only for people who never opened the course.
+const NOT_STARTED_ONLY = new Set(["buried-sep26"])
 
 async function sendBroadcast(opts: {
   admin: AdminClient
@@ -713,8 +758,12 @@ async function sendBroadcast(opts: {
   audience: Audience
   sendAt?: string
   dryRun: boolean
+  // Most to send in this call: Resend's free plan stops at 100 a day, and the
+  // drip needs its share.
+  max?: number
 }) {
   const { admin, campaign, audience, sendAt, dryRun } = opts
+  const max = Math.max(0, Math.floor(opts.max ?? 1000))
   const build = CAMPAIGNS[campaign]
   if (!build || audience === "brand") throw new Error("Unknown campaign or audience.")
   const apiKey = Deno.env.get("RESEND_API_KEY")
@@ -735,8 +784,12 @@ async function sendBroadcast(opts: {
     const { data: already } = await admin.from("meta_lead_broadcasts")
       .select("leadgen_id").eq("leadgen_id", lead.leadgen_id).eq("campaign", campaign).limit(1)
     if (already?.length) { result.skipped.push("already sent"); continue }
+    if (NOT_STARTED_ONLY.has(campaign)) {
+      const { data: student } = await admin.from("academy_students").select("id").ilike("email", email).limit(1)
+      if (student?.length) { result.skipped.push("opened the course"); continue }
+    }
     result.eligible++
-    if (dryRun) continue
+    if (dryRun || result.sent + result.failed >= max) continue
 
     // Claim first, so two calls can never both send it.
     const { error: claimErr } = await admin.from("meta_lead_broadcasts")
@@ -745,7 +798,7 @@ async function sendBroadcast(opts: {
 
     const firstName = String(lead.name ?? "").trim().split(/\s+/)[0] || "there"
     const links = await unsubscribeLinks(lead.leadgen_id)
-    const b = build(audience === "creator-us", firstName, links.page)
+    const b = build(audience === "creator-us", firstName, links.page, await leadCourseLink(audience === "creator-us", lead.leadgen_id))
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -885,7 +938,18 @@ Deno.serve(async (req) => {
       // ClickClick-branded email to a stranger.
       const testOk = testTo.endsWith("@clickclick.video") || testTo.endsWith("@srv1.mail-tester.com")
       if (!testOk) return json(400, { error: "Tests only go to @clickclick.video." }, origin)
-      const b = build(audience === "creator-us", "Sarah", "https://www.clickclick.video/unsubscribe/")
+      // testLead: a meta_leads row that is itself a test inbox, so the test
+      // carries a real signed one-tap link. Never a real lead's id.
+      let link = courseLink(audience === "creator-us")
+      if (body.testLead) {
+        const { data: t } = await admin.from("meta_leads").select("email").eq("leadgen_id", String(body.testLead)).limit(1)
+        const te = String(t?.[0]?.email ?? "").toLowerCase()
+        if (!(te.endsWith("@clickclick.video") || te.endsWith("@srv1.mail-tester.com"))) {
+          return json(400, { error: "testLead must be a test inbox." }, origin)
+        }
+        link = await leadCourseLink(audience === "creator-us", String(body.testLead))
+      }
+      const b = build(audience === "creator-us", "Sarah", "https://www.clickclick.video/unsubscribe/", link)
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "Content-Type": "application/json" },
@@ -894,7 +958,8 @@ Deno.serve(async (req) => {
       return json(res.ok ? 200 : 502, { ok: res.ok }, origin)
     }
     try {
-      const result = await sendBroadcast({ admin, campaign, audience, sendAt, dryRun: body.dryRun !== false })
+      const max = body.max === undefined ? undefined : Number(body.max)
+      const result = await sendBroadcast({ admin, campaign, audience, sendAt, dryRun: body.dryRun !== false, max })
       return json(200, result, origin)
     } catch (err) {
       return json(500, { error: (err as Error).message }, origin)

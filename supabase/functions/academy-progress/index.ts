@@ -253,6 +253,25 @@ const ASSESSMENT_PASS = 0.75
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Same HMAC meta-leads uses for its signed links (sign() there): first 16
+// bytes of HMAC-SHA256(lead id), hex. Compared in constant time.
+async function leadSigOk(lead: string, sig: string): Promise<boolean> {
+  const secret = Deno.env.get("LEADS_UNSUB_SECRET") ?? ""
+  if (!secret || !/^[0-9a-f]{32}$/.test(sig)) return false
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  )
+  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(lead))
+  const want = Array.from(new Uint8Array(mac)).slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("")
+  let diff = 0
+  for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ sig.charCodeAt(i)
+  return diff === 0
+}
+
 // deno-lint-ignore no-explicit-any
 type AdminClient = any
 
@@ -517,11 +536,37 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const type = body?.type
 
-    if (type === "identify") {
-      const name = String(body.name ?? "").trim()
-      const email = String(body.email ?? "").trim().toLowerCase()
+    // identifyLead {lead, sig, accessCode, region?, source?} -> same as identify
+    //
+    // The course link in a Facebook lead's email carries their lead id, signed
+    // (meta-leads signs it with LEADS_UNSUB_SECRET), so they skip the name and
+    // email form: Meta already gave us both. The signature is what stops
+    // anyone walking lead ids to pull other people's details; the browser
+    // never sees the email either way. US leads are US by the form they
+    // filled in; UK-form leads may be in Ireland (EU certificates are checked
+    // by hand), so they still get a one-tap country choice.
+    if (type === "identify" || type === "identifyLead") {
+      let name = String(body.name ?? "").trim()
+      let email = String(body.email ?? "").trim().toLowerCase()
       const accessCode = String(body.accessCode ?? "").trim()
-      const region = String(body.region ?? "").trim().toUpperCase().slice(0, 2)
+      let region = String(body.region ?? "").trim().toUpperCase().slice(0, 2)
+      if (type === "identifyLead") {
+        const lead = String(body.lead ?? "").slice(0, 60)
+        const sig = String(body.sig ?? "")
+        if (!lead || !sig || !(await leadSigOk(lead, sig))) return json(403, { error: "That link has expired." }, origin)
+        const { data: rows, error: leadErr } = await admin
+          .from("meta_leads")
+          .select("name, email, audience")
+          .eq("leadgen_id", lead)
+          .limit(1)
+        if (leadErr) throw leadErr
+        const row = rows?.[0]
+        if (!row?.email) return json(404, { error: "That link has expired." }, origin)
+        name = String(row.name ?? "").trim() || String(row.email).split("@")[0]
+        email = String(row.email).trim().toLowerCase()
+        if (row.audience === "creator-us") region = "US"
+        if (!region) return json(200, { needsRegion: true }, origin)
+      }
       // The unticked-by-default box on the form. Only a tick counts.
       const consent = body.marketingConsent === true
       const source = String(body.source ?? "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 30) || null

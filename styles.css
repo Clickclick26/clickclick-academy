@@ -2748,3 +2748,11 @@ input {
   line-height: 1.55;
   color: var(--ink);
 }
+
+/* One-tap country choice for leads arriving from their email link. */
+.lead-region {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}

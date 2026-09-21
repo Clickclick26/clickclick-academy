@@ -2699,6 +2699,60 @@
     );
   }
 
+  // A Facebook lead's email link carries their signed lead id (?l=&s=), so
+  // the server fills in the name and email Meta already has and nobody sees
+  // the form. UK-form leads get one tap for their country (Ireland is EU,
+  // and EU certificates are checked by hand). Any failure drops the link and
+  // falls back to the normal form, so this can never loop.
+  function openFromLeadLink(course, region) {
+    var lead = loadLeadLink();
+    detailBody.innerHTML = '<p class="detail-loading">Opening your course\u2026</p>';
+    academyApi({
+      type: 'identifyLead',
+      lead: lead.l,
+      sig: lead.s,
+      region: region || '',
+      accessCode: (session && session.code) || '',
+      source: signupSource() || 'email',
+    })
+      .then(function (data) {
+        if (data && data.needsRegion) {
+          detailBody.innerHTML =
+            '<div class="detail-head detail-identify">' +
+            '<h1>' + esc(course.title || '') + '</h1>' +
+            '<p class="detail-lead">One thing before lesson one: where are you based?</p>' +
+            '<div class="lead-region">' +
+            '<button type="button" class="btn primary" data-region="GB">UK</button>' +
+            '<button type="button" class="btn primary" data-region="IE">Ireland</button>' +
+            '<button type="button" class="btn" data-region="">Somewhere else</button>' +
+            '</div></div>';
+          detailBody.querySelectorAll('[data-region]').forEach(function (b) {
+            b.addEventListener('click', function () {
+              var r = b.getAttribute('data-region');
+              if (r) {
+                openFromLeadLink(course, r);
+              } else {
+                clearLeadLink();
+                renderProgress(course);
+              }
+            });
+          });
+          return;
+        }
+        clearLeadLink();
+        saveStudent({
+          studentId: data.studentId,
+          name: data.name,
+          academyId: data.academyId || academyIdFor(data.studentId),
+        });
+        renderProgress(course);
+      })
+      .catch(function () {
+        clearLeadLink();
+        renderProgress(course);
+      });
+  }
+
   var currentDetailCourse = null;
 
   function renderProgress(course, opts) {
@@ -2714,6 +2768,10 @@
       return;
     }
     var student = loadStudent();
+    if (!student && loadLeadLink()) {
+      openFromLeadLink(course);
+      return;
+    }
     if (!student) {
       detailBody.innerHTML = identifyGateHtml(course);
       var idForm = document.getElementById('identify-form');
@@ -3019,6 +3077,36 @@
       return '';
     }
   }
+  var LEAD_KEY = 'cc-lead-link';
+  function loadLeadLink() {
+    try {
+      var v = JSON.parse(sessionStorage.getItem(LEAD_KEY) || 'null');
+      return v && v.l && v.s ? v : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function clearLeadLink() {
+    try {
+      sessionStorage.removeItem(LEAD_KEY);
+    } catch (e) {}
+  }
+  function leadFromLink() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var l = (params.get('l') || '').trim();
+      var sig = (params.get('s') || '').trim();
+      if (!params.has('l') && !params.has('s')) return;
+      params.delete('l');
+      params.delete('s');
+      var rest = params.toString();
+      history.replaceState({}, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+      if (/^[0-9A-Za-z_-]{1,60}$/.test(l) && /^[0-9a-f]{32}$/.test(sig)) {
+        sessionStorage.setItem(LEAD_KEY, JSON.stringify({ l: l, s: sig }));
+      }
+    } catch (e) {}
+  }
+
   function sourceFromLink() {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -3081,6 +3169,7 @@
   function restoreOrGate() {
     var filmId = filmFromLink();
     if (filmId && showFilm(filmId)) return;
+    leadFromLink();
     sourceFromLink();
     var link = codeFromLink();
     var saved = loadSession();
