@@ -14,7 +14,7 @@
        site has no build step to fingerprint filenames, and browsers were
        caching stale CSS/JS across deploys (confirmed live: a visitor's
        browser mixed new HTML with cached old CSS and rendered broken). -->
-  <link rel="stylesheet" href="styles.css?v=46" />
+  <link rel="stylesheet" href="styles.css?v=47" />
   <!-- Heatmaps, scroll maps and session recordings (Microsoft Clarity), so we
        can see where in a lesson people stop rather than only that they did.
        Same consent banner as clickclick.video: nothing loads until a visitor
@@ -22,6 +22,14 @@
   <link rel="stylesheet" href="cookie-consent.css?v=1" />
 </head>
 <body>
+  <!-- The testimonial upload on its own, from the ask email's link -->
+  <div id="film" class="film" hidden>
+    <div class="film-wrap">
+      <img class="brand-logo-stacked" src="brand/clickclick-logo-stacked-black.png" alt="ClickClick" />
+      <div id="film-body"></div>
+    </div>
+  </div>
+
   <!-- Gate -->
   <div id="gate" class="gate" hidden>
     <div class="gate-card">
@@ -139,7 +147,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=48"></script>
+  <script src="app.js?v=49"></script>
   <script src="cookies.js?v=2"></script>
   <script src="analytics.js?v=1"></script>
   <script src="pixel.js?v=1"></script>

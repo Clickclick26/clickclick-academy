@@ -1889,8 +1889,8 @@
   }
 
   // The 60 seconds to camera. Sits straight under the certificate, because
-  // that is the moment they are proudest and it fades fast. Only shown once
-  // their listing is saved: give them something first, ask second.
+  // that is the moment they are proudest and it fades fast. Shown to anyone
+  // who has done the core lessons, and on its own page from the ask email.
   //
   // Email cannot carry this. A minute of phone video is 60 to 150MB and Gmail
   // stops at 25MB, so "send it over" would fail silently at the last step.
@@ -1949,10 +1949,13 @@
     return d.toLocaleDateString('en-GB', { weekday: 'long' });
   }
 
-  function setupTestimonialCard() {
+  // studentId comes from the one-tap link in the ask email (?film=), or from
+  // the student saved in this browser when it sits inside a course.
+  function setupTestimonialCard(studentIdFromLink, onNotOpen) {
     var card = document.getElementById('testimonial-card');
-    var student = loadStudent();
-    if (!card || !student || !student.studentId) return;
+    var saved = loadStudent();
+    var student = { studentId: studentIdFromLink || (saved && saved.studentId) };
+    if (!card || !student.studentId) return;
 
     var idle = document.getElementById('testimonial-idle');
     var progress = document.getElementById('testimonial-progress');
@@ -1971,23 +1974,15 @@
         ', captioned and graded, the same format brands pay for.';
     }
 
-    // Give first, ask second: the favour only appears once they have their
-    // listing saved, so the page has done something for them before it wants
-    // something from them.
-    academyApi({ type: 'listingGet', studentId: student.studentId })
-      .then(function (listing) {
-        var saved = listing && listing.listing && listing.listing.niche && listing.listing.location;
-        if (!saved) return null;
-        return academyApi({ type: 'testimonialGet', studentId: student.studentId });
-      })
+    // Shown to anyone who has done the core lessons; the server decides.
+    academyApi({ type: 'testimonialGet', studentId: student.studentId })
       .then(function (data) {
-        // Someone who clicked through the lessons is never asked.
-        if (!data || data.eligible === false) return;
         card.hidden = false;
-        if (data.testimonial) showDone();
+        if (data && data.testimonial) showDone();
       })
       .catch(function () {
-        // Not certified, or the call failed. Leave the card hidden.
+        // Lessons not finished yet, or the call failed. Leave the card hidden.
+        if (onNotOpen) onNotOpen();
       });
 
     var sending = false;
@@ -3037,7 +3032,36 @@
     }
   }
 
+  // The one-tap link in the testimonial ask: ?film=<student id> opens just
+  // the upload card, with no code, no sign-in and no hunting for the lesson.
+  function filmFromLink() {
+    try {
+      var id = (new URLSearchParams(window.location.search).get('film') || '').trim();
+      return /^[0-9a-f-]{36}$/i.test(id) ? id : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function showFilm(studentId) {
+    var film = document.getElementById('film');
+    var body = document.getElementById('film-body');
+    if (!film || !body) return false;
+    gate.hidden = true;
+    app.hidden = true;
+    film.hidden = false;
+    body.innerHTML = testimonialCardHtml();
+    setupTestimonialCard(studentId, function () {
+      body.innerHTML =
+        '<p class="film-note">This link opens once you have finished the lessons. ' +
+        'Pick up where you left off at <a href="https://academy.clickclick.video/">academy.clickclick.video</a>.</p>';
+    });
+    return true;
+  }
+
   function restoreOrGate() {
+    var filmId = filmFromLink();
+    if (filmId && showFilm(filmId)) return;
     sourceFromLink();
     var link = codeFromLink();
     var saved = loadSession();

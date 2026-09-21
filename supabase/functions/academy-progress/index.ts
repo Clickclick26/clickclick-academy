@@ -1535,15 +1535,16 @@ Deno.serve(async (req) => {
       const studentId = String(body.studentId ?? "")
       if (!studentId) return json(400, { error: "Missing fields." }, origin)
 
-      const { data: certRows, error: certErr } = await admin
-        .from("academy_certificates")
-        .select("credential_id")
+      // Open to anyone who has done the five core lessons of a course. No
+      // certificate, listing or pace rule (dropped 21 Sep 2026): Kathryn wants
+      // every finisher asked, and she watches each clip before any is used.
+      const { data: done, error: doneErr } = await admin
+        .from("academy_progress")
+        .select("lesson_num")
         .eq("student_id", studentId)
-        .eq("approved", true)
-        .limit(1)
-      if (certErr) throw certErr
-      if (!certRows?.length) {
-        return json(403, { error: "Finish the course first." }, origin)
+      if (doneErr) throw doneErr
+      if (new Set((done ?? []).map((r) => String(r.lesson_num))).size < 5) {
+        return json(403, { error: "Finish the lessons first." }, origin)
       }
 
       if (type === "testimonialUpload") {
@@ -1578,21 +1579,7 @@ Deno.serve(async (req) => {
           .limit(1)
         if (error) throw error
 
-        // Somebody who cleared the lessons in a couple of minutes is never
-        // asked for a video about a course they did not read. They keep the
-        // certificate; they just do not get the ask.
-        const { data: stamps } = await admin
-          .from("academy_progress")
-          .select("submitted_at")
-          .eq("student_id", studentId)
-          .order("submitted_at", { ascending: true })
-        const times = (stamps ?? [])
-          .map((r) => new Date(String(r.submitted_at)).getTime())
-          .filter((t) => !Number.isNaN(t))
-        const span = times.length > 1 ? times[times.length - 1] - times[0] : 0
-        const eligible = span >= 12 * 60_000
-
-        return json(200, { testimonial: data?.[0] ?? null, eligible }, origin)
+        return json(200, { testimonial: data?.[0] ?? null, eligible: true }, origin)
       }
 
       const path = String(body.path ?? "").trim()

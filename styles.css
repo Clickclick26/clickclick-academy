@@ -2717,3 +2717,33 @@ input {
 .testimonial-progress-text { margin: .6rem 0 0; font-weight: 500; }
 .testimonial-done-head { margin: 0 0 .4rem; font-weight: 600; }
 .testimonial-done-line { margin: 0 0 .6rem; }
+
+/* The testimonial upload on its own page (?film=). */
+.film {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px 60px;
+  background: var(--bg, #f3f0e6);
+}
+
+.film[hidden] {
+  display: none;
+}
+
+.film-wrap {
+  width: 100%;
+  max-width: 560px;
+}
+
+.film-wrap .brand-logo-stacked {
+  display: block;
+  width: 110px;
+  margin: 0 auto 28px;
+}
+
+.film-note {
+  text-align: center;
+  line-height: 1.55;
+  color: var(--ink);
+}
