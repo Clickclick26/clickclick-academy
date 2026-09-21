@@ -898,6 +898,44 @@ Deno.serve(async (req) => {
     }
   }
 
+  // sendOne {key, to, subject, text, sendAt?} -> one email from hello@, as
+  // Kathryn would write it herself.
+  //
+  // Lark has no send-later, and some emails have to land at a civilised hour
+  // rather than whenever the work got finished. Key-gated exactly like the
+  // broadcasts, and deliberately plain text: this is for a note to one person,
+  // never a campaign. Campaigns go through CAMPAIGNS so the wording stays in
+  // version control.
+  if (body.type === "sendOne") {
+    const to = String(body.to ?? "").trim().toLowerCase()
+    const subject = String(body.subject ?? "").trim().slice(0, 200)
+    const text = String(body.text ?? "")
+    const sendAt = body.sendAt ? String(body.sendAt) : ""
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return json(400, { error: "That address does not look right." }, origin)
+    if (!subject || !text) return json(400, { error: "Needs a subject and a body." }, origin)
+
+    const apiKey = Deno.env.get("RESEND_API_KEY")
+    if (!apiKey) return json(503, { error: "No RESEND_API_KEY." }, origin)
+
+    const payload: Record<string, unknown> = {
+      from: "Kathryn at ClickClick <hello@clickclick.video>",
+      to: [to],
+      reply_to: "hello@clickclick.video",
+      subject,
+      text,
+    }
+    if (sendAt) payload.scheduled_at = sendAt
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+    const out = await res.json().catch(() => ({}))
+    if (!res.ok) return json(502, { error: "Resend refused it.", detail: out }, origin)
+    return json(200, { ok: true, id: out.id ?? null, scheduledFor: sendAt || "now" }, origin)
+  }
+
   if (body.type === "run") {
     const result: Record<string, unknown> = {}
     const token = Deno.env.get("META_LEADS_TOKEN")
