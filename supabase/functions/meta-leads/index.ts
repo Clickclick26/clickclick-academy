@@ -473,8 +473,11 @@ async function sendStep(
     ? brandEmail(step)
     : creatorEmail(step, lead.audience === "creator-us", progress)
   const firstName = String(lead.name ?? "").trim().split(/\s+/)[0] || "there"
+  // Academy sign-ups joined by ticking the box on the course form, not a lead ad.
   const why = lead.audience === "brand"
     ? "You are getting this because you asked for the readiness score on Facebook or Instagram."
+    : lead.leadgen_id.startsWith("academy-")
+    ? "You are getting this because you ticked the box for tips and news when you started The Golden Quarter."
     : "You are getting this because you asked for The Golden Quarter on Facebook or Instagram."
   const links = await unsubscribeLinks(lead.leadgen_id)
   const { text, html } = render(email, firstName, why, links.page)

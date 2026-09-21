@@ -2676,6 +2676,8 @@
       countryOptionsHtml() +
       '</select>' +
       '<p class="identify-note">We ask because certificates for students in the EU are checked by a person before they are issued, so they take a little longer.</p>' +
+      '<label class="identify-consent"><input type="checkbox" id="identify-consent" /> ' +
+      '<span>Send me tips, brand briefs and news about the full course. Unsubscribe any time.</span></label>' +
       '<button type="submit" class="btn primary">Start the course</button>' +
       '<p class="lesson-submit-err" id="identify-err" hidden></p>' +
       '</form>' +
@@ -2722,6 +2724,8 @@
             email: email,
             region: region,
             accessCode: (session && session.code) || '',
+            marketingConsent: !!(document.getElementById('identify-consent') || {}).checked,
+            source: signupSource(),
           })
             .then(function (data) {
               saveStudent({
@@ -2991,6 +2995,28 @@
   // is wiped from the address bar straight away, so a shared screenshot or a
   // bookmark does not carry it, and the referrer of the next click does not
   // leak it either.
+  // Where a sign-up came from (?src=tiktok, set by clickclick.video/free and
+  // /tiktok). Read once, kept for the tab, then wiped from the address bar.
+  var SRC_KEY = 'cc-signup-src';
+  function signupSource() {
+    try {
+      return sessionStorage.getItem(SRC_KEY) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+  function sourceFromLink() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var src = (params.get('src') || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 30);
+      if (!params.has('src')) return;
+      params.delete('src');
+      var rest = params.toString();
+      history.replaceState({}, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+      if (src) sessionStorage.setItem(SRC_KEY, src);
+    } catch (e) {}
+  }
+
   function codeFromLink() {
     try {
       var params = new URLSearchParams(window.location.search);
@@ -3008,6 +3034,7 @@
   }
 
   function restoreOrGate() {
+    sourceFromLink();
     var link = codeFromLink();
     var saved = loadSession();
     var code = (link && link.code) || (saved && saved.code);

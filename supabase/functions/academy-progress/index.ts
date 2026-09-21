@@ -383,15 +383,69 @@ async function portfolioEntitlement(admin: AdminClient, studentId: string) {
 // being two disconnected worlds. Matches by email scoped to brand_id
 // 'clickclick', same dedupe pattern as CLocal's waitlist-ingest function.
 // Best-effort: a failure here must never break signing in to Academy itself.
+// Free-course students who ticked the marketing box get the same follow-up
+// emails as the Facebook leads, by becoming a row in meta_leads that the
+// meta-leads cron already works through. They skip the welcome (step 0):
+// they are already in the course. Only the two free-course codes count, and
+// anyone already in meta_leads under that email (a Facebook lead) is left
+// alone so nobody gets the sequence twice. The id is fixed per student, so a
+// second tick on another visit changes nothing.
+async function joinFollowUps(opts: {
+  admin: AdminClient
+  studentId: string
+  name: string
+  email: string
+  accessCode: string
+  region: string
+}) {
+  const { admin, studentId, name, email, accessCode, region } = opts
+  const code = accessCode.toUpperCase()
+  if (code !== "GOLDENQUARTER" && code !== "GOLDENQUARTERUS") return
+  try {
+    const { data: already, error: findErr } = await admin
+      .from("meta_leads")
+      .select("leadgen_id")
+      .ilike("email", email)
+      .limit(1)
+    if (findErr) throw findErr
+    if (already && already.length > 0) return
+    const { error } = await admin.from("meta_leads").upsert(
+      {
+        leadgen_id: `academy-${studentId}`,
+        form_id: "academy",
+        form_name: "Academy sign-up",
+        audience: code === "GOLDENQUARTERUS" || region === "US" ? "creator-us" : "creator-uk",
+        email,
+        name,
+        answers: {},
+        created_time: new Date().toISOString(),
+        steps_sent: 1,
+      },
+      { onConflict: "leadgen_id", ignoreDuplicates: true },
+    )
+    if (error) throw error
+  } catch (err) {
+    // Best effort: the student still gets into their course.
+    console.error("academy -> follow-ups failed:", (err as Error).message)
+  }
+}
+
 async function syncToCrmContacts(opts: {
   admin: AdminClient
   name: string
   email: string
   accessCode: string
+  source?: string | null
+  consent?: boolean
 }) {
   try {
-    const { admin, name, email, accessCode } = opts
-    const tags = Array.from(new Set(["academy", accessCode].filter(Boolean)))
+    const { admin, name, email, accessCode, source, consent } = opts
+    const tags = Array.from(new Set([
+      "academy",
+      accessCode,
+      source ? `from-${source}` : "",
+      consent ? "marketing-ok" : "",
+    ].filter(Boolean)))
     const notesLine = `Academy signup\naccess code: ${accessCode || "(none)"}`
 
     const { data: existingRows, error: findErr } = await admin
@@ -461,6 +515,9 @@ Deno.serve(async (req) => {
       const email = String(body.email ?? "").trim().toLowerCase()
       const accessCode = String(body.accessCode ?? "").trim()
       const region = String(body.region ?? "").trim().toUpperCase().slice(0, 2)
+      // The unticked-by-default box on the form. Only a tick counts.
+      const consent = body.marketingConsent === true
+      const source = String(body.source ?? "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 30) || null
       if (!name) return json(400, { error: "Name required." }, origin)
       if (!EMAIL_RE.test(email)) return json(400, { error: "Real email required." }, origin)
 
@@ -472,12 +529,24 @@ Deno.serve(async (req) => {
       if (findErr) throw findErr
 
       if (existing && existing.length > 0) {
-        if (region) {
-          await admin.from("academy_students").update({ region }).eq("id", existing[0].id)
+        // A repeat visit can switch consent on, never off: unticking the box
+        // on another device is not an unsubscribe. Source is first touch only.
+        const patch: Record<string, unknown> = {}
+        if (region) patch.region = region
+        if (consent) {
+          patch.marketing_consent = true
+          patch.consent_at = new Date().toISOString()
+        }
+        if (Object.keys(patch).length) {
+          await admin.from("academy_students").update(patch).eq("id", existing[0].id)
+        }
+        if (source) {
+          await admin.from("academy_students").update({ source }).eq("id", existing[0].id).is("source", null)
         }
         // Still sync on repeat visits — cheap, and catches anyone who signed
         // up before this existed, or unlocked a second pack since.
-        await syncToCrmContacts({ admin, name: existing[0].name, email, accessCode })
+        await syncToCrmContacts({ admin, name: existing[0].name, email, accessCode, source, consent })
+        if (consent) await joinFollowUps({ admin, studentId: existing[0].id, name: existing[0].name, email, accessCode, region })
         return json(
           200,
           {
@@ -491,11 +560,20 @@ Deno.serve(async (req) => {
 
       const { data: created, error: insErr } = await admin
         .from("academy_students")
-        .insert({ name, email, access_code: accessCode, region: region || null })
+        .insert({
+          name,
+          email,
+          access_code: accessCode,
+          region: region || null,
+          source,
+          marketing_consent: consent,
+          consent_at: consent ? new Date().toISOString() : null,
+        })
         .select("id, name")
         .single()
       if (insErr) throw insErr
-      await syncToCrmContacts({ admin, name, email, accessCode })
+      await syncToCrmContacts({ admin, name, email, accessCode, source, consent })
+      if (consent) await joinFollowUps({ admin, studentId: created.id, name, email, accessCode, region })
       return json(
         200,
         { studentId: created.id, name: created.name, academyId: academyId(created.id) },

@@ -2595,6 +2595,24 @@ input {
   margin: 0;
 }
 
+.identify-consent {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.identify-consent input {
+  width: 18px;
+  height: 18px;
+  margin: 0.1rem 0 0;
+  flex: none;
+  accent-color: var(--ink);
+}
+
 .academy-id-line {
   font-size: 0.78rem;
   color: var(--mid);
