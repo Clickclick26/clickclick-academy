@@ -2739,6 +2739,7 @@ input {
 .film-wrap .brand-logo-stacked {
   display: block;
   width: 110px;
+  height: auto;
   margin: 0 auto 28px;
 }
 
