@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Testimonial clip | ClickClick Academy</title>
+  <!-- For Kathryn, from the "Video from ..." email. A clip over 45MB is
+       uploaded in pieces because the free Supabase plan stores nothing over
+       50MB; this page fetches the pieces, joins them byte for byte into the
+       original file, plays it and offers it as a download. Nothing is
+       re-encoded. The pieces sit in a public bucket under a random name, so
+       the page needs no sign-in, and it is kept out of search. -->
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    :root { --bg: #f3f0e6; --ink: #1a1a1a; --mid: #5c5c5c; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 720px; margin: 0 auto; padding: 32px 16px 60px; }
+    h1 { font-size: 1.3rem; margin: 0 0 .4rem; }
+    p { line-height: 1.55; color: var(--mid); }
+    video { width: 100%; max-height: 75vh; background: #000; border-radius: 14px; margin-top: 16px; }
+    a.btn { display: inline-block; margin-top: 16px; padding: .7rem 1.2rem; border-radius: 999px; background: var(--ink); color: var(--bg); text-decoration: none; font-weight: 600; }
+    .bar { height: 8px; background: rgba(0,0,0,.08); border-radius: 99px; overflow: hidden; margin-top: 12px; }
+    .bar span { display: block; height: 100%; width: 0; background: var(--ink); transition: width .2s; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Testimonial clip</h1>
+    <p id="status">Fetching the video&hellip;</p>
+    <div class="bar" id="bar"><span id="fill"></span></div>
+    <video id="player" controls playsinline hidden></video>
+    <a class="btn" id="download" hidden>Download the video</a>
+  </main>
+  <script>
+    (function () {
+      var BASE = 'https://gapybapywpdogexibtgj.supabase.co/storage/v1/object/public/creator-portfolios/';
+      var status = document.getElementById('status');
+      var fill = document.getElementById('fill');
+      var q = new URLSearchParams(location.search);
+      var path = q.get('v') || '';
+      var n = Math.floor(Number(q.get('n') || 1));
+
+      // Only testimonial files, only a sane number of pieces.
+      if (!/^[0-9a-f-]{36}\/testimonial-[0-9a-f]{16}\.(mp4|mov|webm|m4v)$/i.test(path) || !(n >= 1 && n <= 12)) {
+        status.textContent = 'This link is not complete. Open it from the email again.';
+        document.getElementById('bar').hidden = true;
+        return;
+      }
+
+      var ext = path.split('.').pop().toLowerCase();
+      var type = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', m4v: 'video/x-m4v' }[ext];
+      var urls = n === 1 ? [BASE + path] : Array.from({ length: n }, function (_, i) { return BASE + path + '.part' + (i + 1); });
+
+      var done = 0;
+      Promise.all(urls.map(function (u) {
+        return fetch(u).then(function (r) {
+          if (!r.ok) throw new Error('missing piece');
+          return r.blob();
+        }).then(function (b) {
+          done += 1;
+          fill.style.width = Math.round((done / urls.length) * 100) + '%';
+          return b;
+        });
+      }))
+        .then(function (pieces) {
+          var file = new Blob(pieces, { type: type });
+          var url = URL.createObjectURL(file);
+          var player = document.getElementById('player');
+          player.src = url;
+          player.hidden = false;
+          var dl = document.getElementById('download');
+          dl.href = url;
+          dl.download = path.split('/').pop();
+          dl.hidden = false;
+          document.getElementById('bar').hidden = true;
+          status.textContent = (file.size / 1048576).toFixed(0) + 'MB' + (n > 1 ? ', joined from ' + n + ' pieces.' : '.');
+        })
+        .catch(function () {
+          status.textContent = 'A piece of this video is missing. It may still be uploading: try again in a few minutes.';
+        });
+    })();
+  </script>
+</body>
+</html>

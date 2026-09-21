@@ -351,6 +351,13 @@ function sanitisePortfolio(input: Record<string, unknown>, studentId: string) {
 }
 
 // Turns stored paths into the public URLs the rendered page actually loads.
+// A testimonial sent in pieces is joined back together by this page, in the
+// browser: nothing on the free plan can store the whole file in one go.
+const MAX_VIDEO_PARTS = 12
+function watchUrl(path: string, parts: number): string {
+  return `https://academy.clickclick.video/watch.html?v=${encodeURIComponent(path)}&n=${parts}`
+}
+
 function publicUrl(supabaseUrl: string, path: string): string {
   if (!path) return ""
   return `${supabaseUrl}/storage/v1/object/public/${PORTFOLIO_BUCKET}/${path}`
@@ -1525,8 +1532,8 @@ Deno.serve(async (req) => {
     }
 
     // testimonialGet    {studentId} -> the clip they have already sent, if any
-    // testimonialUpload {studentId, contentType} -> a signed URL for the video
-    // testimonialSave   {studentId, path, note, consent} -> {ok}
+    // testimonialUpload {studentId, contentType, parts?} -> a signed URL per piece
+    // testimonialSave   {studentId, path, note, parts?} -> {ok}
     //
     // A minute of phone video is 60 to 150MB, which is three times what Gmail
     // will carry, so "email it to me" quietly fails at the last step. One slot
@@ -1560,14 +1567,26 @@ Deno.serve(async (req) => {
 
         const rand = crypto.randomUUID().replace(/-/g, "").slice(0, 16)
         const path = `${studentId}/testimonial-${rand}.${ext}`
-        const { data, error } = await admin.storage
-          .from(PORTFOLIO_BUCKET)
-          .createSignedUploadUrl(path)
-        if (error) {
-          console.error("testimonial upload url failed:", error.message)
-          return json(503, { error: "File store not ready." }, origin)
+
+        // Over 45MB the page sends the file in pieces (the free plan stops at
+        // 50MB a file), so it asks for one upload slot per piece.
+        const parts = Math.floor(Number(body.parts ?? 1))
+        if (!(parts >= 1 && parts <= MAX_VIDEO_PARTS)) {
+          return json(400, { error: "That video is too long. Keep it to a minute or two." }, origin)
         }
-        return json(200, { path, token: data.token, url: data.signedUrl }, origin)
+        const names = parts === 1 ? [path] : Array.from({ length: parts }, (_, i) => `${path}.part${i + 1}`)
+        const urls: string[] = []
+        for (const name of names) {
+          const { data, error } = await admin.storage
+            .from(PORTFOLIO_BUCKET)
+            .createSignedUploadUrl(name)
+          if (error) {
+            console.error("testimonial upload url failed:", error.message)
+            return json(503, { error: "File store not ready." }, origin)
+          }
+          urls.push(data.signedUrl)
+        }
+        return json(200, { path, url: urls[0], urls }, origin)
       }
 
       if (type === "testimonialGet") {
@@ -1584,6 +1603,8 @@ Deno.serve(async (req) => {
 
       const path = String(body.path ?? "").trim()
       const note = String(body.note ?? "").replace(/[<>]/g, "").trim().slice(0, 500)
+      const parts = Math.floor(Number(body.parts ?? 1))
+      if (!(parts >= 1 && parts <= MAX_VIDEO_PARTS)) return json(400, { error: "Missing fields." }, origin)
       if (!path.startsWith(`${studentId}/`)) {
         return json(400, { error: "That file is not yours." }, origin)
       }
@@ -1597,7 +1618,7 @@ Deno.serve(async (req) => {
       await admin.from("academy_testimonials").delete().eq("student_id", studentId)
       const { error } = await admin
         .from("academy_testimonials")
-        .insert({ student_id: studentId, path, note, consent })
+        .insert({ student_id: studentId, path, note, consent, parts })
       if (error) throw error
 
       // Kathryn watches these herself, so the only automation is telling her
@@ -1620,7 +1641,9 @@ Deno.serve(async (req) => {
             text: [
               `${person?.name ?? "A creator"} (${person?.email ?? "unknown"}) sent a clip.`,
               note ? `They said: ${note}` : "",
-              `File: ${publicUrl(supabaseUrl, path)}`,
+              parts === 1
+                ? `Watch: ${publicUrl(supabaseUrl, path)}`
+                : `Watch (it came in ${parts} pieces, this joins them): ${watchUrl(path, parts)}`,
             ].filter(Boolean).join("\n\n"),
           }),
         }).catch((e) => console.error("testimonial email failed:", e))

@@ -1997,35 +1997,54 @@
       if (msg) msg.hidden = true;
       var started = Date.now();
 
-      academyApi({ type: 'testimonialUpload', studentId: student.studentId, contentType: file.type })
+      // The free plan stores nothing over 50MB, and a minute of phone video
+      // is usually more, so big files go up in 45MB pieces. watch.html joins
+      // them again; nothing is re-encoded, so no quality is lost.
+      var PIECE = 45 * 1024 * 1024;
+      var parts = Math.max(1, Math.ceil(file.size / PIECE));
+
+      function putPiece(url, blob, before) {
+        return new Promise(function (resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('PUT', url, true);
+          xhr.setRequestHeader('Content-Type', file.type);
+          xhr.upload.onprogress = function (e) {
+            if (!e.lengthComputable) return;
+            var sent = before + e.loaded;
+            var pct = Math.round((sent / file.size) * 100);
+            fill.style.width = pct + '%';
+            var elapsed = (Date.now() - started) / 1000;
+            var left = sent > 0 ? Math.round((elapsed / sent) * (file.size - sent)) : 0;
+            var mins = Math.ceil(left / 60);
+            progressText.textContent =
+              'Sending\u2026 ' + pct + '%' + (left > 45 ? ' (about ' + mins + ' minute' + (mins === 1 ? '' : 's') + ' left)' : '');
+          };
+          xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else reject(new Error('That did not upload. Try again on wifi if you can.'));
+          };
+          xhr.onerror = function () { reject(new Error('The connection dropped. Have another go.')); };
+          xhr.send(blob);
+        });
+      }
+
+      academyApi({ type: 'testimonialUpload', studentId: student.studentId, contentType: file.type, parts: parts })
         .then(function (up) {
-          return new Promise(function (resolve, reject) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('PUT', up.url, true);
-            xhr.setRequestHeader('Content-Type', file.type);
-            xhr.upload.onprogress = function (e) {
-              if (!e.lengthComputable) return;
-              var pct = Math.round((e.loaded / e.total) * 100);
-              fill.style.width = pct + '%';
-              var elapsed = (Date.now() - started) / 1000;
-              var left = e.loaded > 0 ? Math.round((elapsed / e.loaded) * (e.total - e.loaded)) : 0;
-              var mins = Math.ceil(left / 60);
-              progressText.textContent =
-                'Sending\u2026 ' + pct + '%' + (left > 45 ? ' (about ' + mins + ' minute' + (mins === 1 ? '' : 's') + ' left)' : '');
-            };
-            xhr.onload = function () {
-              if (xhr.status >= 200 && xhr.status < 300) resolve(up.path);
-              else reject(new Error('That did not upload. Try again on wifi if you can.'));
-            };
-            xhr.onerror = function () { reject(new Error('The connection dropped. Have another go.')); };
-            xhr.send(file);
+          var urls = up.urls || [up.url];
+          var chain = Promise.resolve();
+          urls.forEach(function (url, i) {
+            chain = chain.then(function () {
+              return putPiece(url, file.slice(i * PIECE, Math.min(file.size, (i + 1) * PIECE)), i * PIECE);
+            });
           });
+          return chain.then(function () { return up.path; });
         })
         .then(function (path) {
           return academyApi({
             type: 'testimonialSave',
             studentId: student.studentId,
             path: path,
+            parts: parts,
             note: (document.getElementById('testimonial-note') || {}).value || ''
           });
         })
