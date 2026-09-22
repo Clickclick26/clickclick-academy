@@ -392,14 +392,17 @@ async function sendCodeEmail(row: {
 
   const firstName = String(row.name ?? "").trim().split(/\s+/)[0] || "there"
   const isPriority = row.tier === "priority"
-  const academy = "https://academy.clickclick.video/"
+  // The code rides in the link, so tapping the button opens the course with
+  // no code box (22 Sep 2026: the box is where people got stuck).
+  const academy = `https://academy.clickclick.video/?k=${encodeURIComponent(row.code)}&src=buyer`
 
   const lines = [
     `Hi ${firstName},`,
     "",
     `Your access code is ${row.code}`,
     "",
-    `Open ${academy} and put that code in. Then put your name and this email address in once. That is what saves your progress, so use the same email every time.`,
+    `Open your course: ${academy}`,
+    "It asks for your name and this email address once. That is what saves your progress, so use the same email every time. If you ever lose this email, go to academy.clickclick.video and choose \"Email me my link\".",
     "",
     isPriority
       ? "Your portfolio page is in there too, under \"Your portfolio page\". Fill it in whenever you have something worth showing."
@@ -420,7 +423,7 @@ async function sendCodeEmail(row: {
 <p style="margin:0 0 6px">Your access code is</p>
 <p style="font-size:30px;font-weight:700;letter-spacing:.06em;margin:0 0 20px">${escapeHtml(row.code)}</p>
 <p><a href="${academy}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Open the Academy</a></p>
-<p>Put that code in, then put your name and this email address in once. That is what saves your progress, so use the same email every time.</p>
+<p>The button opens your course with the code already in. It asks for your name and this email address once, which saves your progress, so use the same email every time. Lost this email? Go to academy.clickclick.video and choose "Email me my link".</p>
 ${isPriority ? '<p>Your portfolio page is in there too, under "Your portfolio page". Fill it in whenever you have something worth showing.</p>' : ""}
 <p>Your progress is saved against your email rather than the device you are on, so nothing is lost if you clear your browser or move to a different phone.</p>
 <p style="color:#5c5c5c;font-size:14px">${

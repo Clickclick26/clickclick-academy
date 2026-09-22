@@ -632,7 +632,7 @@ async function sendDue(admin: AdminClient) {
 
 type Broadcast = { subject: string; html: string; text: string }
 
-function foundingSep26(us: boolean, firstName: string, unsub: string): Broadcast {
+function foundingSep26(us: boolean, firstName: string, unsub: string, link = courseLink(us)): Broadcast {
   const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
   const promo = us ? "FOUNDING60" : "FOUNDING50"
   const off = us ? "$60" : "£50"
@@ -647,7 +647,7 @@ function foundingSep26(us: boolean, firstName: string, unsub: string): Broadcast
   const text = [
     `Hi ${firstName},`,
     "Your free course, The Golden Quarter, is waiting for you. Five short lessons, each one about ten minutes, and it saves your place if you stop halfway.",
-    `Open lesson one: ${ACADEMY}\nYour code: ${code}`,
+    `Open lesson one: ${link}\nYour code: ${code}`,
     "Finish it and you get a certificate with its own credential ID, something you can show a brand.",
     `Why now: brands are booking creators for ${season} right now, through October. The first 20 people to get certified by ${oct31} go to the top of the list we match brands from.`,
     `Founding-member price: ${off} off the full course. 32 lessons, the ${contract} client contract, and the certificate brands check. Use code ${promo} at checkout. Ends ${ends}.\nSee the full course: ${course}`,
@@ -659,7 +659,7 @@ function foundingSep26(us: boolean, firstName: string, unsub: string): Broadcast
   const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
 <p>Hi ${escapeHtml(firstName)},</p>
 <p>Your free course, The Golden Quarter, is waiting for you. Five short lessons, each one about ten minutes, and it saves your place if you stop halfway.</p>
-<p><a href="${ACADEMY}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Open lesson one</a></p>
+<p><a href="${link}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Open lesson one</a></p>
 <p style="margin:0 0 18px;font-size:14px;color:#5c5c5c">Your code: <b style="color:#141414;letter-spacing:.04em">${code}</b></p>
 <p>Finish it and you get a certificate with its own credential ID, something you can show a brand.</p>
 <p><b>Why now:</b> brands are booking creators for ${season} right now, through October. The first 20 people to get certified by ${oct31} go to the top of the list we match brands from.</p>
@@ -679,9 +679,8 @@ function foundingSep26(us: boolean, firstName: string, unsub: string): Broadcast
 // 50 of the first 58 stopped at the code box, so this is the same course with
 // the code taken out of their hands. One link, on purpose: a wall of links
 // reads as spam to Gmail.
-function oneClickSep26(us: boolean, firstName: string, unsub: string): Broadcast {
+function oneClickSep26(us: boolean, firstName: string, unsub: string, link = courseLink(us)): Broadcast {
   const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
-  const link = courseLink(us)
   const subject = "The Golden Quarter, without the code"
   const why = "You're getting this because you asked for The Golden Quarter on Facebook or Instagram."
 

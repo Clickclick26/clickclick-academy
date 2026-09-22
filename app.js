@@ -91,7 +91,7 @@
     var key = student.studentId + '|' + course.id;
     if (certificateCache[key] || certInFlight[key]) return;
     certInFlight[key] = true;
-    academyApi({ type: 'certificate', studentId: student.studentId, courseId: course.id })
+    academyApi({ type: 'certificate', studentId: student.studentId, courseId: course.id, accessCode: (session && session.code) || '' })
       .then(function (data) {
         certificateCache[key] = data.credentialId;
         // A certificate held for human review still has a real credential ID,
@@ -2751,10 +2751,10 @@
       '<span class="course-tag">' + esc(course.tag || '') + '</span>' +
       '<h1>' + esc(course.title || '') + '</h1>' +
       (course.description ? '<p class="detail-lead">' + esc(course.description) + '</p>' : '') +
-      '<p class="detail-lead">Tell us who you are so your progress is saved. Each lesson opens the next one once you have passed its check.</p>' +
+      '<p class="detail-lead">Your email is your key. Use the same one every time and your progress follows you to any phone or laptop. No password needed.</p>' +
       '<form id="identify-form" class="identify-form">' +
       '<input type="text" id="identify-name" placeholder="Your name" required />' +
-      '<input type="email" id="identify-email" placeholder="Your email" required />' +
+      '<input type="email" id="identify-email" placeholder="Your email (the one you\'ll use to come back)" required />' +
       '<label class="identify-label" for="identify-region">Where are you based?</label>' +
       '<select id="identify-region" required>' +
       countryOptionsHtml() +
@@ -2844,6 +2844,7 @@
     }
     if (!student) {
       detailBody.innerHTML = identifyGateHtml(course);
+      track('form_shown');
       var idForm = document.getElementById('identify-form');
       if (idForm) {
         idForm.addEventListener('submit', function (e) {
@@ -3025,6 +3026,7 @@
     } else {
       gate.hidden = false;
       app.hidden = true;
+      track('gate_shown');
     }
   }
 
@@ -3092,7 +3094,8 @@
       gateBtn.textContent = 'Checking…';
     }
     var onDone = (opts && opts.onDone) || function () {};
-    academyApi({ type: 'content', accessCode: code })
+    // studentId lets the server attach a bought code to a returning student.
+    academyApi({ type: 'content', accessCode: code, studentId: (loadStudent() || {}).studentId || '' })
       .then(function (data) {
         enterWithContent(data);
         onDone(data);
@@ -3236,11 +3239,97 @@
     return true;
   }
 
+  // Anonymous steps before someone is a student, so drop-off can be seen
+  // (22 Sep 2026). No names or emails: just the door and how far they got.
+  function visitorId() {
+    try {
+      var v = localStorage.getItem('cc-visitor');
+      if (!v) {
+        v = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+        localStorage.setItem('cc-visitor', v);
+      }
+      return v;
+    } catch (e) {
+      return '';
+    }
+  }
+  function track(event) {
+    try {
+      academyApi({
+        type: 'track',
+        event: event,
+        source: signupSource(),
+        hasCode: !!((session && session.code) || loadSession() || /[?&]k=/.test(window.location.search)),
+        hasLead: !!loadLeadLink(),
+        hasStudent: !!loadStudent(),
+        visitor: visitorId(),
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  // "Email me my link" on the code screen: the main way back in for anyone
+  // on a new device, in an in-app browser, or who never saw a code.
+  var linkForm = document.getElementById('link-form');
+  if (linkForm) {
+    linkForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var emailEl = document.getElementById('link-email');
+      var btn = document.getElementById('link-btn');
+      var email = ((emailEl && emailEl.value) || '').trim();
+      if (!email) return;
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending\u2026'; }
+      track('link_requested');
+      academyApi({ type: 'sendLink', email: email })
+        .catch(function () {})
+        .then(function () {
+          var note = document.getElementById('link-note');
+          var doneEl = document.getElementById('link-done');
+          if (note) note.hidden = true;
+          if (doneEl) doneEl.hidden = false;
+          if (btn) { btn.disabled = false; btn.textContent = 'Email me my link'; }
+        });
+    });
+  }
+
+  // A student's own link (?u=&t=, from "Email me my link" or the certificate
+  // email): signed on the server, so it puts them back in as themselves on
+  // any device. Wiped from the address bar once read.
+  function studentFromLink() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var u = (params.get('u') || '').trim();
+      var t = (params.get('t') || '').trim();
+      if (!params.has('u') && !params.has('t')) return null;
+      params.delete('u');
+      params.delete('t');
+      var rest = params.toString();
+      history.replaceState({}, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+      return /^[0-9a-f-]{36}$/i.test(u) && /^[0-9a-f]{32}$/.test(t) ? { u: u, t: t } : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function restoreOrGate() {
+    var own = studentFromLink();
+    if (own) {
+      academyApi({ type: 'resumeStudent', u: own.u, t: own.t })
+        .then(function (data) {
+          saveStudent({
+            studentId: data.studentId,
+            name: data.name,
+            academyId: data.academyId || academyIdFor(data.studentId),
+          });
+        })
+        .catch(function () {})
+        .then(restoreOrGate);
+      return;
+    }
     var filmId = filmFromLink();
     if (filmId && showFilm(filmId)) return;
     leadFromLink();
     sourceFromLink();
+    track('land');
     var link = codeFromLink();
     var saved = loadSession();
     var code = (link && link.code) || (saved && saved.code);
@@ -3288,7 +3377,7 @@
             var offline = !(e && /did not work/i.test(e.message || ''));
             err.textContent = offline
               ? 'Could not reach the Academy. Check your connection and try again.'
-              : 'That code did not work. Try again or ask ClickClick.';
+              : 'That code didn\'t work. Check for spaces, or use "Email me my link" above.';
             err.hidden = false;
           }
           if (input) {

@@ -2799,3 +2799,43 @@ input {
 .testimonial-quote .btn {
   align-self: flex-start;
 }
+
+/* The way back in: email link first, code second (22 Sep 2026). */
+.gate-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+  margin-bottom: 6px;
+}
+
+.gate-small {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--mid);
+  margin: 8px 0 0;
+  text-align: left;
+}
+
+.gate-ok {
+  color: #2f7d54;
+  font-weight: 600;
+}
+
+.gate-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+  color: var(--mid);
+  font-size: 0.8rem;
+}
+
+.gate-or::before,
+.gate-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+}

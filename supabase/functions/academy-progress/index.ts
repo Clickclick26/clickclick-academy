@@ -254,10 +254,10 @@ const ASSESSMENT_PASS = 0.75
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // Same HMAC meta-leads uses for its signed links (sign() there): first 16
-// bytes of HMAC-SHA256(lead id), hex. Compared in constant time.
-async function leadSigOk(lead: string, sig: string): Promise<boolean> {
+// bytes of HMAC-SHA256(message), hex, keyed with LEADS_UNSUB_SECRET.
+async function hmacHex(message: string): Promise<string> {
   const secret = Deno.env.get("LEADS_UNSUB_SECRET") ?? ""
-  if (!secret || !/^[0-9a-f]{32}$/.test(sig)) return false
+  if (!secret) return ""
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -265,11 +265,35 @@ async function leadSigOk(lead: string, sig: string): Promise<boolean> {
     false,
     ["sign"],
   )
-  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(lead))
-  const want = Array.from(new Uint8Array(mac)).slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("")
+  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message))
+  return Array.from(new Uint8Array(mac)).slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("")
+}
+
+async function sigMatches(message: string, sig: string): Promise<boolean> {
+  if (!/^[0-9a-f]{32}$/.test(sig)) return false
+  const want = await hmacHex(message)
+  if (!want) return false
   let diff = 0
   for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ sig.charCodeAt(i)
   return diff === 0
+}
+
+// A lead's email link: signed lead id, exactly as meta-leads signs it.
+async function leadSigOk(lead: string, sig: string): Promise<boolean> {
+  return await sigMatches(lead, sig)
+}
+
+// A student's own link back in ("Email me my link", certificate emails). The
+// "student:" prefix keeps it from ever being a valid lead signature.
+async function studentSig(studentId: string): Promise<string> {
+  return await hmacHex(`student:${studentId}`)
+}
+
+const ACADEMY_URL = "https://academy.clickclick.video/"
+// The free course each free code opens, so a link can land on it directly.
+const FREE_COURSE_FOR: Record<string, string> = {
+  GOLDENQUARTER: "golden-quarter-ugc",
+  GOLDENQUARTERUS: "golden-quarter-ugc-us",
 }
 
 // deno-lint-ignore no-explicit-any
@@ -382,12 +406,42 @@ function publicUrl(supabaseUrl: string, path: string): string {
   return `${supabaseUrl}/storage/v1/object/public/${PORTFOLIO_BUCKET}/${path}`
 }
 
+// Which of a student's codes to go by. They may have started on a free code
+// and bought later, or switched between the UK and US free codes, and only
+// the first code they ever used is on their record. So: their record's code,
+// then the code they are using right now, then any paid code bought under
+// their email; the first one that allows what is being asked for wins.
+// deno-lint-ignore no-explicit-any
+async function bestPackFor(admin: AdminClient, packs: Record<string, PackRow>, student: any, want: (p: PackRow) => boolean, currentCode?: unknown) {
+  const tried = new Set<string>()
+  const candidates: unknown[] = [student.access_code, currentCode]
+  if (student.email) {
+    const { data: bought } = await admin
+      .from("academy_access_codes")
+      .select("code")
+      .ilike("email", String(student.email))
+      .or("revoked.is.null,revoked.eq.false")
+    for (const r of bought ?? []) candidates.push(r.code)
+  }
+  let first = null
+  for (const c of candidates) {
+    const key = String(c ?? "").trim().toUpperCase()
+    if (!key || tried.has(key)) continue
+    tried.add(key)
+    const m = await resolvePack(admin, packs, c)
+    if (!m) continue
+    if (!first) first = m
+    if (!m.expired && want(m.pack)) return m
+  }
+  return first
+}
+
 // The portfolio page is a paid extra, not part of the course, so entitlement
 // is the pack's own flag rather than "has an access code".
 async function portfolioEntitlement(admin: AdminClient, studentId: string) {
   const { data, error } = await admin
     .from("academy_students")
-    .select("id, name, access_code")
+    .select("id, name, email, access_code")
     .eq("id", studentId)
     .limit(1)
   if (error) throw error
@@ -395,7 +449,7 @@ async function portfolioEntitlement(admin: AdminClient, studentId: string) {
   if (!student) return { ok: false as const, reason: "No such student." }
 
   const content = await loadContent(admin)
-  const pack = await resolvePack(admin, content.packs, student.access_code)
+  const pack = await bestPackFor(admin, content.packs, student, (p) => p.portfolio === true)
   if (!pack || pack.expired || pack.pack.portfolio !== true) {
     return { ok: false as const, reason: "A portfolio page is part of Certification + Priority." }
   }
@@ -633,6 +687,120 @@ Deno.serve(async (req) => {
       )
     }
 
+    // sendLink {email} -> {ok}
+    //
+    // "Email me my link": the way back in for anyone on a new phone, in an
+    // in-app browser, or who never saw a code. Always answers the same way,
+    // so the box cannot be used to find out who is signed up. Sends the
+    // student's own signed link (or, for a lead who never opened the course,
+    // their lead link). At most 3 an hour to any one address.
+    if (type === "sendLink") {
+      const email = String(body.email ?? "").trim().toLowerCase().slice(0, 200)
+      const done = json(200, { ok: true }, origin)
+      if (!EMAIL_RE.test(email)) return json(400, { error: "That email does not look right." }, origin)
+
+      const { data: recent } = await admin
+        .from("academy_link_requests")
+        .select("id")
+        .ilike("email", email)
+        .gte("at", new Date(Date.now() - 3600000).toISOString())
+      if ((recent ?? []).length >= 3) return done
+
+      let link = ""
+      let firstName = ""
+      const { data: students } = await admin
+        .from("academy_students")
+        .select("id, name, email, access_code, created_at")
+        .ilike("email", email)
+        .order("created_at", { ascending: true })
+      if (students?.length) {
+        // The record with the most lessons done is the one to send them back to.
+        let best = students[0]
+        let bestCount = -1
+        for (const st of students) {
+          const { count } = await admin.from("academy_progress").select("lesson_num", { count: "exact", head: true }).eq("student_id", st.id)
+          if ((count ?? 0) > bestCount) { best = st; bestCount = count ?? 0 }
+        }
+        const content = await loadContent(admin)
+        const pack = await bestPackFor(admin, content.packs, best, () => true)
+        const code = pack && !pack.expired ? pack.code : String(best.access_code ?? "")
+        const course = FREE_COURSE_FOR[code.toUpperCase()]
+        link = `${ACADEMY_URL}?k=${encodeURIComponent(code)}${course ? `&c=${course}` : ""}&src=relink&u=${best.id}&t=${await studentSig(best.id)}`
+        firstName = String(best.name ?? "").trim().split(/\s+/)[0]
+      } else {
+        const { data: leads } = await admin
+          .from("meta_leads")
+          .select("leadgen_id, name, audience")
+          .ilike("email", email)
+          .not("audience", "is", null)
+          .neq("audience", "brand")
+          .limit(1)
+        const lead = leads?.[0]
+        if (lead) {
+          const us = lead.audience === "creator-us"
+          const code = us ? "GOLDENQUARTERUS" : "GOLDENQUARTER"
+          link = `${ACADEMY_URL}?k=${code}&c=${FREE_COURSE_FOR[code]}&src=relink&l=${encodeURIComponent(lead.leadgen_id)}&s=${await hmacHex(String(lead.leadgen_id))}`
+          firstName = String(lead.name ?? "").trim().split(/\s+/)[0]
+        }
+      }
+
+      const apiKey = Deno.env.get("RESEND_API_KEY")
+      const sent = !!(link && apiKey)
+      await admin.from("academy_link_requests").insert({ email, sent })
+      if (sent) {
+        const text = [
+          `Hi ${firstName || "there"},`,
+          "Here's your link back into the course. It takes you straight to where you left off:",
+          link,
+          "It's set up to remember you on that device. If you ever need it again, go to academy.clickclick.video and choose \"Email me my link\".",
+          "Kathryn\nClickClick",
+        ].join("\n\n")
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "Kathryn at ClickClick <hello@clickclick.video>",
+            to: [email],
+            reply_to: "hello@clickclick.video",
+            subject: "Your link back into the course",
+            text,
+          }),
+        }).catch((e) => console.error("link email failed:", e))
+      }
+      return done
+    }
+
+    // resumeStudent {u, t} -> {studentId, name, academyId}
+    // The other half of a student link: a valid signature puts them back in
+    // as themselves, on any device.
+    if (type === "resumeStudent") {
+      const u = String(body.u ?? "")
+      const t = String(body.t ?? "")
+      if (!/^[0-9a-f-]{36}$/i.test(u) || !(await sigMatches(`student:${u}`, t))) {
+        return json(403, { error: "That link has expired." }, origin)
+      }
+      const { data } = await admin.from("academy_students").select("id, name").eq("id", u).limit(1)
+      const st = data?.[0]
+      if (!st) return json(404, { error: "That link has expired." }, origin)
+      return json(200, { studentId: st.id, name: st.name, academyId: academyId(st.id) }, origin)
+    }
+
+    // track {event, source?, hasCode?, hasLead?, hasStudent?, visitor?} -> {ok}
+    // Anonymous steps before someone is a student, so drop-off can be seen.
+    if (type === "track") {
+      const event = String(body.event ?? "").replace(/[^a-z_]/g, "").slice(0, 30)
+      if (!["land", "gate_shown", "form_shown", "link_requested"].includes(event)) return json(200, { ok: true }, origin)
+      await admin.from("academy_events").insert({
+        event,
+        source: String(body.source ?? "").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || null,
+        has_code: body.hasCode === true,
+        has_lead: body.hasLead === true,
+        has_student: body.hasStudent === true,
+        visitor: String(body.visitor ?? "").replace(/[^a-z0-9]/gi, "").slice(0, 24) || null,
+      })
+      return json(200, { ok: true }, origin)
+    }
+
     if (type === "list") {
       const studentId = String(body.studentId ?? "")
       const courseId = String(body.courseId ?? "")
@@ -720,6 +888,15 @@ Deno.serve(async (req) => {
 
       const allowedIds = new Set(match.pack.courseIds ?? [])
       const allowed = (courses as Array<{ id?: string }>).filter((c) => allowedIds.has(String(c.id)))
+
+      // A bought code (one with a buyer row) opened by someone who already
+      // has a student record replaces the code on that record, so a free
+      // student who pays gets the paid certificate and portfolio. Free codes
+      // never overwrite: a buyer revisiting the free link keeps what they paid for.
+      const upgradeFor = String(body.studentId ?? "")
+      if (match.buyer && /^[0-9a-f-]{36}$/i.test(upgradeFor)) {
+        await admin.from("academy_students").update({ access_code: match.code }).eq("id", upgradeFor)
+      }
 
       return json(
         200,
@@ -907,7 +1084,7 @@ Deno.serve(async (req) => {
 
       const { data: certStudent } = await admin
         .from("academy_students")
-        .select("region, access_code")
+        .select("region, access_code, email")
         .eq("id", studentId)
         .limit(1)
       const studentRecord = certStudent?.[0]
@@ -915,7 +1092,11 @@ Deno.serve(async (req) => {
 
       // An expired student keeps a certificate already issued, because it is a
       // credential a brand may have checked. They just cannot claim a new one.
-      const pack = await resolvePack(admin, content.packs, studentRecord.access_code)
+      const pack = await bestPackFor(
+        admin, content.packs, studentRecord,
+        (p) => (p.courseIds ?? []).includes(courseId),
+        body.accessCode,
+      )
       if (!pack || pack.expired || !(pack.pack.courseIds ?? []).includes(courseId)) {
         return json(403, { error: "That course is not on your access code." }, origin)
       }
@@ -1096,8 +1277,39 @@ Deno.serve(async (req) => {
         .from("academy_certificates")
         .update({ approved: true })
         .in("credential_id", credentialIds)
-        .select("credential_id")
+        .select("credential_id, student_id")
       if (uErr) throw uErr
+
+      // Tell each of them it is ready, with their own link back in: the page
+      // promised "we will email you", and until 22 Sep 2026 nothing did.
+      const apiKey = Deno.env.get("RESEND_API_KEY")
+      if (apiKey) {
+        for (const row of updated ?? []) {
+          const { data: st } = await admin.from("academy_students").select("id, name, email, access_code").eq("id", row.student_id).limit(1)
+          const person = st?.[0]
+          if (!person?.email) continue
+          const code = String(person.access_code ?? "")
+          const course = FREE_COURSE_FOR[code.toUpperCase()]
+          const link = `${ACADEMY_URL}?k=${encodeURIComponent(code)}${course ? `&c=${course}` : ""}&src=certificate&u=${person.id}&t=${await studentSig(person.id)}`
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "Kathryn at ClickClick <hello@clickclick.video>",
+              to: [person.email],
+              reply_to: "hello@clickclick.video",
+              subject: "Your certificate is ready",
+              text: [
+                `Hi ${String(person.name ?? "").trim().split(/\s+/)[0] || "there"},`,
+                `Your certificate is ready. Credential ID: ${row.credential_id}.`,
+                "This link opens the course with your certificate at the bottom of it:",
+                link,
+                "Kathryn\nClickClick",
+              ].join("\n\n"),
+            }),
+          }).catch((e) => console.error("approval email failed:", e))
+        }
+      }
       return json(200, { approved: (updated ?? []).length }, origin)
     }
 

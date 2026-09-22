@@ -14,7 +14,7 @@
        site has no build step to fingerprint filenames, and browsers were
        caching stale CSS/JS across deploys (confirmed live: a visitor's
        browser mixed new HTML with cached old CSS and rendered broken). -->
-  <link rel="stylesheet" href="styles.css?v=50" />
+  <link rel="stylesheet" href="styles.css?v=51" />
   <!-- Heatmaps, scroll maps and session recordings (Microsoft Clarity), so we
        can see where in a lesson people stop rather than only that they did.
        Same consent banner as clickclick.video: nothing loads until a visitor
@@ -34,15 +34,24 @@
   <div id="gate" class="gate" hidden>
     <div class="gate-card">
       <img class="brand-logo-stacked" src="brand/clickclick-logo-stacked-black.png" alt="ClickClick" />
-      <h3>Your course pack</h3>
-      <p class="lead">Enter the access code ClickClick gave you. It opens only your courses, nothing else.</p>
-      <form id="gate-form" class="gate-form">
-        <label class="sr-only" for="access-code">Access code</label>
-        <input id="access-code" name="access-code" class="gate-input" type="text" placeholder="Access code" autocomplete="off" spellcheck="false" required />
-        <p id="gate-error" class="error" hidden>That code did not work. Try again or ask ClickClick.</p>
-        <button class="btn primary" type="submit">Enter Academy</button>
+      <h3>Welcome back</h3>
+      <p class="lead">Pick up where you left off. Your progress is saved to your email.</p>
+      <!-- The main way back in (22 Sep 2026): most people never saw a code. -->
+      <form id="link-form" class="gate-form">
+        <label class="gate-label" for="link-email">Lost your link?</label>
+        <input id="link-email" name="link-email" class="gate-input" type="email" placeholder="The email you signed up with" autocomplete="email" required />
+        <button class="btn primary" type="submit" id="link-btn">Email me my link</button>
+        <p class="gate-small" id="link-note">We'll send a link that takes you straight back in, with your progress. Check Spam or Promotions if you can't see it.</p>
+        <p class="gate-small gate-ok" id="link-done" hidden>Done. If that email is signed up, your link is on its way from hello@clickclick.video.</p>
       </form>
-      <p class="hint">Need a code? Email <a href="mailto:hello@clickclick.video">hello@clickclick.video</a></p>
+      <div class="gate-or"><span>or</span></div>
+      <form id="gate-form" class="gate-form">
+        <label class="gate-label" for="access-code">Have an access code?</label>
+        <input id="access-code" name="access-code" class="gate-input" type="text" placeholder="Access code" autocomplete="off" spellcheck="false" required />
+        <p id="gate-error" class="error" hidden>That code didn't work. Check for spaces, or use "Email me my link" above.</p>
+        <button class="btn" type="submit">Open my course</button>
+      </form>
+      <p class="hint">Still stuck? Email <a href="mailto:hello@clickclick.video">hello@clickclick.video</a> and we'll send your link by hand.</p>
     </div>
   </div>
 
@@ -147,7 +156,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=53"></script>
+  <script src="app.js?v=54"></script>
   <script src="cookies.js?v=2"></script>
   <script src="analytics.js?v=1"></script>
   <script src="pixel.js?v=1"></script>
