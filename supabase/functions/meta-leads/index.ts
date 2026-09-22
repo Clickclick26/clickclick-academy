@@ -763,6 +763,60 @@ ${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
   return { subject, html, text }
 }
 
+// The last call on the founding price (sent 28-29 Sep 2026). Everyone who
+// has not bought gets it, whether they finished the free course or not, so
+// it points both ways: the paid course, and their saved place in the free one.
+function foundingEndsSep26(us: boolean, firstName: string, unsub: string, link: string): Broadcast {
+  const promo = us ? "FOUNDING60" : "FOUNDING50"
+  const off = us ? "$60" : "£50"
+  const price = us ? "$139 instead of $199" : "£99 instead of £149"
+  const ends = us ? "this Wednesday, September 30, at 11:59pm Eastern" : "this Wednesday, 30 September, at 11:59pm"
+  const contract = us ? "US" : "UK"
+  const course = "https://www.clickclick.video/creators/#price"
+  const subject = `${off} off ends Wednesday`
+  const why = "You're getting this because you asked for The Golden Quarter."
+  const paras = [
+    `Quick one. The founding price on the full UGC course ends ${ends}.`,
+    `Use code ${promo} at checkout and it's ${price}.`,
+    `You get 32 lessons, the ${contract} client contract you can send to brands, and a certificate brands can check.`,
+  ]
+  const after = "Still on the free course? That stays free, and your place is saved."
+  const text = [`Hi ${firstName},`, ...paras, `See the full course: ${course}`, `${after} ${link}`, "Kathryn\nClickClick", `${why} Unsubscribe: ${unsub}\n${ADDRESS}`].join("\n\n")
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
+<p><a href="${course}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">See the full course</a></p>
+<p>${escapeHtml(after)} <a href="${link}" style="color:#141414;font-weight:600">Continue the free course &rarr;</a></p>
+<p>Kathryn<br>ClickClick</p>
+<p style="color:#5c5c5c;font-size:13px;margin-top:28px">${escapeHtml(why)} <a href="${unsub}" style="color:#5c5c5c">Unsubscribe</a><br>${escapeHtml(ADDRESS)}</p>
+</div>`
+  return { subject, html, text }
+}
+
+// For leads who still have not opened the course (sent 2 Oct 2026). Asks
+// for one word back, so we learn what is stopping people. Replies land in
+// hello@clickclick.video.
+function whatStoppedOct26(_us: boolean, firstName: string, unsub: string, link: string): Broadcast {
+  const subject = "Can I ask you something?"
+  const why = "You're getting this because you asked for The Golden Quarter."
+  const paras = [
+    "You asked for The Golden Quarter, my free UGC course, but it's still unopened.",
+    "Can I ask what got in the way? Just hit reply. One word is plenty: busy, forgot, not for me, or something else.",
+    "I read every reply. It helps me make the course better for the next person.",
+  ]
+  const after = "If you still want it, it's here, no code needed:"
+  const text = [`Hi ${firstName},`, ...paras, `${after} ${link}`, "Kathryn\nClickClick", `${why} Unsubscribe: ${unsub}\n${ADDRESS}`].join("\n\n")
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
+<p>${escapeHtml(after)}</p>
+<p><a href="${link}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Open lesson one</a></p>
+<p>Kathryn<br>ClickClick</p>
+<p style="color:#5c5c5c;font-size:13px;margin-top:28px">${escapeHtml(why)} <a href="${unsub}" style="color:#5c5c5c">Unsubscribe</a><br>${escapeHtml(ADDRESS)}</p>
+</div>`
+  return { subject, html, text }
+}
+
 // Sends resumeEmail once to each lead who opened the course, has not
 // finished it, and has done nothing for a day. Runs with every cron run;
 // meta_lead_broadcasts (campaign "resume") is the once-only claim. Only
@@ -829,11 +883,13 @@ const CAMPAIGNS: Record<string, BroadcastBuilder> = {
   "founding-sep26": foundingSep26,
   "one-click-sep26": oneClickSep26,
   "buried-sep26": buriedSep26,
+  "founding-ends-sep26": foundingEndsSep26,
+  "what-stopped-oct26": whatStoppedOct26,
   // Sent automatically by sendResumes; listed here so it can be test-sent.
   "resume": resumeEmail,
 }
 // Campaigns only for people who never opened the course.
-const NOT_STARTED_ONLY = new Set(["buried-sep26"])
+const NOT_STARTED_ONLY = new Set(["buried-sep26", "what-stopped-oct26"])
 
 // One campaign-style email from Kathryn, with the one-click unsubscribe
 // headers every marketing email here carries.
