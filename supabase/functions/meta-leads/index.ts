@@ -1101,6 +1101,17 @@ Deno.serve(async (req) => {
     }
   }
 
+  // cancelScheduled {key, id} -> {ok}: calls off a sendOne booked with sendAt.
+  if (body.type === "cancelScheduled") {
+    const id = String(body.id ?? "")
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return json(400, { error: "Bad id." }, origin)
+    const res = await fetch(`https://api.resend.com/emails/${id}/cancel`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}` },
+    })
+    return json(res.ok ? 200 : 502, { ok: res.ok, detail: res.ok ? undefined : await res.text() }, origin)
+  }
+
   if (body.type === "sendOne") {
     const to = String(body.to ?? "").trim().toLowerCase()
     const subject = String(body.subject ?? "").trim().slice(0, 200)
