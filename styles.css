@@ -2839,3 +2839,171 @@ input {
   height: 1px;
   background: rgba(0, 0, 0, 0.1);
 }
+
+/* ---- lesson widgets -----------------------------------------------------
+   The pieces you poke at while reading a lesson. They sit inside the lesson
+   card, so they stay quieter than the activity above them: no badge, no
+   Reset, softer surface. Added 23 Sep 2026. */
+.lwidget {
+  margin: 20px 0;
+  padding: 20px 22px;
+  background: var(--surface-soft);
+  border: 1px solid var(--cream-deep);
+  border-radius: var(--radius);
+}
+.lwidget-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.lwidget-hint,
+.lwidget-note {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: var(--mid);
+}
+.lwidget-note { margin: 12px 0 0; }
+.lw-label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--mid);
+  margin-bottom: 6px;
+}
+
+/* the brief */
+.lw-brief {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--cream-deep);
+  border-radius: 14px;
+  padding: 6px 16px;
+}
+.lw-brief-row {
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--cream-deep);
+  font-size: 0.94rem;
+}
+.lw-brief-row:last-child { border-bottom: 0; }
+.lw-brief dt {
+  width: 124px;
+  flex: none;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mid);
+  padding-top: 3px;
+}
+.lw-brief dd { margin: 0; }
+.lw-brief mark {
+  background: #fff0b8;
+  color: inherit;
+  border-radius: 5px;
+  padding: 0 5px;
+  font-weight: 600;
+}
+
+/* usage dial */
+.lw-dialwrap {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.lw-dial {
+  --deg: 30deg;
+  width: 128px;
+  height: 128px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--turquoise-deep) 0deg var(--deg), var(--cream-deep) var(--deg) 360deg);
+}
+.lw-dial span {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.25;
+  padding: 0 6px;
+}
+.lw-dialside { flex: 1; min-width: 200px; }
+.lw-dialside input[type='range'] { width: 100%; accent-color: var(--turquoise-deep); }
+.lw-fee {
+  margin: 8px 0 0;
+  font-size: 1.9rem;
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.lw-fee small {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 400;
+  color: var(--mid);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+/* spot the costly clause */
+.lw-trap { display: grid; gap: 9px; }
+.lw-clause {
+  text-align: left;
+  font: inherit;
+  font-size: 0.94rem;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--cream-deep);
+  border-radius: 13px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.lw-clause:hover { border-color: var(--turquoise); }
+.lw-clause[aria-pressed='true'][data-costly='1'] {
+  border-color: var(--green);
+  background: rgba(34, 197, 94, 0.1);
+}
+.lw-clause[aria-pressed='true'][data-costly='0'] {
+  border-color: var(--pink);
+  background: rgba(232, 62, 140, 0.08);
+}
+.lw-verdict {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  color: var(--mid);
+  min-height: 1.5em;
+}
+
+/* pitch builder */
+.lwidget--pitch select {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--cream-deep);
+  border-radius: 12px;
+  padding: 11px 13px;
+}
+.lw-pitch {
+  margin: 13px 0 0;
+  background: var(--surface);
+  border: 1px solid var(--cream-deep);
+  border-radius: 13px;
+  padding: 15px;
+  font-size: 0.94rem;
+  white-space: pre-wrap;
+}
+.lw-copy { margin-top: 11px; }
+
+@media (max-width: 560px) {
+  .lwidget { padding: 16px; }
+  .lw-brief dt { width: 100px; }
+}

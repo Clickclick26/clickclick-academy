@@ -1302,6 +1302,116 @@
     );
   }
 
+  // Lesson widgets: the things you poke at while reading, as opposed to the
+  // one `activity` that gates the lesson. Kathryn, 23 Sep 2026: the course
+  // "looks a little boring". These sit in the body, keep no score, and never
+  // block the Mark done button, so a reader can ignore them entirely.
+  //
+  // Deliberately separate from `activity`: that one has saved state, a Reset
+  // and a gate, and threading three more of them through that machinery to
+  // get three toys would have tangled the part that decides whether someone
+  // finished a lesson.
+  function lessonWidgetsHtml(lessonNum, widgets) {
+    if (!Array.isArray(widgets) || !widgets.length) return '';
+    var out = '';
+    for (var i = 0; i < widgets.length; i++) {
+      var w = widgets[i] || {};
+      var inner = '';
+      if (w.kind === 'brief') inner = widgetBriefHtml(w);
+      else if (w.kind === 'usage-dial') inner = widgetUsageDialHtml(lessonNum, i, w);
+      else if (w.kind === 'trap') inner = widgetTrapHtml(lessonNum, i, w);
+      else if (w.kind === 'pitch') inner = widgetPitchHtml(lessonNum, i, w);
+      if (!inner) continue;
+      out +=
+        '<section class="lwidget lwidget--' + esc(w.kind) + '" data-widget="' + esc(w.kind) +
+        '" data-lesson="' + esc(lessonNum) + '" data-index="' + i + '">' +
+        (w.title ? '<h5 class="lwidget-title">' + esc(w.title) + '</h5>' : '') +
+        (w.hint ? '<p class="lwidget-hint">' + esc(w.hint) + '</p>' : '') +
+        inner +
+        '</section>';
+    }
+    return out;
+  }
+
+  // A real brief on screen, with the lines that decide what it is worth
+  // marked. Reading one beats being told what one looks like.
+  function widgetBriefHtml(w) {
+    var rows = Array.isArray(w.rows) ? w.rows : [];
+    var out = '<dl class="lw-brief">';
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i] || {};
+      out +=
+        '<div class="lw-brief-row">' +
+        '<dt>' + esc(r.label || '') + '</dt>' +
+        '<dd>' + (r.flag ? '<mark>' + esc(r.value || '') + '</mark>' : esc(r.value || '')) + '</dd>' +
+        '</div>';
+    }
+    return out + '</dl>' + (w.note ? '<p class="lwidget-note">' + esc(w.note) + '</p>' : '');
+  }
+
+  // Usage rights as a dial: same filming, longer licence, bigger number.
+  function widgetUsageDialHtml(lessonNum, idx, w) {
+    var tiers = Array.isArray(w.tiers) ? w.tiers : [];
+    if (!tiers.length) return '';
+    var first = tiers[0] || {};
+    var id = 'lw-usage-' + esc(lessonNum).replace(/[^0-9a-z]/gi, '') + '-' + idx;
+    return (
+      '<div class="lw-dialwrap">' +
+      '<div class="lw-dial" data-role="dial" style="--deg:' + Number(first.degrees || 30) + 'deg">' +
+      '<span data-role="dial-label">' + esc(first.label || '') + '</span>' +
+      '</div>' +
+      '<div class="lw-dialside">' +
+      '<label class="lw-label" for="' + id + '">' + esc(w.sliderLabel || 'How long can they use it?') + '</label>' +
+      '<input type="range" id="' + id + '" data-role="usage-range" min="0" max="' + (tiers.length - 1) +
+      '" step="1" value="0" />' +
+      '<p class="lw-fee" data-role="fee">' + esc(first.fee || '') +
+      '<small data-role="fee-note">' + esc(first.note || '') + '</small></p>' +
+      '</div>' +
+      '<script type="application/json" data-role="tiers">' +
+      JSON.stringify(tiers).replace(/</g, '\\u003c') +
+      '<\/script>' +
+      '</div>'
+    );
+  }
+
+  // Four clauses, one of them expensive. Tapping explains why, which is the
+  // whole lesson in one move.
+  function widgetTrapHtml(lessonNum, idx, w) {
+    var clauses = Array.isArray(w.clauses) ? w.clauses : [];
+    if (!clauses.length) return '';
+    var out = '<div class="lw-trap">';
+    for (var i = 0; i < clauses.length; i++) {
+      var c = clauses[i] || {};
+      out +=
+        '<button type="button" class="lw-clause" data-role="clause" aria-pressed="false" data-costly="' +
+        (c.costly ? '1' : '0') + '" data-why="' + esc(c.why || '') + '">' +
+        esc(c.text || '') + '</button>';
+    }
+    return out + '</div><p class="lw-verdict" data-role="verdict" role="status"></p>';
+  }
+
+  // The pitch they can actually send, in their own niche. The point is that
+  // nobody has to write the first line from nothing.
+  function widgetPitchHtml(lessonNum, idx, w) {
+    var options = Array.isArray(w.options) ? w.options : [];
+    if (!options.length) return '';
+    var id = 'lw-pitch-' + esc(lessonNum).replace(/[^0-9a-z]/gi, '') + '-' + idx;
+    var out =
+      '<label class="lw-label" for="' + id + '">' + esc(w.selectLabel || 'What do you make?') + '</label>' +
+      '<select id="' + id + '" data-role="pitch-select">';
+    for (var i = 0; i < options.length; i++) {
+      out += '<option value="' + i + '">' + esc(options[i].label || '') + '</option>';
+    }
+    out +=
+      '</select>' +
+      '<p class="lw-pitch" data-role="pitch-text">' + esc(options[0].text || '') + '</p>' +
+      '<button type="button" class="btn ghost lw-copy" data-role="pitch-copy">Copy this</button>' +
+      '<script type="application/json" data-role="pitches">' +
+      JSON.stringify(options.map(function (o) { return o.text || ''; })).replace(/</g, '\\u003c') +
+      '<\/script>';
+    return out;
+  }
+
   function lessonFigureHtml(figure) {
     if (!figure) return '';
     if (!figure.src) return lessonMediaPlaceholderHtml('image', figure.caption);
@@ -1635,6 +1745,7 @@
       (lesson.overview ? '<p class="lesson-overview">' + esc(lesson.overview) + '</p>' : '') +
       lessonBodyHtml(lesson.body) +
       lessonFigureHtml(lesson.figure) +
+      lessonWidgetsHtml(lesson.num, lesson.widgets) +
       dmMockupHtml(lesson.dmMockup) +
       '<div class="lesson-field lesson-field--interactive">' +
       '<span class="lesson-field-label">Interactive</span>' +
@@ -3440,7 +3551,65 @@
     if (hint) hint.hidden = ok;
   }
 
+  // ---- lesson widgets ----------------------------------------------------
+  // All three are read-only toys: nothing is saved, nothing is scored, and
+  // nothing here can change whether a lesson counts as done.
+
+  function widgetData(wrap, role) {
+    var tag = wrap.querySelector('script[data-role="' + role + '"]');
+    if (!tag) return null;
+    try {
+      return JSON.parse(tag.textContent || 'null');
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function drawUsageDial(wrap) {
+    var tiers = widgetData(wrap, 'tiers');
+    var range = wrap.querySelector('[data-role="usage-range"]');
+    if (!tiers || !range) return;
+    var tier = tiers[Number(range.value)] || tiers[0] || {};
+    var dial = wrap.querySelector('[data-role="dial"]');
+    var label = wrap.querySelector('[data-role="dial-label"]');
+    var fee = wrap.querySelector('[data-role="fee"]');
+    var note = wrap.querySelector('[data-role="fee-note"]');
+    if (dial) dial.style.setProperty('--deg', (Number(tier.degrees) || 0) + 'deg');
+    if (label) label.textContent = tier.label || '';
+    if (fee) fee.childNodes[0].nodeValue = tier.fee || '';
+    if (note) note.textContent = tier.note || '';
+  }
+
   document.addEventListener('click', function (e) {
+    var clause = e.target.closest ? e.target.closest('[data-role="clause"]') : null;
+    if (clause) {
+      var trapWrap = clause.closest('.lwidget');
+      trapWrap.querySelectorAll('[data-role="clause"]').forEach(function (b) {
+        b.setAttribute('aria-pressed', 'false');
+      });
+      clause.setAttribute('aria-pressed', 'true');
+      var verdict = trapWrap.querySelector('[data-role="verdict"]');
+      if (verdict) verdict.textContent = clause.getAttribute('data-why') || '';
+    }
+
+    var copyBtn = e.target.closest ? e.target.closest('[data-role="pitch-copy"]') : null;
+    if (copyBtn) {
+      var pitchWrap = copyBtn.closest('.lwidget');
+      var textEl = pitchWrap.querySelector('[data-role="pitch-text"]');
+      var text = textEl ? textEl.textContent : '';
+      var done = function (msg) {
+        copyBtn.textContent = msg;
+        setTimeout(function () { copyBtn.textContent = 'Copy this'; }, 1800);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done('Copied'); }, function () {
+          done('Select the text and copy');
+        });
+      } else {
+        done('Select the text and copy');
+      }
+    }
+
     var cardForRefresh = e.target.closest ? e.target.closest('.lesson-card') : null;
     if (cardForRefresh) {
       setTimeout(function () {
@@ -3767,6 +3936,9 @@
   });
 
   document.addEventListener('input', function (e) {
+    var usageRange = e.target.closest ? e.target.closest('[data-role="usage-range"]') : null;
+    if (usageRange) drawUsageDial(usageRange.closest('.lwidget'));
+
     var allocInput = e.target.closest('.activity-allocator-input');
     if (allocInput) {
       var wrap = allocInput.closest('.activity-allocator');
@@ -3831,6 +4003,14 @@
   });
 
   document.addEventListener('change', function (e) {
+    var pitchSelect = e.target.closest ? e.target.closest('[data-role="pitch-select"]') : null;
+    if (pitchSelect) {
+      var pWrap = pitchSelect.closest('.lwidget');
+      var texts = widgetData(pWrap, 'pitches') || [];
+      var target = pWrap.querySelector('[data-role="pitch-text"]');
+      if (target) target.textContent = texts[Number(pitchSelect.value)] || '';
+    }
+
     var matchSelect = e.target.closest('.activity-match-select');
     if (matchSelect) {
       var mWrap = matchSelect.closest('.activity');
