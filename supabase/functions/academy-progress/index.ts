@@ -801,6 +801,95 @@ Deno.serve(async (req) => {
       return json(200, { ok: true }, origin)
     }
 
+    // finalCheckNudges {key} -> {sent}
+    //
+    // A certificate needs every lesson ticked AND the final check passed.
+    // People who stop after the last lesson are never told that, so they sit
+    // one click away from the thing they came for. This finds them and says
+    // so. Once each, recorded in academy_events, and only for the free
+    // courses, where the last lesson is where everyone stops.
+    if (type === "finalCheckNudges") {
+      const cronKey = Deno.env.get("CRON_KEY")
+      if (!cronKey || !timingSafeEqual(String(body.key ?? ""), cronKey)) {
+        return json(401, { error: "Not allowed." }, origin)
+      }
+      const apiKey = Deno.env.get("RESEND_API_KEY")
+      if (!apiKey) return json(503, { error: "No mail key." }, origin)
+      const content = await loadContent(admin)
+      const max = Math.max(0, Math.min(50, Math.floor(Number(body.max ?? 25))))
+      const dry = body.dryRun === true
+
+      const { data: students } = await admin
+        .from("academy_students")
+        .select("id, name, email, access_code")
+        .in("access_code", Object.keys(FREE_COURSE_FOR))
+      const out: Array<Record<string, unknown>> = []
+      const seen = new Set<string>()
+
+      for (const st of (students ?? []) as Array<Record<string, string>>) {
+        if (out.length >= max) break
+        const courseId = FREE_COURSE_FOR[String(st.access_code).toUpperCase()]
+        const course = (content.courses as Array<Record<string, unknown>>).find((c) => String(c.id) === courseId)
+        if (!course) continue
+
+        const lessonNums: string[] = []
+        for (const m of (course.modules as Array<{ lessons?: Array<{ num?: string }> }>) ?? []) {
+          for (const l of m.lessons ?? []) if (l.num) lessonNums.push(String(l.num))
+        }
+        const { data: doneRows } = await admin
+          .from("academy_progress").select("lesson_num").eq("student_id", st.id).eq("course_id", courseId)
+        const done = new Set((doneRows ?? []).map((r: { lesson_num: string }) => String(r.lesson_num)))
+        if (lessonNums.some((n) => !done.has(n))) continue
+
+        const { data: assessed } = await admin
+          .from("academy_assessments").select("passed").eq("student_id", st.id).eq("course_id", courseId).limit(1)
+        if (assessed?.[0]?.passed === true) continue
+
+        // Certificates issued before the final check existed still count.
+        const { data: hasCert } = await admin
+          .from("academy_certificates").select("credential_id").eq("student_id", st.id).limit(1)
+        if (hasCert?.length) continue
+
+        // One person, one email: a few people signed up twice with two
+        // addresses, and two identical emails in a morning reads as a glitch.
+        const who = String(st.name ?? "").trim().toLowerCase()
+        if (who && seen.has(who)) continue
+        if (who) seen.add(who)
+
+        const { data: already } = await admin
+          .from("academy_events").select("id").eq("event", "final_check_nudge").eq("visitor", st.id.slice(0, 24)).limit(1)
+        if (already?.length) continue
+
+        out.push({ name: st.name, email: st.email })
+        if (dry) continue
+
+        const link = `${ACADEMY_URL}?k=${encodeURIComponent(st.access_code)}&c=${courseId}&src=finalcheck&u=${st.id}&t=${await studentSig(st.id)}`
+        const first = String(st.name ?? "").trim().split(/\s+/)[0] || "there"
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "Kathryn at ClickClick <hello@clickclick.video>",
+            to: [st.email],
+            reply_to: "hello@clickclick.video",
+            subject: "One thing left for your certificate",
+            text: `Hi ${first},\n\nYou have done every lesson of The Golden Quarter. There is one thing left: the final check, eight questions, about five minutes.\n\nPass it and your certificate is issued straight away, with its own credential ID a brand can check.\n\nTake the final check: ${link}\n\nKathryn\nClickClick`,
+            html: `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${first.replace(/[<>&]/g, "")},</p>
+<p>You have done every lesson of The Golden Quarter. There is one thing left: the final check, eight questions, about five minutes.</p>
+<p>Pass it and your certificate is issued straight away, with its own credential ID a brand can check.</p>
+<p><a href="${link}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Take the final check</a></p>
+<p>Kathryn<br>ClickClick</p>
+</div>`,
+          }),
+        })
+        if (res.ok) {
+          await admin.from("academy_events").insert({ event: "final_check_nudge", source: "cron", has_student: true, visitor: st.id.slice(0, 24) })
+        }
+      }
+      return json(200, { sent: out.length, people: out, dryRun: dry }, origin)
+    }
+
     if (type === "list") {
       const studentId = String(body.studentId ?? "")
       const courseId = String(body.courseId ?? "")
