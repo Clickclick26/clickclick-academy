@@ -1758,6 +1758,7 @@
       '<span class="lesson-field-label">' + (selfPaced ? 'Worth trying' : 'Deliverable') + '</span>' +
       '<span class="lesson-field-body">' + esc(lesson.deliverable || '') + '</span>' +
       '</div>' +
+      (state === 'submitted' && !selfPaced ? lessonEndHtml(lesson) : '') +
       actionHtml +
       '</article>'
     );
@@ -1777,6 +1778,37 @@
       (up.heading ? '<p class="module-upgrade-head">' + esc(up.heading) + '</p>' : '') +
       (up.body ? '<p class="module-upgrade-body">' + esc(up.body) + '</p>' : '') +
       cta +
+      '</div>'
+    );
+  }
+
+  // What a lesson looks like once it is done. The old ending was the lesson
+  // simply stopping, which gave no sense of progress and never mentioned the
+  // final check, so people finished all five lessons and never got the
+  // certificate they came for (Larissa and David, 22 Sep 2026).
+  function lessonEndHtml(lesson) {
+    var nums = currentAllNums;
+    var idx = nums.indexOf(lesson.num);
+    if (idx < 0) return '';
+    var total = nums.length;
+    var doneCount = nums.filter(function (n) { return currentDoneByNum[n]; }).length;
+    var pips = '';
+    for (var i = 0; i < total; i++) {
+      pips += '<i class="' + (currentDoneByNum[nums[i]] ? 'on' : '') + '"></i>';
+    }
+    var nextNum = idx < total - 1 ? nums[idx + 1] : null;
+    var last = doneCount >= total;
+    var line = last
+      ? 'That is every lesson. One thing left: the final check, then your certificate.'
+      : nextNum
+        ? 'Next up: ' + (currentTitleByNum[nextNum] || 'the next lesson') + '.'
+        : '';
+    return (
+      '<div class="lesson-end' + (last ? ' lesson-end--last' : '') + '">' +
+      '<div class="lesson-end-pips">' + pips + '</div>' +
+      '<p class="lesson-end-head">' + (last ? 'Course finished' : 'Lesson done') + '</p>' +
+      '<p class="lesson-end-line">' + esc(line) + '</p>' +
+      '<p class="lesson-end-count">' + doneCount + ' of ' + total + ' lessons</p>' +
       '</div>'
     );
   }
@@ -1805,6 +1837,11 @@
   // submitted yet), or open (the first not-yet-submitted lesson, or lesson
   // 1 with nothing submitted at all).
   var currentAllNums = [];
+  // Filled when a course renders, so a lesson's end screen can say how far
+  // along someone is and name what comes next without walking the course
+  // again from inside the lesson.
+  var currentTitleByNum = {};
+  var currentDoneByNum = {};
   function lessonState(lesson, submittedByNum) {
     if (submittedByNum[lesson.num]) {
       lesson._submitted = submittedByNum[lesson.num];
@@ -2697,8 +2734,26 @@
     var selfPaced = !!course.selfPaced;
     var doneCount = Object.keys(submittedByNum).length;
     currentAllNums = flatLessonNums(course);
+    currentDoneByNum = submittedByNum || {};
+    currentTitleByNum = {};
+    modules.forEach(function (m) {
+      (Array.isArray(m.lessons) ? m.lessons : []).forEach(function (l) {
+        currentTitleByNum[l.num] = l.title || '';
+      });
+    });
     var complete = !selfPaced && lessonCount > 0 && doneCount >= lessonCount;
     return (
+      (selfPaced || !lessonCount
+        ? ''
+        : '<div class="sticky-progress" role="progressbar" aria-valuenow="' + doneCount +
+          '" aria-valuemin="0" aria-valuemax="' + lessonCount + '">' +
+          '<div class="sticky-progress-row">' +
+          '<span class="sticky-progress-label">' + esc(course.title || 'Your course') + '</span>' +
+          '<span class="sticky-progress-count">' + doneCount + ' of ' + lessonCount + ' done</span>' +
+          '</div>' +
+          '<div class="progress-track"><div class="progress-fill"></div></div>' +
+          '</div>'
+      ) +
       '<div class="detail-head' + (course.brand === 'clocal' ? ' detail-head--clocal' : '') + '">' +
       (course.brand === 'clocal' ? clocalMarkHtml() : '') +
       '<span class="course-tag">' +
@@ -2802,12 +2857,14 @@
   // Runs the width from 0 to its real percentage on a rAF tick after mount,
   // so the fill always animates in, including on a plain page load.
   function animateProgressBar(doneCount, lessonCount) {
-    var fill = detailBody.querySelector('.progress-fill');
-    if (!fill) return;
+    var fills = detailBody.querySelectorAll('.progress-fill');
+    if (!fills.length) return;
     var pct = lessonCount ? Math.round((doneCount / lessonCount) * 100) : 0;
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
-        fill.style.width = pct + '%';
+        fills.forEach(function (fill) {
+          fill.style.width = pct + '%';
+        });
       });
     });
   }

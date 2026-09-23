@@ -3007,3 +3007,74 @@ input {
   .lwidget { padding: 16px; }
   .lw-brief dt { width: 100px; }
 }
+
+/* ---- sticky progress + lesson end screen --------------------------------
+   Added 23 Sep 2026. The course already had a progress bar, but it scrolled
+   away with the header, so most of a lesson was read with no sense of how
+   far along you were. */
+.sticky-progress {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  margin: 0 0 18px;
+  padding: 12px 0 10px;
+  background: color-mix(in srgb, var(--page) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--cream-deep);
+}
+.sticky-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 0.84rem;
+  color: var(--mid);
+}
+.sticky-progress-label {
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sticky-progress-count { flex: none; font-variant-numeric: tabular-nums; }
+
+.lesson-end {
+  margin: 18px 0 4px;
+  padding: 20px 22px;
+  border-radius: var(--radius);
+  color: #fff;
+  background: radial-gradient(120% 90% at 28% 18%, #3cc4cc 0%, #0a98a4 46%, #0a6f78 100%);
+}
+.lesson-end--last {
+  background: radial-gradient(120% 90% at 28% 18%, #8f7ac4 0%, #7b5ea7 46%, #5d4482 100%);
+}
+.lesson-end-pips {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+.lesson-end-pips i {
+  width: 28px;
+  height: 7px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.34);
+}
+.lesson-end-pips i.on { background: #fff; }
+.lesson-end-head {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.lesson-end-line { margin: 0; opacity: 0.94; }
+.lesson-end-count {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 560px) {
+  .lesson-end { padding: 16px; }
+  .lesson-end-pips i { width: 20px; }
+}
