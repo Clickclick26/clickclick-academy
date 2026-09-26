@@ -1088,6 +1088,102 @@ async function sendStudentFollowUps(admin: AdminClient, dry = false) {
   return { students: sent, planned }
 }
 
+// The testimonial ask, which never existed.
+//
+// app.js has a one-tap route, ?film=<student id>, and a comment saying it comes
+// "from the ask email's link". No such email was ever built: grepping the
+// functions for "film=" found nothing. The only ask was a card on the finish
+// screen, third of four stacked at once, below the certificate, seen once each
+// by nine people mid-scroll. Zero testimonials is what that produces.
+//
+// Nothing is offered in return. A free edit or a discount in exchange for a
+// review is an incentivised review under the DMCC Act, and it would have to be
+// disclosed, which makes the testimonial worth less than not having it.
+//
+// The seven people who already hold certificates were asked twice by hand
+// before this existed, so they are not asked a third time by a machine. This
+// only goes to certificates issued from the day it went live.
+const TESTIMONIAL_ASK_FROM = "2026-09-26T00:00:00Z"
+
+function testimonialEmail(firstName: string, unsub: string, link: string): Broadcast {
+  const subject = "Would you say that on camera?"
+  const why = "You're getting this because you finished The Golden Quarter."
+  const paras = [
+    "You finished the course and your certificate is issued, so you are one of the first certified Q4 creators.",
+    "Would you record twenty to thirty seconds saying what it was like? Front camera, no script, no editing. What you thought before, and what you would tell another creator now.",
+    "The button opens a page that takes the video straight from your phone. Nothing to sign into.",
+  ]
+  const after = "Nothing in return, and no hard feelings if you would rather not. A written sentence is just as welcome if you would rather not be on camera."
+  const text = [`Hi ${firstName},`, ...paras, `Record it here: ${link}`, after, "Kathryn\nClickClick", `${why} Unsubscribe: ${unsub}\n${ADDRESS}`].join("\n\n")
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
+<p><a href="${link}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Record it here</a></p>
+<p>${escapeHtml(after)}</p>
+<p>Kathryn<br>ClickClick</p>
+<p style="color:#5c5c5c;font-size:13px;margin-top:28px">${escapeHtml(why)} <a href="${unsub}" style="color:#5c5c5c">Unsubscribe</a><br>${escapeHtml(ADDRESS)}</p>
+</div>`
+  return { subject, html, text }
+}
+
+async function sendTestimonialAsks(admin: AdminClient, dry = false) {
+  const apiKey = Deno.env.get("RESEND_API_KEY")
+  if (!apiKey && !dry) return { asks: 0, asksPlanned: [] as string[] }
+
+  // A day after the certificate, so it does not land in the same breath as it.
+  const { data, error } = await admin
+    .from("academy_certificates")
+    .select("student_id, issued_at, approved")
+    .gte("issued_at", TESTIMONIAL_ASK_FROM)
+    .lte("issued_at", new Date(Date.now() - 86400000).toISOString())
+  if (error) throw error
+
+  let sent = 0
+  const asksPlanned: string[] = []
+  for (const cert of (data ?? []) as Array<{ student_id: string; approved: boolean | null }>) {
+    if (sent >= 20) break
+    // A certificate held for a person to check is not issued yet.
+    if (cert.approved === false) continue
+
+    const { data: sends } = await admin.from("academy_sends")
+      .select("campaign").eq("student_id", cert.student_id).eq("campaign", "testimonial").limit(1)
+    if ((sends as unknown[] | null)?.length) continue
+
+    const { data: sts } = await admin.from("academy_students")
+      .select("id, name, email, unsubscribed_at").eq("id", cert.student_id).limit(1)
+    const st = (sts as Array<Record<string, unknown>> | null)?.[0]
+    if (!st || st.unsubscribed_at) continue
+    const email = String(st.email ?? "").trim()
+    if (!email) continue
+
+    // Already sent one in? Then there is nothing to ask for.
+    const { data: had } = await admin.from("academy_testimonials")
+      .select("id").eq("student_id", cert.student_id).limit(1)
+    if ((had as unknown[] | null)?.length) continue
+
+    if (dry) {
+      asksPlanned.push(email)
+      continue
+    }
+
+    const { error: claimErr } = await admin.from("academy_sends")
+      .insert({ student_id: cert.student_id, campaign: "testimonial" })
+    if (claimErr) continue
+
+    const firstName = String(st.name ?? "").trim().split(/\s+/)[0] || "there"
+    const links = await studentUnsubLinks(String(st.id))
+    const link = `${ACADEMY}?film=${st.id}`
+    const res = await sendCampaignEmail(apiKey as string, email, testimonialEmail(firstName, links.page, link), links.oneClick)
+    if (res.ok) {
+      sent++
+    } else {
+      console.error("testimonial ask failed:", res.status, await res.text())
+      await admin.from("academy_sends").delete().eq("student_id", cert.student_id).eq("campaign", "testimonial")
+    }
+  }
+  return { asks: sent, asksPlanned }
+}
+
 // link is the lead's own signed course link (leadCourseLink); older
 // campaigns ignore it.
 type BroadcastBuilder = (us: boolean, firstName: string, unsub: string, link: string) => Broadcast
@@ -1226,6 +1322,12 @@ Deno.serve(async (req) => {
   // dry is explicitly false. The cron key is already checked above.
   if (body.type === "studentFollowUps") {
     return json(200, await sendStudentFollowUps(admin, body.dry !== false), origin)
+  }
+
+  // testimonialAsks {dry} -> who would be asked, sending nothing unless dry is
+  // explicitly false.
+  if (body.type === "testimonialAsks") {
+    return json(200, await sendTestimonialAsks(admin, body.dry !== false), origin)
   }
 
   if (body.type === "preview") {
@@ -1443,6 +1545,11 @@ Deno.serve(async (req) => {
       Object.assign(result, await sendStudentFollowUps(admin))
     } catch (err) {
       console.error("student follow-ups failed:", (err as Error).message)
+    }
+    try {
+      Object.assign(result, await sendTestimonialAsks(admin))
+    } catch (err) {
+      console.error("testimonial asks failed:", (err as Error).message)
     }
     return json(result.fetchError ? 502 : 200, result, origin)
   }
