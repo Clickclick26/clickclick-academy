@@ -3091,3 +3091,11 @@ input {
   font-weight: 600;
   line-height: 1.3;
 }
+
+/* First time on the code screen. The way in has to come before the two ways
+   back in, or a new arrival reads "Welcome back" and leaves. */
+.gate-start { margin-bottom: 0.25rem; }
+.gate-start h3 { margin: 0 0 0.35rem; }
+.gate-start .lead { margin: 0 0 0.9rem; }
+.gate-start .btn { width: 100%; }
+.gate-back-head { margin: 0 0 0.35rem; font-size: 1.02rem; }

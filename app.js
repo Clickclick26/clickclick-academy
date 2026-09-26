@@ -3447,10 +3447,11 @@
       var code = (params.get('k') || '').trim();
       if (!code) return null;
       var courseId = (params.get('c') || '').trim();
-      params.delete('k');
-      params.delete('c');
-      var rest = params.toString();
-      history.replaceState({}, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+      // The code stays in the address bar. Wiping it meant every bookmark, every
+      // back button and every link anyone reshared came back to a login screen,
+      // which is the last thing an Instagram or Facebook in-app browser needs.
+      // The signed personal parts (?u=&t=, ?l=&s=) are still removed, by
+      // studentFromLink and leadFromLink.
       return { code: code, courseId: courseId };
     } catch (e) {
       return null;
@@ -3524,13 +3525,24 @@
       if (!email) return;
       if (btn) { btn.disabled = true; btn.textContent = 'Sending\u2026'; }
       track('link_requested');
+      var note = document.getElementById('link-note');
+      var doneEl = document.getElementById('link-done');
+      var linkErr = document.getElementById('link-error');
+      if (linkErr) linkErr.hidden = true;
       academyApi({ type: 'sendLink', email: email })
-        .catch(function () {})
         .then(function () {
-          var note = document.getElementById('link-note');
-          var doneEl = document.getElementById('link-done');
           if (note) note.hidden = true;
           if (doneEl) doneEl.hidden = false;
+        })
+        .catch(function (e) {
+          // It used to say "on its way" either way. A mistyped address got the
+          // same cheerful message as a real one and nothing was ever sent.
+          if (linkErr) {
+            linkErr.textContent = (e && e.message) || 'Could not send that. Try again in a minute.';
+            linkErr.hidden = false;
+          }
+        })
+        .then(function () {
           if (btn) { btn.disabled = false; btn.textContent = 'Email me my link'; }
         });
     });
@@ -3606,6 +3618,28 @@
 
   function boot() {
     restoreOrGate();
+  }
+
+  // The free course's own code, so a first-time arrival has something to press.
+  // It is one word and it is printed in every email, so there was never
+  // anything here to protect.
+  var FREE_COURSE_CODE = 'GOLDENQUARTER';
+  var startBtn = document.getElementById('gate-start-btn');
+  if (startBtn) {
+    startBtn.addEventListener('click', function () {
+      startBtn.disabled = true;
+      startBtn.textContent = 'Opening\u2026';
+      unlockWithCode(FREE_COURSE_CODE, {
+        onFail: function () {
+          startBtn.disabled = false;
+          startBtn.textContent = 'Start the free course';
+          if (err) {
+            err.textContent = 'Could not reach the Academy. Check your connection and try again.';
+            err.hidden = false;
+          }
+        },
+      });
+    });
   }
 
   if (form) {

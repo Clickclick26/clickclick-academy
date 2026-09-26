@@ -14,7 +14,7 @@
        site has no build step to fingerprint filenames, and browsers were
        caching stale CSS/JS across deploys (confirmed live: a visitor's
        browser mixed new HTML with cached old CSS and rendered broken). -->
-  <link rel="stylesheet" href="styles.css?v=54" />
+  <link rel="stylesheet" href="styles.css?v=55" />
   <!-- Heatmaps, scroll maps and session recordings (Microsoft Clarity), so we
        can see where in a lesson people stop rather than only that they did.
        Same consent banner as clickclick.video: nothing loads until a visitor
@@ -34,7 +34,17 @@
   <div id="gate" class="gate" hidden>
     <div class="gate-card">
       <img class="brand-logo-stacked" src="brand/clickclick-logo-stacked-black.png" alt="ClickClick" />
-      <h3>Welcome back</h3>
+      <!-- First time here (26 Sep 2026). 18 people hit this screen and 13 of
+           them were already signed up: everyone got "Welcome back" and two
+           login forms, for a free course whose access code is one word printed
+           in every email. There was nothing to protect and nowhere to click. -->
+      <div class="gate-start">
+        <h3>The Golden Quarter</h3>
+        <p class="lead">Five short lessons on getting booked for Q4. Free, and it stays free.</p>
+        <button class="btn primary" type="button" id="gate-start-btn">Start the free course</button>
+      </div>
+      <div class="gate-or"><span>or</span></div>
+      <h3 class="gate-back-head">Been here before?</h3>
       <p class="lead">Pick up where you left off. Your progress is saved to your email.</p>
       <!-- The main way back in (22 Sep 2026): most people never saw a code. -->
       <form id="link-form" class="gate-form">
@@ -43,6 +53,7 @@
         <button class="btn primary" type="submit" id="link-btn">Email me my link</button>
         <p class="gate-small" id="link-note">We'll send a link that takes you straight back in, with your progress. Check Spam or Promotions if you can't see it.</p>
         <p class="gate-small gate-ok" id="link-done" hidden>Done. If that email is signed up, your link is on its way from hello@clickclick.video.</p>
+        <p class="error" id="link-error" hidden></p>
       </form>
       <div class="gate-or"><span>or</span></div>
       <form id="gate-form" class="gate-form">
@@ -156,7 +167,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=57"></script>
+  <script src="app.js?v=58"></script>
   <script src="cookies.js?v=2"></script>
   <script src="analytics.js?v=1"></script>
   <script src="pixel.js?v=1"></script>
