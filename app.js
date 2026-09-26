@@ -80,6 +80,11 @@
   // credential id: a student who goes offline should see "pending" again
   // rather than a stale "approved" from last week.
   var certApproval = {};
+  // Set when the server has refused to issue a certificate because the final
+  // check has not been passed. Until 26 Sep 2026 the refusal was swallowed and
+  // the browser drew its own certificate with a made-up credential ID, so
+  // people downloaded certificates that were in no database anywhere.
+  var certBlocked = {};
 
   function certificateIsPending(course, student) {
     if (!student) return false;
@@ -103,9 +108,18 @@
           renderProgress(currentDetailCourse);
         }
       })
-      .catch(function () {
-        // Offline or the table isn't set up yet: the temporary local ID
-        // stays on screen, nothing breaks, we'll just try again next visit.
+      .catch(function (err) {
+        // A refusal is not a network problem. The server says no when the final
+        // check has not been passed, and that has to show on screen as the
+        // check still to do, never as a certificate.
+        if (err && err.data && err.data.needsAssessment) {
+          certBlocked[key] = true;
+          if (currentDetailCourse && currentDetailCourse.id === course.id) {
+            renderProgress(currentDetailCourse);
+          }
+        }
+        // Anything else is offline or not set up yet: nothing is drawn, and
+        // we try again on the next visit.
       })
       .then(function () {
         certInFlight[key] = false;
@@ -923,9 +937,11 @@
       (activity.prompt ? '<p class="activity-flip-prompt">' + esc(activity.prompt) + '</p>' : '') +
       '<div class="activity-flip-grid">' +
       cards
-        .map(function (c) {
+        .map(function (c, ci) {
+          var wasFlipped = !!(state.flipped || {})[ci];
           return (
-            '<button type="button" class="flip-card" aria-pressed="false">' +
+            '<button type="button" class="flip-card' + (wasFlipped ? ' is-flipped' : '') +
+            '" data-card="' + ci + '" aria-pressed="' + (wasFlipped ? 'true' : 'false') + '">' +
             '<span class="flip-card-inner">' +
             '<span class="flip-card-face flip-card-front">' + esc(c.front || '') + '</span>' +
             '<span class="flip-card-face flip-card-back">' + esc(c.back || '') + '</span>' +
@@ -1738,6 +1754,9 @@
       '<div class="lesson-card-head">' +
       '<span class="lesson-num">' + esc(lesson.num || '') + '</span>' +
       '<h4>' + esc(lesson.title || '') + '</h4>' +
+      // A bonus lesson sits outside the count, so it needs saying: otherwise
+      // "5 of 5 done" with a sixth card underneath reads as a mistake.
+      (lesson.bonus ? '<span class="lesson-bonus-badge">Extra, not needed for your certificate</span>' : '') +
       statusBadge +
       '</div>' +
       lessonVideoHtml(lesson.video) +
@@ -1863,25 +1882,42 @@
   // that once ensureRealCredentialId has fetched it; until then (first
   // render, or offline) it falls back to a locally-computed placeholder so
   // the certificate still displays something immediately.
+  // The only credential ID there is comes from the server, where it is written
+  // into academy_certificates. No server answer means no ID and nothing to
+  // download: a certificate a brand cannot look up is worse than none.
   function credentialId(course) {
     var student = loadStudent();
-    if (student && student.studentId) {
-      var cached = certificateCache[student.studentId + '|' + (course.id || '')];
-      if (cached) return cached;
-      ensureRealCredentialId(course, student);
-    }
-    return localFallbackCredentialId(course, student);
+    if (!student || !student.studentId) return '';
+    var cached = certificateCache[student.studentId + '|' + (course.id || '')];
+    if (cached) return cached;
+    ensureRealCredentialId(course, student);
+    return '';
   }
 
-  function localFallbackCredentialId(course, student) {
-    var seed = ((student && student.studentId) || 'guest') + '|' + (course.id || '');
-    var hash = 0;
-    for (var i = 0; i < seed.length; i++) {
-      hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  function certificateIsBlocked(course, student) {
+    if (!student || !student.studentId) return false;
+    return certBlocked[student.studentId + '|' + (course.id || '')] === true;
+  }
+
+  // What shows once the lessons are done. One thing at a time, in the order it
+  // actually happens: the final check, then the certificate the server issued,
+  // then the ask. Until 26 Sep 2026 all four cards rendered at once, the
+  // certificate card said "issued" before anyone had passed anything, and its
+  // Download button worked. Nine people finished the lessons, five never took
+  // the check, and the certificate was drawn in the browser regardless.
+  function finishHtml(course, lessonCount, moduleCount) {
+    var student = loadStudent();
+    var certId = credentialId(course);
+    if (!certId) {
+      // Either the server has refused (check not passed) or it has not
+      // answered yet. Neither is a certificate.
+      return assessmentCardHtml(certificateIsBlocked(course, student));
     }
-    var num = (hash % 9000) + 1000;
-    var slug = String(course.id || 'cc').split('-')[0].toUpperCase();
-    return 'CC-' + slug + '-' + new Date().getFullYear() + '-' + num;
+    return (
+      certificateCardHtml(course, lessonCount, moduleCount) +
+      testimonialCardHtml() +
+      listingCardHtml()
+    );
   }
 
   function certificateCardHtml(course, lessonCount, moduleCount) {
@@ -1897,8 +1933,8 @@
       '<h3>You finished ' + esc(course.title || '') + '</h3>' +
       '</div>' +
       '</div>' +
-      '<p class="certificate-sub">All ' + lessonCount + ' lessons completed. Your certificate is issued under ' +
-      'credential ID ' + esc(certId) + ', download it, or add it to the certifications section of your LinkedIn profile.</p>' +
+      '<p class="certificate-sub">All ' + lessonCount + ' lessons done and the final check passed. Your certificate is issued under ' +
+      'credential ID ' + esc(certId) + ', which a brand can look up. Download it, or add it to the certifications section of your LinkedIn profile.</p>' +
       (student && student.academyId
         ? '<p class="academy-id-line">Your Academy ID is <strong>' + esc(student.academyId) +
           '</strong>. Quote it if you ever need to ask us about your course.</p>'
@@ -1925,17 +1961,17 @@
   // server, six to pass, retake as often as they like. The browser never
   // learns which option is right, which is the whole point: two of the first
   // three certificates were clicked through in under two minutes.
-  function assessmentCardHtml() {
+  function assessmentCardHtml(refused) {
     return (
       '<div class="certificate-card assessment-card" id="assessment-card" hidden>' +
       '<div class="certificate-card-head">' +
       '<span class="certificate-seal" aria-hidden="true">&#128221;</span>' +
       '<div>' +
       '<p class="certificate-eyebrow">Final check</p>' +
-      '<h3>One last thing before your certificate</h3>' +
+      '<h3>' + (refused ? 'Your certificate is waiting on this' : 'Lessons done. One thing left') + '</h3>' +
       '</div>' +
       '</div>' +
-      '<p class="certificate-sub" id="assessment-intro">Eight questions from the lessons. Six right and your certificate is issued. Get it wrong and you can go again, as many times as you like.</p>' +
+      '<p class="certificate-sub" id="assessment-intro">Eight questions from the lessons. Six right and your certificate is issued, with a credential ID a brand can look up. Get one wrong and you can go again, as many times as you like.</p>' +
       '<form class="assessment-form" id="assessment-form"></form>' +
       '<p class="assessment-msg" id="assessment-msg" hidden></p>' +
       '</div>'
@@ -1955,10 +1991,19 @@
         var qs = (data && data.questions) || [];
         if (!qs.length) return;
         card.hidden = false;
+        // The count comes from the content, so it changes when the lessons do.
+        // It used to be written into the copy as "eight questions, six right".
+        var intro = document.getElementById('assessment-intro');
+        if (intro && data.total && data.pass) {
+          intro.textContent =
+            data.total + ' questions from the lessons. ' + data.pass +
+            ' right and your certificate is issued, with a credential ID a brand can look up. ' +
+            'Get one wrong and you can go again, as many times as you like.';
+        }
         form.innerHTML =
           qs
             .map(function (q, n) {
-              var name = 'q' + q.num.replace('.', '_') + '_' + q.index;
+              var name = 'q' + String(q.num).replace(/[^\w]/g, '_') + '_' + q.index;
               return (
                 '<fieldset class="assessment-q" data-num="' + esc(q.num) + '" data-index="' + q.index + '">' +
                 '<legend>' + (n + 1) + '. ' + esc(q.q) + '</legend>' +
@@ -2675,6 +2720,11 @@
 
   function downloadCertificate(course) {
     var student = loadStudent();
+    // Nothing gets drawn that the server has not issued. This used to fall back
+    // to a locally computed ID, so a refused certificate downloaded anyway with
+    // a credential number that existed in no database.
+    var serverId = credentialId(course);
+    if (!serverId) return;
     var name = (student && student.name) || 'Creator';
     var modules = Array.isArray(course.modules) ? course.modules : [];
     var lessonCount = modules.reduce(function (n, m) {
@@ -2720,19 +2770,35 @@
       'issueMonth=' + (now.getMonth() + 1),
       'certUrl=' + encodeURIComponent('https://academy.clickclick.video/'),
     ];
+    // The credential ID goes on the LinkedIn entry too, so a brand reading the
+    // profile has the number to look up. Only ever the server's ID.
+    var certId = credentialId(course);
+    if (certId) parts.push('certId=' + encodeURIComponent(certId));
     return 'https://www.linkedin.com/profile/add?' + parts.join('&');
   }
 
   function courseDetailHtml(course, submittedByNum, justUnlockedNum) {
     var modules = Array.isArray(course.modules) ? course.modules : [];
-    var lessonCount = modules.reduce(function (n, m) {
-      return n + (Array.isArray(m.lessons) ? m.lessons.length : 0);
-    }, 0);
+    // Lessons marked "bonus" sit outside the count. The Golden Quarter's sixth
+    // lesson is the pricing tool that sells the paid course, and until
+    // 26 Sep 2026 the certificate, the final check and the testimonial ask all
+    // waited behind it, while every email promised five lessons.
+    var coreNums = {};
+    var lessonCount = 0;
+    modules.forEach(function (m) {
+      (Array.isArray(m.lessons) ? m.lessons : []).forEach(function (l) {
+        if (l.bonus) return;
+        coreNums[l.num] = true;
+        lessonCount++;
+      });
+    });
     // selfPaced courses (the CLocal creator courses) aren't graded, so there's
     // nothing to "submit" or lock, no done-count, no progress bar, no
     // completion banner, just lessons to browse and try at your own pace.
     var selfPaced = !!course.selfPaced;
-    var doneCount = Object.keys(submittedByNum).length;
+    var doneCount = Object.keys(submittedByNum).filter(function (n) {
+      return coreNums[n];
+    }).length;
     currentAllNums = flatLessonNums(course);
     currentDoneByNum = submittedByNum || {};
     currentTitleByNum = {};
@@ -2774,7 +2840,7 @@
         : '<div class="progress-track" role="progressbar" aria-valuenow="' + doneCount +
           '" aria-valuemin="0" aria-valuemax="' + lessonCount + '"><div class="progress-fill"></div></div>'
       ) +
-      (complete ? assessmentCardHtml() + certificateCardHtml(course, lessonCount, modules.length) + testimonialCardHtml() + listingCardHtml() : '') +
+      (complete ? finishHtml(course, lessonCount, modules.length) : '') +
       '</div>' +
       courseIntroHtml(course) +
       modules.map(function (m, i) { return moduleHtml(m, i, submittedByNum, justUnlockedNum, selfPaced); }).join('') +
@@ -3116,6 +3182,16 @@
       btn.textContent = 'Saving…';
     }
 
+    // Send the working, not just the claim. The server holds the answer key
+    // and decides whether this lesson is really done: it used to be decided
+    // here, and pressing Check was enough to pass whatever the answers said.
+    var actState = getLessonActivityState(lessonNum) || {};
+    var answers = {};
+    Object.keys(actState).forEach(function (k) {
+      answers[k] = actState[k];
+    });
+    answers.gate = getLessonActivityState(gateStateKey(lessonNum)).right || {};
+
     academyApi({
       type: 'submit',
       studentId: student.studentId,
@@ -3123,6 +3199,7 @@
       lessonNum: lessonNum,
       note: 'Marked done by the student.',
       filePath: null,
+      answers: answers,
     })
       .then(function () {
         var idx = currentAllNums.indexOf(lessonNum);
@@ -3757,6 +3834,7 @@
     }
     var certLinkedInBtn = e.target.closest('.certificate-linkedin-btn');
     if (certLinkedInBtn && currentDetailCourse) {
+      if (!credentialId(currentDetailCourse)) return;
       window.open(linkedInAddUrl(currentDetailCourse), '_blank', 'noopener');
       return;
     }
@@ -3971,6 +4049,15 @@
     if (flipCard) {
       var flipped = flipCard.classList.toggle('is-flipped');
       flipCard.setAttribute('aria-pressed', flipped ? 'true' : 'false');
+      // Remembered, because the server will not count the lesson until every
+      // card has been turned over at least once.
+      var flipActivity = flipCard.closest('.activity');
+      var flipLessonNum = flipActivity ? flipActivity.getAttribute('data-lesson') : null;
+      if (flipLessonNum && flipped) {
+        var seen = getLessonActivityState(flipLessonNum).flipped || {};
+        seen[flipCard.getAttribute('data-card')] = true;
+        saveLessonActivityState(flipLessonNum, { flipped: seen });
+      }
       return;
     }
 

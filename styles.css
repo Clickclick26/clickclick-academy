@@ -3078,3 +3078,16 @@ input {
   .lesson-end { padding: 16px; }
   .lesson-end-pips i { width: 20px; }
 }
+
+/* A bonus lesson is not part of the count, and the card has to say so, or
+   "5 of 5 done" with a sixth lesson underneath looks like a bug. */
+.lesson-bonus-badge {
+  display: inline-block;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: #efe7d4;
+  color: #6b5c3c;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+}

@@ -569,6 +569,203 @@ async function syncToCrmContacts(opts: {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Did they actually do the activity?
+//
+// Until 26 Sep 2026 this was only ever checked in the browser, and the browser
+// marked a lesson done the moment the Check button was pressed, whatever the
+// answers said. Nine people "finished" the course, one of them inside a single
+// minute, and four of the nine never took the final check. So the rule now
+// lives here, on the server, next to the answer key.
+//
+// The browser sends its working: the same object it keeps in localStorage for
+// that lesson, plus the gate quiz's under `gate`. This recomputes the result
+// from the content, so editing localStorage or calling the endpoint by hand
+// gets you nowhere.
+//
+// Kinds with no right answer (a self-check list, a calculator, a writing
+// frame, flip cards) still have a bar: every part filled in or ticked, not
+// merely touched.
+function activityPassed(
+  lesson: Record<string, unknown>,
+  answers: Record<string, unknown>,
+): { ok: boolean; why: string } {
+  const a = (answers ?? {}) as Record<string, unknown>
+  const at = (k: string): Record<string, unknown> =>
+    (a[k] ?? {}) as Record<string, unknown>
+  const pick = (m: Record<string, unknown>, i: number | string): unknown => m[String(i)]
+  const filled = (v: unknown) =>
+    v !== undefined && v !== null && String(v).trim() !== ""
+
+  // The gate quiz, where a lesson has one. The browser only ever records a
+  // question once it has been answered correctly, so every index must be there.
+  const gate = lesson.gate as Record<string, unknown> | undefined
+  const gateQs = (gate?.questions as unknown[]) ?? []
+  if (gateQs.length) {
+    const right = at("gate")
+    for (let i = 0; i < gateQs.length; i++) {
+      if (pick(right, i) !== true) {
+        return { ok: false, why: "Answer every question in the check above before marking this done." }
+      }
+    }
+  }
+
+  const act = lesson.activity as Record<string, unknown> | undefined
+  if (!act) return { ok: true, why: "" }
+  const kind = String(act.kind ?? "")
+  const items = (act.items as unknown[]) ?? []
+  const wrong = (why: string) => ({ ok: false, why })
+
+  if (kind === "quiz") {
+    const qs = (act.questions as Array<Record<string, unknown>>) ?? []
+    const given = at("answers")
+    for (let i = 0; i < qs.length; i++) {
+      if (Number(pick(given, i)) !== Number(qs[i].correct)) {
+        return wrong("Every question has to be right before this lesson counts. Have another go at the ones marked wrong.")
+      }
+    }
+    return { ok: true, why: "" }
+  }
+
+  if (kind === "sequence") {
+    const order = (a.order as unknown[]) ?? []
+    if (order.length !== items.length) return wrong("Put the steps in order first.")
+    for (let i = 0; i < order.length; i++) {
+      if (Number(order[i]) !== i) {
+        return wrong("The order is not right yet. Drag the steps and check again.")
+      }
+    }
+    return { ok: true, why: "" }
+  }
+
+  if (kind === "match") {
+    const sel = at("selections")
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i] as Record<string, unknown>
+      if (String(pick(sel, i) ?? "") !== String(it.correct ?? "")) {
+        return wrong("Some of those are not matched up right yet. Change them and check again.")
+      }
+    }
+    return { ok: true, why: "" }
+  }
+
+  if (kind === "wheel") {
+    const segs = (act.segments as Array<Record<string, unknown>>) ?? []
+    const answered = at("answered")
+    for (let si = 0; si < segs.length; si++) {
+      const qs = (segs[si].questions as Array<Record<string, unknown>>) ?? []
+      const entry = (pick(answered, si) ?? {}) as Record<string, unknown>
+      for (let qi = 0; qi < qs.length; qi++) {
+        if (Number(pick(entry, qi)) !== Number(qs[qi].correct)) {
+          return wrong("Spin the wheel until you have had every topic, and get each one right.")
+        }
+      }
+    }
+    return { ok: true, why: "" }
+  }
+
+  if (kind === "checklist") {
+    const checked = at("checked")
+    const on = (i: number) => pick(checked, i) === true
+    if (act.graded === true) {
+      // A graded list is a spot-the-problem exercise: tick the flags, leave
+      // the rest alone.
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i] as Record<string, unknown>
+        if (on(i) !== (it.isFlag === true)) {
+          return wrong("Not quite. Tick only the ones that are a problem, then check again.")
+        }
+      }
+      return { ok: true, why: "" }
+    }
+    const min = Number(act.minRequired ?? 0)
+    let count = 0
+    const tags: Record<string, boolean> = {}
+    for (let i = 0; i < items.length; i++) {
+      if (on(i)) {
+        count++
+        const tag = String((items[i] as Record<string, unknown>).tag ?? "")
+        if (tag) tags[tag] = true
+      }
+    }
+    const diversity = Number(act.requireTagDiversity ?? 0)
+    if (diversity && Object.keys(tags).length < diversity) {
+      return wrong("Pick from more than one group before marking this done.")
+    }
+    if (min) {
+      if (count < min) return wrong("Tick at least " + min + " before marking this done.")
+      return { ok: true, why: "" }
+    }
+    // No grading and no minimum: reading every line is the exercise, so all
+    // of them have to be ticked.
+    if (count < items.length) {
+      return wrong("Work down the whole list and tick each one before marking this done.")
+    }
+    return { ok: true, why: "" }
+  }
+
+  if (kind === "allocator") {
+    if (String(act.mode ?? "") === "calculator") {
+      const inputs = at("inputs")
+      const fields = (act.fields as Array<Record<string, unknown>>) ?? []
+      for (const f of fields) {
+        if (!filled(inputs[String(f.key ?? "")])) {
+          return wrong("Fill in every box and press the button before marking this done.")
+        }
+      }
+      return { ok: true, why: "" }
+    }
+    const values = at("values")
+    for (let i = 0; i < items.length; i++) {
+      if (!filled(pick(values, i))) {
+        return wrong("Put a number against every line before marking this done.")
+      }
+    }
+    return { ok: true, why: "" }
+  }
+
+  if (kind === "rubric") {
+    const scores = at("scores")
+    const subjects = (act.subjects as unknown[]) ?? []
+    const criteria = (act.criteria as unknown[]) ?? []
+    for (let si = 0; si < subjects.length; si++) {
+      const row = (pick(scores, si) ?? {}) as Record<string, unknown>
+      for (let ci = 0; ci < criteria.length; ci++) {
+        if (!filled(pick(row, ci))) {
+          return wrong("Score every box before marking this done.")
+        }
+      }
+    }
+    return { ok: true, why: "" }
+  }
+
+  if (kind === "builder") {
+    const values = at("values")
+    const fields = (act.fields as unknown[]) ?? []
+    for (let i = 0; i < fields.length; i++) {
+      if (String(pick(values, i) ?? "").trim().length < 3) {
+        return wrong("Write something in every box before marking this done.")
+      }
+    }
+    return { ok: true, why: "" }
+  }
+
+  if (kind === "flip") {
+    const cards = (act.cards as unknown[]) ?? []
+    const seen = at("flipped")
+    for (let i = 0; i < cards.length; i++) {
+      if (pick(seen, i) !== true) {
+        return wrong("Turn over every card before marking this done.")
+      }
+    }
+    return { ok: true, why: "" }
+  }
+
+  // An activity kind nobody has written a rule for yet. Fail closed and say
+  // so plainly, rather than quietly waving it through the way the browser did.
+  return wrong("This activity cannot be marked done yet. Tell us and we will sort it.")
+}
+
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin")
 
@@ -929,6 +1126,34 @@ Deno.serve(async (req) => {
         return json(400, { error: "Add a note or a file before submitting." }, origin)
       }
 
+      // The activity has to have been done, properly, and this is where that
+      // is decided. The browser used to decide it and got it wrong: pressing
+      // the Check button marked the lesson done whatever the answers were.
+      let submitContent
+      try {
+        submitContent = await loadContent(admin)
+      } catch (_e) {
+        return json(503, { error: "Content store not configured." }, origin)
+      }
+      const submitCourse = (submitContent.courses as Array<Record<string, unknown>>).find(
+        (c) => String(c.id) === courseId,
+      )
+      if (!submitCourse) return json(404, { error: "No such course." }, origin)
+      let submitLesson: Record<string, unknown> | null = null
+      for (const m of (submitCourse.modules as Array<{ lessons?: Array<Record<string, unknown>> }>) ?? []) {
+        for (const l of m.lessons ?? []) {
+          if (String(l.num ?? "") === lessonNum) submitLesson = l
+        }
+      }
+      if (!submitLesson) return json(404, { error: "No such lesson." }, origin)
+      const verdict = activityPassed(
+        submitLesson,
+        (body.answers ?? {}) as Record<string, unknown>,
+      )
+      if (!verdict.ok) {
+        return json(403, { error: verdict.why, notDoneYet: true }, origin)
+      }
+
       const { error } = await admin.from("academy_progress").upsert(
         {
           student_id: studentId,
@@ -1074,20 +1299,51 @@ Deno.serve(async (req) => {
 
       type Q = { num: string; index: number; q: string; options: string[]; correct: number }
       const questions: Q[] = []
+      // A lesson's quiz questions carry the scenario in `q` and the actual
+      // question once, at the top of the activity, in `prompt`. Until
+      // 26 Sep 2026 only `q` came through, so half the final check read as a
+      // scenario with three answers and no question: "You charge £400 to make
+      // the video. What should the invoice say?" was missing, and the options
+      // talked about £400 out of nowhere.
+      //
+      // The gate quizzes count too. They ask a whole question in `q`, they sit
+      // on lessons that have no activity quiz, and leaving them out meant the
+      // check only ever drew on two of the six lessons.
+      const addFrom = (
+        lessonNum: string,
+        prompt: string,
+        list: Array<Record<string, unknown>>,
+        tag: string,
+      ) => {
+        list.forEach((item, index) => {
+          const scenario = String(item.q ?? "").trim()
+          const ask = prompt.trim()
+          questions.push({
+            num: lessonNum + tag,
+            index,
+            q: ask && ask !== scenario ? scenario + " " + ask : scenario,
+            options: (item.options as string[]) ?? [],
+            correct: Number(item.correct ?? -1),
+          })
+        })
+      }
       for (const m of (course.modules as Array<{ lessons?: Array<Record<string, unknown>>} >) ?? []) {
         for (const lesson of m.lessons ?? []) {
+          const num = String(lesson.num ?? "")
           const activity = lesson.activity as Record<string, unknown> | undefined
-          if (!activity || activity.kind !== "quiz") continue
-          const list = (activity.questions as Array<Record<string, unknown>>) ?? []
-          list.forEach((item, index) => {
-            questions.push({
-              num: String(lesson.num ?? ""),
-              index,
-              q: String(item.q ?? ""),
-              options: (item.options as string[]) ?? [],
-              correct: Number(item.correct ?? -1),
+          if (activity && activity.kind === "quiz") {
+            addFrom(num, String(activity.prompt ?? ""), (activity.questions as Array<Record<string, unknown>>) ?? [], "")
+          }
+          if (activity && activity.kind === "wheel") {
+            const segs = (activity.segments as Array<Record<string, unknown>>) ?? []
+            segs.forEach((seg, si) => {
+              addFrom(num, "", (seg.questions as Array<Record<string, unknown>>) ?? [], "::w" + si)
             })
-          })
+          }
+          const gate = lesson.gate as Record<string, unknown> | undefined
+          if (gate) {
+            addFrom(num, "", (gate.questions as Array<Record<string, unknown>>) ?? [], "::g")
+          }
         }
       }
       if (!questions.length) {
