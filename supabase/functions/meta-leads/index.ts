@@ -291,6 +291,17 @@ async function unsubscribeLinks(id: string) {
 
 async function unsubscribe(admin: AdminClient, id: string, s: string) {
   if (!Deno.env.get("LEADS_UNSUB_SECRET") || !id || !timingSafeEqual(s, await sign(id))) return false
+  // "s:<uuid>" is a student rather than a lead: the people who signed up from a
+  // DM, a group or the website, who have no meta_leads row to stop.
+  if (id.startsWith("s:")) {
+    const { error } = await admin
+      .from("academy_students")
+      .update({ unsubscribed_at: new Date().toISOString(), marketing_consent: false })
+      .eq("id", id.slice(2))
+      .is("unsubscribed_at", null)
+    if (error) throw error
+    return true
+  }
   const { error } = await admin
     .from("meta_leads")
     .update({ stopped_at: new Date().toISOString(), stopped_reason: "unsubscribed" })
@@ -876,6 +887,207 @@ async function sendResumes(admin: AdminClient, max = 30) {
   return { resumes: sent }
 }
 
+// ------------------------------------------------- Students, not leads ----
+//
+// Everything above this line is keyed on meta_leads: a Facebook lead form
+// comes in, and the day 0, day 2 and day 7 sequence and the resume nudge
+// follow it. Anyone who signed up any other way (an Instagram DM, a Facebook
+// group, the website) has no lead row, and until 26 Sep 2026 every one of
+// those lookups skipped them. They received nothing, ever. With the ads off,
+// that is everyone arriving.
+//
+// So this is the same care, driven off academy_students. Three emails:
+//
+//   welcome  their link back in, once, soon after they sign up
+//   resume   they have not finished and have not touched it for two days
+//   offer    day 7, the paid course, and only with marketing consent
+//
+// The first two are about the course they asked for. The third is marketing,
+// so it needs the tick box (PECR), and it is not sent to anyone who never
+// opened a lesson: pitching £149 to someone who has not read a word is how
+// you lose them.
+const STUDENT_MAX_PER_RUN = 25
+
+// Byte for byte what academy-progress computes for the same student, so its
+// ?u=&t= link check passes: same secret, same HMAC, same 16-byte truncation.
+async function studentSig(studentId: string): Promise<string> {
+  return await sign(`student:${studentId}`)
+}
+
+// Students unsubscribe with the same signed link, marked "s:" so the handler
+// knows to look in academy_students rather than meta_leads.
+async function studentUnsubLinks(studentId: string) {
+  const id = `s:${studentId}`
+  const s = await sign(id)
+  const q = `u=${encodeURIComponent(id)}&s=${s}`
+  return { page: `https://www.clickclick.video/unsubscribe/?${q}`, oneClick: `${FUNCTION_URL}?${q}` }
+}
+
+function studentCourseLink(code: string, courseId: string, src: string, studentId: string, sig: string) {
+  return `${ACADEMY}?k=${encodeURIComponent(code)}${courseId ? `&c=${courseId}` : ""}&src=${src}&u=${studentId}&t=${sig}`
+}
+
+function welcomeEmail(firstName: string, unsub: string, link: string): Broadcast {
+  const subject = "Your link into The Golden Quarter"
+  const why = "You're getting this because you signed up for The Golden Quarter."
+  const paras = [
+    "Here is your way back into the course. Keep this email: the link opens it on any phone or laptop, and it remembers where you got to.",
+    "Five short lessons. The first one explains why the Black Friday work you see in November was booked back in September.",
+  ]
+  const after = "Nothing to pay, and no calls. Finish the five and there is a certificate with an ID a brand can look up."
+  const text = [`Hi ${firstName},`, ...paras, `Open the course: ${link}`, after, "Kathryn\nClickClick", `${why} Unsubscribe: ${unsub}\n${ADDRESS}`].join("\n\n")
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
+<p><a href="${link}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">Open the course</a></p>
+<p>${escapeHtml(after)}</p>
+<p>Kathryn<br>ClickClick</p>
+<p style="color:#5c5c5c;font-size:13px;margin-top:28px">${escapeHtml(why)} <a href="${unsub}" style="color:#5c5c5c">Unsubscribe</a><br>${escapeHtml(ADDRESS)}</p>
+</div>`
+  return { subject, html, text }
+}
+
+function studentOfferEmail(us: boolean, firstName: string, unsub: string, link: string): Broadcast {
+  const price = us ? "$199" : "£149"
+  const contract = us ? "US" : "UK"
+  const course = "https://www.clickclick.video/creators/#price"
+  const subject = "The full course, if the free one was useful"
+  const why = "You're getting this because you signed up for The Golden Quarter and ticked to hear from us."
+  const paras = [
+    "You have been working through The Golden Quarter, so this is the one email about the paid one.",
+    `It is ${price}, one payment, 12 months. 32 lessons, the ${contract} client contract you can send to brands, and a certificate with an ID a brand can check.`,
+    "If the free course is all you wanted, that is genuinely fine. It stays open and your place stays saved.",
+  ]
+  const after = "Either way, finish the five lessons and get your certificate."
+  const text = [`Hi ${firstName},`, ...paras, `See the full course: ${course}`, `${after} ${link}`, "Kathryn\nClickClick", `${why} Unsubscribe: ${unsub}\n${ADDRESS}`].join("\n\n")
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;color:#141414;max-width:520px">
+<p>Hi ${escapeHtml(firstName)},</p>
+${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
+<p><a href="${course}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#141414;color:#F0EAD6;text-decoration:none;font-weight:500">See the full course</a></p>
+<p>${escapeHtml(after)} <a href="${link}" style="color:#141414;font-weight:600">Continue the free course &rarr;</a></p>
+<p>Kathryn<br>ClickClick</p>
+<p style="color:#5c5c5c;font-size:13px;margin-top:28px">${escapeHtml(why)} <a href="${unsub}" style="color:#5c5c5c">Unsubscribe</a><br>${escapeHtml(ADDRESS)}</p>
+</div>`
+  return { subject, html, text }
+}
+
+type StudentRow = {
+  id: string
+  name: string | null
+  email: string | null
+  access_code: string | null
+  created_at: string
+  marketing_consent: boolean | null
+  unsubscribed_at: string | null
+}
+
+async function sendStudentFollowUps(admin: AdminClient, dry = false) {
+  const apiKey = Deno.env.get("RESEND_API_KEY")
+  if (!apiKey && !dry) return { students: 0, planned: [] as string[] }
+  const now = Date.now()
+
+  const { data, error } = await admin
+    .from("academy_students")
+    .select("id, name, email, access_code, created_at, marketing_consent, unsubscribed_at")
+    .in("access_code", ["GOLDENQUARTER", "GOLDENQUARTERUS"])
+    .is("unsubscribed_at", null)
+    .not("email", "is", null)
+    .gte("created_at", new Date(now - 60 * 86400000).toISOString())
+    .order("created_at")
+  if (error) throw error
+
+  let sent = 0
+  const planned: string[] = []
+  const seen = new Set<string>()
+
+  for (const st of (data ?? []) as StudentRow[]) {
+    if (sent >= STUDENT_MAX_PER_RUN) break
+    const email = String(st.email ?? "").trim()
+    if (!email) continue
+    // A few people signed up twice with two addresses; one email each.
+    const key = email.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+
+    // Leads already have their own sequence above. This is only for the people
+    // that sequence cannot see.
+    const { data: leads } = await admin.from("meta_leads")
+      .select("leadgen_id").ilike("email", email).not("audience", "is", null).limit(1)
+    if ((leads as unknown[] | null)?.length) continue
+
+    const us = String(st.access_code ?? "").toUpperCase() === "GOLDENQUARTERUS"
+    const courseId = us ? FREE_COURSE["creator-us"] : FREE_COURSE["creator-uk"]
+
+    const { data: rows } = await admin.from("academy_progress")
+      .select("lesson_num, submitted_at").eq("student_id", st.id)
+    const done = new Set((rows ?? []).map((r: { lesson_num: string }) => r.lesson_num))
+    const finished = CORE_LESSONS.every((n) => done.has(n))
+    const started = done.size > 0
+    const signedUp = new Date(st.created_at).getTime()
+    const lastTouch = Math.max(signedUp,
+      ...(rows ?? []).map((r: { submitted_at: string }) => new Date(r.submitted_at).getTime()))
+
+    const { data: sends } = await admin.from("academy_sends")
+      .select("campaign, sent_at").eq("student_id", st.id)
+    const already = new Map((sends ?? []).map((r: { campaign: string; sent_at: string }) => [r.campaign, r.sent_at]))
+    const lastSend = Math.max(0, ...(sends ?? []).map((r: { sent_at: string }) => new Date(r.sent_at).getTime()))
+    if (lastSend && now - lastSend < MIN_GAP_HOURS * 3600000) continue
+
+    // Which one is due. First match wins, so nobody gets two in a day.
+    let campaign = ""
+    if (!already.has("welcome")) {
+      campaign = "welcome"
+    } else if (!finished && !already.has("resume") && now - lastTouch >= 2 * 86400000) {
+      campaign = "resume"
+    } else if (
+      !already.has("offer") &&
+      st.marketing_consent === true &&
+      started &&
+      now - signedUp >= 7 * 86400000
+    ) {
+      if (await hasBought(admin, email)) continue
+      campaign = "offer"
+    }
+    if (!campaign) continue
+
+    // Daytime where they are, same rule as the lead sequence.
+    const hour = Number(new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric", hour12: false, timeZone: us ? "America/New_York" : "Europe/London",
+    }).format(new Date()))
+    if (hour < 8 || hour >= 20) continue
+
+    if (dry) {
+      planned.push(`${campaign}: ${email}`)
+      continue
+    }
+
+    // Claim first, so two overlapping runs cannot send the same one twice.
+    const { error: claimErr } = await admin.from("academy_sends")
+      .insert({ student_id: st.id, campaign })
+    if (claimErr) continue
+
+    const firstName = String(st.name ?? "").trim().split(/\s+/)[0] || "there"
+    const links = await studentUnsubLinks(st.id)
+    const link = studentCourseLink(
+      String(st.access_code ?? ""), courseId, campaign, st.id, await studentSig(st.id),
+    )
+    const body = campaign === "welcome"
+      ? welcomeEmail(firstName, links.page, link)
+      : campaign === "resume"
+      ? resumeEmail(us, firstName, links.page, link)
+      : studentOfferEmail(us, firstName, links.page, link)
+
+    const res = await sendCampaignEmail(apiKey as string, email, body, links.oneClick)
+    if (res.ok) {
+      sent++
+    } else {
+      console.error("student send failed:", campaign, res.status, await res.text())
+      await admin.from("academy_sends").delete().eq("student_id", st.id).eq("campaign", campaign)
+    }
+  }
+  return { students: sent, planned }
+}
+
 // link is the lead's own signed course link (leadCourseLink); older
 // campaigns ignore it.
 type BroadcastBuilder = (us: boolean, firstName: string, unsub: string, link: string) => Broadcast
@@ -1008,6 +1220,12 @@ Deno.serve(async (req) => {
   const cronKey = Deno.env.get("CRON_KEY")
   if (!cronKey || !timingSafeEqual(String(body.key ?? ""), cronKey)) {
     return json(401, { error: "Not allowed." }, origin)
+  }
+
+  // studentFollowUps {dry} -> who would get what, and nothing is sent unless
+  // dry is explicitly false. The cron key is already checked above.
+  if (body.type === "studentFollowUps") {
+    return json(200, await sendStudentFollowUps(admin, body.dry !== false), origin)
   }
 
   if (body.type === "preview") {
@@ -1218,6 +1436,13 @@ Deno.serve(async (req) => {
       Object.assign(result, await sendResumes(admin))
     } catch (err) {
       console.error("resumes failed:", (err as Error).message)
+    }
+    // Everyone who never came from a lead form: DMs, Facebook groups, the
+    // website. Kept separate so a failure here cannot hold up the lead emails.
+    try {
+      Object.assign(result, await sendStudentFollowUps(admin))
+    } catch (err) {
+      console.error("student follow-ups failed:", (err as Error).message)
     }
     return json(result.fetchError ? 502 : 200, result, origin)
   }
