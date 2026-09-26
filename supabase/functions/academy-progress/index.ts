@@ -1332,7 +1332,11 @@ Deno.serve(async (req) => {
           const num = String(lesson.num ?? "")
           const activity = lesson.activity as Record<string, unknown> | undefined
           if (activity && activity.kind === "quiz") {
-            addFrom(num, String(activity.prompt ?? ""), (activity.questions as Array<Record<string, unknown>>) ?? [], "")
+            // "ask" is the question on its own, where the lesson's prompt is
+            // partly a heading ("Four Q4 briefs.") that means nothing once the
+            // question is lifted out of the lesson.
+            const ask = String(activity.ask ?? activity.prompt ?? "")
+            addFrom(num, ask, (activity.questions as Array<Record<string, unknown>>) ?? [], "")
           }
           if (activity && activity.kind === "wheel") {
             const segs = (activity.segments as Array<Record<string, unknown>>) ?? []
